@@ -1,0 +1,19 @@
+{
+  "name": "festo",
+  "version": "1.0.0",
+  "description": "Festo Event Management System - Full Stack",
+  "scripts": {
+    "dev": "powershell -ExecutionPolicy Bypass -File ./start-servers.ps1",
+    "dev:clean": "powershell -ExecutionPolicy Bypass -File ./start-servers.ps1",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm run dev",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "kill:ports": "powershell -Command \"Get-NetTCPConnection -LocalPort 5000,5173 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+

@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+  Merged Fonts: 
+  - Cinzel (for ultra-luxury headers)
+  - Lato (body text alternative)
+  - Playfair Display (Main Serif for headings)
+  - Montserrat (Main Sans for body/UI)
+
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lato:wght@300;400;700&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lato:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap');
+
+@layer base {
+    * {
+        box-sizing: border-box;
+    }
+    
+    html, body {
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+        margin: 0;
+        padding: 0;
+    }
+    
+    body {
+        @apply bg-gray-50 dark:bg-[#0A0A0A] text-gray-900 dark:text-gray-100 font-['Montserrat'];
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-['Playfair_Display'];
+    }
+}
+
+@layer components {
+    .btn-primary {
+        @apply bg-[#D4AF37] hover:bg-[#C5A028] text-black font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-lg hover:shadow-[#D4AF37]/40 transform hover:-translate-y-0.5;
+    }
+
+    .btn-secondary {
+        @apply bg-white/10 backdrop-blur-md hover:bg-white/20 text-white font-semibold py-3 px-8 rounded-full border border-white/10 transition-all duration-300;
+    }
+
+    .card {
+        @apply bg-white dark:bg-[#111] rounded-3xl shadow-xl p-8 border border-gray-100 dark:border-white/10 transition-all duration-300 hover:border-[#D4AF37]/30;
+    }
+
+    .input-field {
+        @apply w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-white/20 bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent transition-all duration-200;
+    }
+}
+
+@layer utilities {
+    .bg-grid-pattern {
+        background-image:
+            linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .animate-spin-slow {
+        animation: spin-slow 20s linear infinite;
+    }
+}
+
+/* --- ANIMATIONS --- */
+@keyframes gradient {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+@keyframes spin-slow {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* --- CUSTOM DATEPICKER STYLES (Dark Luxury Theme) --- */
+.react-datepicker {
+    background-color: #1a1a1a !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 1rem !important;
+    font-family: 'Montserrat', sans-serif !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5) !important;
+}
+
+.react-datepicker__header {
+    background-color: #0a0a0a !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 1rem 1rem 0 0 !important;
+    padding-top: 1rem !important;
+}
+
+.react-datepicker__current-month {
+    color: #D4AF37 !important;
+    font-family: 'Playfair Display', serif !important;
+    font-weight: 600 !important;
+    font-size: 1.1rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.react-datepicker__day-name {
+    color: rgba(255, 255, 255, 0.4) !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 0.1em !important;
+}
+
+.react-datepicker__day {
+    color: white !important;
+    border-radius: 0.5rem !important;
+    transition: all 0.2s !important;
+    margin: 0.2rem !important;
+}
+
+.react-datepicker__day:hover {
+    background-color: rgba(212, 175, 55, 0.2) !important;
+    color: #D4AF37 !important;
+}
+
+.react-datepicker__day--selected {
+    background-color: #D4AF37 !important;
+    color: black !important;
+    font-weight: 700 !important;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.4) !important;
+}
+
+.react-datepicker__day--keyboard-selected {
+    background-color: rgba(212, 175, 55, 0.1) !important;
+    color: #D4AF37 !important;
+}
+
+.react-datepicker__day--disabled {
+    color: rgba(255, 255, 255, 0.1) !important;
+    cursor: not-allowed !important;
+}
+
+.react-datepicker__navigation {
+    top: 1.25rem !important;
+}
+
+.react-datepicker__navigation-icon::before {
+    border-color: #D4AF37 !important;
+    border-width: 2px 2px 0 0 !important;
+}
+
+.react-datepicker__navigation:hover *::before {
+    border-color: #FFD700 !important;
+}
+
+.react-datepicker__month {
+    background-color: #1a1a1a !important;
+    padding: 0.5rem !important;
+    border-radius: 0 0 1rem 1rem !important;
+}
+
+.react-datepicker__day--today {
+    font-weight: 600 !important;
+    border: 1px solid rgba(212, 175, 55, 0.5) !important;
+    background-color: transparent !important;
+}

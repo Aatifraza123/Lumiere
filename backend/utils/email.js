@@ -1,0 +1,447 @@
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT || 587,
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
+});
+
+export const sendEmail = async (options) => {
+  try {
+    // Check if SMTP is configured
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.warn('⚠️  SMTP credentials not configured. Email sending skipped.');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📧 Email would be sent to:', options.email);
+        console.log('📧 Subject:', options.subject);
+        return { messageId: 'dev-mode' }; // Allow to continue in development
+      }
+      throw new Error('Email configuration missing');
+    }
+
+    const mailOptions = {
+      from: `${process.env.SMTP_FROM || 'Lumière Events'} <${process.env.SMTP_USER}>`,
+      to: options.email,
+      subject: options.subject,
+      html: options.html,
+      text: options.text
+    };
+
+    if (options.attachments) {
+      mailOptions.attachments = options.attachments;
+      console.log(`📎 Attachments: ${options.attachments.length} file(s)`);
+    }
+
+    console.log(`📧 Sending email to: ${options.email}`);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email sent successfully:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('❌ Email error:', error);
+    console.error('❌ Email error details:', {
+      message: error.message,
+      code: error.code,
+      response: error.response
+    });
+    throw error;
+  }
+};
+
+export const sendOTPEmail = async (email, otp) => {
+  // Check if email configuration exists
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.warn('⚠️  SMTP credentials not configured. Email sending skipped.');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📧 OTP for development:', otp);
+      return; // Allow to continue in development
+    }
+    throw new Error('Email configuration missing');
+  }
+
+  const subject = 'Email Verification OTP - Lumière Events';
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%); color: #000; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { padding: 30px; background: #f9f9f9; }
+        .otp-box { background: white; padding: 30px; margin: 20px 0; border-radius: 10px; text-align: center; border: 2px solid #D4AF37; }
+        .otp-code { font-size: 36px; font-weight: bold; color: #D4AF37; letter-spacing: 10px; margin: 20px 0; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+        .warning { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; color: #856404; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Lumière Events</h1>
+          <p style="margin: 0; font-size: 18px;">Email Verification</p>
+        </div>
+        <div class="content">
+          <p>Hello,</p>
+          <p>Thank you for registering with Lumière Events. Please use the following OTP to verify your email address:</p>
+          <div class="otp-box">
+            <p style="margin: 0 0 10px 0; color: #666;">Your Verification Code</p>
+            <div class="otp-code">${otp}</div>
+            <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;">This code will expire in 10 minutes</p>
+          </div>
+          <div class="warning">
+            <strong>⚠️ Security Notice:</strong> Never share this OTP with anyone. Our team will never ask for your OTP.
+          </div>
+          <p>If you didn't request this code, please ignore this email.</p>
+          <p>Best regards,<br>Lumière Events Team</p>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} Lumière Events. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `Your OTP for email verification is: ${otp}. This code will expire in 10 minutes.`;
+
+  return sendEmail({
+    email,
+    subject,
+    html,
+    text
+  });
+};
+
+export const sendBookingConfirmation = async (booking, user, invoicePath = null) => {
+  const subject = `Booking Confirmation - ${booking.invoiceNumber} | Lumière Events`;
+  const paymentStatusText = booking.paymentStatus === 'paid' 
+    ? 'Paid' 
+    : booking.paymentStatus === 'partial' 
+    ? 'Partially Paid' 
+    : 'Pending Payment';
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%); color: #000; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { padding: 30px; background: #f9f9f9; }
+        .booking-details { background: white; padding: 20px; margin: 15px 0; border-radius: 10px; border: 1px solid #e0e0e0; }
+        .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label { font-weight: bold; color: #666; }
+        .detail-value { color: #333; }
+        .total-amount { font-size: 20px; font-weight: bold; color: #D4AF37; margin-top: 15px; padding-top: 15px; border-top: 2px solid #D4AF37; }
+        .status-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .status-confirmed { background: #d4edda; color: #155724; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+        .invoice-note { background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 15px 0; color: #004085; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1 style="margin: 0;">Lumière Events</h1>
+          <p style="margin: 10px 0 0 0; font-size: 18px;">Booking Confirmed!</p>
+        </div>
+        <div class="content">
+          <p>Dear ${user.name},</p>
+          <p>Thank you for choosing Lumière Events! Your booking has been confirmed. Please find the details below:</p>
+          
+          <div class="booking-details">
+            <h3 style="margin-top: 0; color: #D4AF37;">Booking Details</h3>
+            <div class="detail-row">
+              <span class="detail-label">Invoice Number:</span>
+              <span class="detail-value">${booking.invoiceNumber}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Event Name:</span>
+              <span class="detail-value">${booking.eventName}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Event Type:</span>
+              <span class="detail-value">${booking.eventType.charAt(0).toUpperCase() + booking.eventType.slice(1)}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Venue:</span>
+              <span class="detail-value">${booking.hallId?.name || 'N/A'}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Location:</span>
+              <span class="detail-value">${booking.hallId?.location || 'N/A'}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Date:</span>
+              <span class="detail-value">${new Date(booking.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Time:</span>
+              <span class="detail-value">${booking.startTime} - ${booking.endTime}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Number of Guests:</span>
+              <span class="detail-value">${booking.guestCount}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Base Price:</span>
+              <span class="detail-value">₹${booking.basePrice.toLocaleString('en-IN')}</span>
+            </div>
+            ${booking.slotPrice > 0 ? `
+            <div class="detail-row">
+              <span class="detail-label">Time Slot:</span>
+              <span class="detail-value">₹${booking.slotPrice.toLocaleString('en-IN')}</span>
+            </div>
+            ` : ''}
+            ${booking.addonsTotal > 0 ? `
+            <div class="detail-row">
+              <span class="detail-label">Add-ons:</span>
+              <span class="detail-value">₹${booking.addonsTotal.toLocaleString('en-IN')}</span>
+            </div>
+            ` : ''}
+            <div class="detail-row">
+              <span class="detail-label">Tax (18% GST):</span>
+              <span class="detail-value">₹${booking.tax.toLocaleString('en-IN')}</span>
+            </div>
+            <div class="total-amount">
+              <div class="detail-row">
+                <span class="detail-label">Total Amount:</span>
+                <span class="detail-value">₹${booking.totalAmount.toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Payment Status:</span>
+              <span class="status-badge ${booking.paymentStatus === 'paid' ? 'status-confirmed' : 'status-pending'}">${paymentStatusText}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Booking Status:</span>
+              <span class="status-badge ${booking.status === 'confirmed' ? 'status-confirmed' : 'status-pending'}">${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span>
+            </div>
+          </div>
+
+          ${invoicePath ? `
+          <div class="invoice-note">
+            <strong>📄 Invoice Attached:</strong> Please find your invoice PDF attached to this email.
+          </div>
+          ` : ''}
+
+          ${booking.paymentStatus !== 'paid' ? `
+          <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; color: #856404;">
+            <strong>⚠️ Payment Pending:</strong> Please complete your payment before the event date. You can pay through your dashboard or contact us for assistance.
+          </div>
+          ` : ''}
+
+          <p>If you have any questions or need to make changes to your booking, please don't hesitate to contact us.</p>
+          <p>We look forward to making your event memorable!</p>
+          <p>Best regards,<br><strong>Lumière Events Team</strong></p>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} Lumière Events. All rights reserved.</p>
+          <p>This is an automated email. Please do not reply to this message.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const attachments = [];
+  if (invoicePath) {
+    attachments.push({
+      filename: `invoice-${booking.invoiceNumber}.pdf`,
+      path: invoicePath
+    });
+  }
+
+  return sendEmail({
+    email: user.email,
+    subject,
+    html,
+    attachments: attachments.length > 0 ? attachments : undefined
+  });
+};
+
+// Send admin notification email with customer booking details
+export const sendAdminBookingNotification = async (booking, customer) => {
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@lumiere.com';
+  const subject = `New Booking Received - ${booking.invoiceNumber} | Lumière Events`;
+  
+  // Debug: Log what we received
+  console.log('📧 sendAdminBookingNotification called');
+  console.log('📧 Customer parameter received:', customer);
+  console.log('📧 Customer type:', typeof customer);
+  console.log('📧 Customer keys:', customer ? Object.keys(customer) : 'null');
+  
+  // Ensure we have customer details - use customer parameter directly
+  // Extract with explicit checks
+  let customerName = 'N/A';
+  let customerEmail = 'N/A';
+  let customerPhone = 'N/A';
+  
+  if (customer) {
+    if (customer.name) {
+      customerName = String(customer.name).trim();
+    }
+    if (customer.email) {
+      customerEmail = String(customer.email).trim();
+    }
+    if (customer.phone) {
+      customerPhone = String(customer.phone).trim();
+    } else if (customer.mobile) {
+      customerPhone = String(customer.mobile).trim();
+    }
+  }
+  
+  console.log('📧 Admin notification - Extracted customer details:', {
+    name: customerName,
+    email: customerEmail,
+    phone: customerPhone,
+    'customer object': customer,
+    'customer.name': customer?.name,
+    'customer.email': customer?.email,
+    'customer.phone': customer?.phone,
+    'customer.mobile': customer?.mobile
+  });
+  
+  // Verify values before template creation
+  console.log('📧 Final values for email template:', {
+    customerName: customerName,
+    customerEmail: customerEmail,
+    customerPhone: customerPhone,
+    'customerName length': customerName.length,
+    'customerPhone length': customerPhone.length,
+    'customerName type': typeof customerName,
+    'customerPhone type': typeof customerPhone
+  });
+  
+  // Create HTML template with explicit variable interpolation
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%); color: #000; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { padding: 30px; background: #f9f9f9; }
+        .booking-details { background: white; padding: 20px; margin: 15px 0; border-radius: 10px; border: 1px solid #e0e0e0; }
+        .customer-details { background: #e7f3ff; padding: 20px; margin: 15px 0; border-radius: 10px; border: 2px solid #004085; }
+        .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label { font-weight: bold; color: #666; }
+        .detail-value { color: #333; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1 style="margin: 0;">Lumière Events</h1>
+          <p style="margin: 10px 0 0 0; font-size: 18px;">New Booking Received</p>
+        </div>
+        <div class="content">
+          <p>Dear Admin,</p>
+          <p>A new booking has been received. Please find the customer and booking details below:</p>
+          
+          <div class="customer-details">
+            <h3 style="margin-top: 0; color: #004085;">Customer Information</h3>
+            <div class="detail-row">
+              <span class="detail-label">Name:</span>
+              <span class="detail-value">${customerName || 'Not provided'}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Email:</span>
+              <span class="detail-value">${customerEmail || 'Not provided'}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Phone:</span>
+              <span class="detail-value">${customerPhone || 'Not provided'}</span>
+            </div>
+          </div>
+
+          <div class="booking-details">
+            <h3 style="margin-top: 0; color: #D4AF37;">Booking Details</h3>
+            <div class="detail-row">
+              <span class="detail-label">Invoice Number:</span>
+              <span class="detail-value">${booking.invoiceNumber}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Event Name:</span>
+              <span class="detail-value">${booking.eventName}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Event Type:</span>
+              <span class="detail-value">${booking.eventType.charAt(0).toUpperCase() + booking.eventType.slice(1)}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Venue:</span>
+              <span class="detail-value">${booking.hallId?.name || 'N/A'}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Location:</span>
+              <span class="detail-value">${booking.hallId?.location || 'N/A'}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Date:</span>
+              <span class="detail-value">${new Date(booking.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Time:</span>
+              <span class="detail-value">${booking.startTime} - ${booking.endTime}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Number of Guests:</span>
+              <span class="detail-value">${booking.guestCount}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Total Amount:</span>
+              <span class="detail-value">₹${booking.totalAmount.toLocaleString('en-IN')}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Payment Status:</span>
+              <span class="detail-value">${booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1)}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Booking Status:</span>
+              <span class="detail-value">${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span>
+            </div>
+          </div>
+
+          <p>Please review this booking and take necessary action.</p>
+          <p>Best regards,<br><strong>Lumière Events System</strong></p>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} Lumière Events. All rights reserved.</p>
+          <p>This is an automated notification email.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // Log a sample of the HTML to verify interpolation
+  const customerInfoStart = html.indexOf('Customer Information');
+  if (customerInfoStart > -1) {
+    const htmlSample = html.substring(customerInfoStart, customerInfoStart + 300);
+    console.log('📧 HTML sample (Customer Information section):', htmlSample);
+  }
+  
+  console.log('📧 Sending admin notification email to:', adminEmail);
+  
+  return sendEmail({
+    email: adminEmail,
+    subject,
+    html
+  });
+};
+
+
