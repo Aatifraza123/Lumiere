@@ -29,39 +29,7 @@ const Blog = () => {
     visible: { y: 0, opacity: 1 }
   };
 
-  // Mock Data for Preview (Remove in Production)
-  const MOCK_BLOGS = [
-    {
-      _id: '1',
-      title: 'The Art of Modern Wedding Planning',
-      slug: 'art-of-modern-wedding',
-      excerpt: 'Discover the latest trends in luxury weddings, from sustainable decor to intimate destination ceremonies.',
-      image: { url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200' },
-      date: 'Oct 24, 2025',
-      readTime: '5 min read',
-      author: 'Sarah Jenkins'
-    },
-    {
-      _id: '2',
-      title: 'Corporate Events: Beyond the Boardroom',
-      slug: 'corporate-events-guide',
-      excerpt: 'How to create engaging corporate retreats that foster real connection and team building.',
-      image: { url: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=800' },
-      date: 'Oct 20, 2025',
-      readTime: '4 min read',
-      author: 'Michael Chen'
-    },
-    {
-      _id: '3',
-      title: 'Selecting the Perfect Venue',
-      slug: 'venue-selection-tips',
-      excerpt: 'A comprehensive guide to choosing a venue that aligns with your vision and budget.',
-      image: { url: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800' },
-      date: 'Oct 15, 2025',
-      readTime: '6 min read',
-      author: 'Emma Wilson'
-    }
-  ];
+  // Mock Data removed - only use real blogs from database
 
   useEffect(() => {
     fetchBlogs();
@@ -81,17 +49,18 @@ const Blog = () => {
           date: blog.publishedAt ? new Date(blog.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
           readTime: '5 min read',
           author: blog.author?.name || (typeof blog.author === 'string' ? blog.author : 'Admin'),
-          authorObj: blog.author
+          authorObj: blog.author,
+          category: blog.category || 'general'
         }));
         setBlogs(transformedBlogs);
       } else {
-        // Fallback to mock data if no blogs in database
-        setBlogs(MOCK_BLOGS);
+        // No blogs in database - show empty state
+        setBlogs([]);
       }
     } catch (error) {
       console.error('Error fetching blogs:', error);
-      // Fallback to mock data on error
-      setBlogs(MOCK_BLOGS);
+      // On error, show empty state instead of mock data
+      setBlogs([]);
     } finally {
       setLoading(false);
     }
@@ -123,6 +92,11 @@ const Blog = () => {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3, 4, 5, 6].map((n) => <BlogSkeleton key={n} />)}
+          </div>
+        ) : blogs.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-gray-400 text-lg mb-4">No blog posts available yet.</p>
+            <p className="text-gray-500 text-sm">Check back soon for updates!</p>
           </div>
         ) : (
           <motion.div 
