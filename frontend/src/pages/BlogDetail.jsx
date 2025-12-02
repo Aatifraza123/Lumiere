@@ -49,11 +49,19 @@ const BlogDetail = () => {
         
         setBlog(transformedBlog);
       } else {
+        // Blog not found - set blog to null to show error state
+        setBlog(null);
         toast.error('Blog post not found');
       }
     } catch (error) {
       console.error('Error fetching blog:', error);
-      toast.error(error.response?.data?.message || 'Blog not found');
+      // On 404 or any error, set blog to null to show error state
+      setBlog(null);
+      if (error.response?.status === 404) {
+        toast.error('Blog post not found. It may have been removed or the link is incorrect.');
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to load blog post');
+      }
     } finally {
       setLoading(false);
     }
