@@ -50,6 +50,32 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/festo', {
   console.error('❌ MongoDB Connection Error:', err.message);
 });
 
+// Health check endpoint (before routes)
+app.get('/api/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Server is running',
+    timestamp: new Date().toISOString(),
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Lumière Events API Server',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      halls: '/api/halls',
+      services: '/api/services',
+      bookings: '/api/bookings',
+      admin: '/api/admin'
+    }
+  });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/halls', hallRoutes);
@@ -68,17 +94,8 @@ app.use('/api/subscribe', subscribeRoutes);
 
 // Debug: Log all registered routes
 console.log('✅ Routes registered:');
+console.log('  - GET  /api/health');
 console.log('  - POST /api/bookings (public)');
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Server is running',
-    timestamp: new Date().toISOString(),
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
-  });
-});
 
 // 404 handler
 app.use((req, res) => {
