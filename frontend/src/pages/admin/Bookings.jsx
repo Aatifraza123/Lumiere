@@ -29,15 +29,38 @@ const AdminBookings = () => {
 
   const fetchBookings = async () => {
     try {
+      setLoading(true);
       const params = new URLSearchParams();
       if (filters.status) params.append('status', filters.status);
       if (filters.paymentStatus) params.append('paymentStatus', filters.paymentStatus);
       
+      console.log('📥 Fetching bookings from:', `/admin/bookings?${params.toString()}`);
       const response = await api.get(`/admin/bookings?${params.toString()}`);
-      setBookings(response.data.data || []);
+      console.log('📦 Bookings response:', response.data);
+      
+      // Handle different response formats
+      let bookingsData = [];
+      if (response.data) {
+        if (Array.isArray(response.data)) {
+          bookingsData = response.data;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          bookingsData = response.data.data;
+        } else if (response.data.bookings && Array.isArray(response.data.bookings)) {
+          bookingsData = response.data.bookings;
+        }
+      }
+      
+      console.log('✅ Bookings loaded:', bookingsData.length);
+      setBookings(bookingsData);
     } catch (error) {
-      console.error('Error fetching bookings:', error);
-      toast.error('Failed to fetch bookings');
+      console.error('❌ Error fetching bookings:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      toast.error(error.response?.data?.message || 'Failed to fetch bookings');
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -94,9 +117,11 @@ const AdminBookings = () => {
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `invoice-${selectedBooking.invoiceNumber}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      if (document.body) {
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
       window.URL.revokeObjectURL(url);
       
       toast.success('Invoice downloaded successfully');

@@ -680,19 +680,29 @@ router.delete('/services/:id', async (req, res, next) => {
 // ========== BOOKINGS ==========
 router.get('/bookings', async (req, res, next) => {
   try {
+    console.log('📥 GET /admin/bookings - Request received');
     const { status, paymentStatus } = req.query;
     const query = {};
 
     if (status) query.status = status;
     if (paymentStatus) query.paymentStatus = paymentStatus;
 
+    console.log('🔍 Query:', query);
+
     const bookings = await Booking.find(query)
       .populate('userId', 'name email phone')
-      .populate('hallId', 'name location')
+      .populate('hallId', 'name location images')
       .sort({ createdAt: -1 });
 
+    console.log('✅ Found bookings:', bookings.length);
     res.json({ success: true, count: bookings.length, data: bookings });
   } catch (error) {
+    console.error('❌ Error fetching bookings:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
     next(error);
   }
 });
