@@ -43,17 +43,7 @@ const Book = () => {
   const [totalPrice, setTotalPrice] = useState(parseFloat(searchParams.get('price')) || 0);
   const [paymentOption, setPaymentOption] = useState('with-payment');
   
-  // OTP States
-  const [emailOTP, setEmailOTP] = useState('');
-  const [mobileOTP, setMobileOTP] = useState('');
-  const [emailOTPSent, setEmailOTPSent] = useState(false);
-  const [mobileOTPSent, setMobileOTPSent] = useState(false);
-  const [emailOTPVerified, setEmailOTPVerified] = useState(false);
-  const [mobileOTPVerified, setMobileOTPVerified] = useState(false);
-  const [sendingEmailOTP, setSendingEmailOTP] = useState(false);
-  const [sendingMobileOTP, setSendingMobileOTP] = useState(false);
-  const [verifyingEmailOTP, setVerifyingEmailOTP] = useState(false);
-  const [verifyingMobileOTP, setVerifyingMobileOTP] = useState(false);
+  // OTP verification removed - no longer required
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -91,105 +81,7 @@ const Book = () => {
     }
   };
 
-  const handleSendEmailOTP = async () => {
-    if (!user?.email) {
-      toast.error('Email not found');
-      return;
-    }
-    setSendingEmailOTP(true);
-    try {
-      const response = await api.post('/auth/send-otp', { email: user.email });
-      if (response.data.success) {
-        setEmailOTPSent(true);
-        toast.success('OTP sent to your email!');
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to send email OTP');
-    } finally {
-      setSendingEmailOTP(false);
-    }
-  };
-
-  const handleVerifyEmailOTP = async () => {
-    if (!emailOTP || emailOTP.length !== 6) {
-      toast.error('Please enter a valid 6-digit OTP');
-      return;
-    }
-    setVerifyingEmailOTP(true);
-    try {
-      const response = await api.post('/auth/verify-otp', {
-        email: user.email,
-        otp: emailOTP
-      });
-      if (response.data.success) {
-        setEmailOTPVerified(true);
-        toast.success('Email verified successfully!');
-        setStep(4);
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid OTP');
-    } finally {
-      setVerifyingEmailOTP(false);
-    }
-  };
-
-  const handleSendMobileOTP = async () => {
-    if (!user?.phone) {
-      toast.error('Phone number not found');
-      return;
-    }
-    setSendingMobileOTP(true);
-    try {
-      const response = await api.post('/auth/send-mobile-otp', { phone: user.phone });
-      if (response.data.success) {
-        setMobileOTPSent(true);
-        toast.success('OTP sent to your mobile!');
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to send mobile OTP');
-    } finally {
-      setSendingMobileOTP(false);
-    }
-  };
-
-  const handleVerifyMobileOTP = async () => {
-    if (!mobileOTP || mobileOTP.length !== 6) {
-      toast.error('Please enter a valid 6-digit OTP');
-      return;
-    }
-    setVerifyingMobileOTP(true);
-    try {
-      const response = await api.post('/auth/verify-mobile-otp', {
-        phone: user.phone,
-        otp: mobileOTP
-      });
-      if (response.data.success) {
-        setMobileOTPVerified(true);
-        toast.success('Mobile verified successfully!');
-        setStep(5);
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid OTP');
-    } finally {
-      setVerifyingMobileOTP(false);
-    }
-  };
-
-  // Auto-verify Email OTP when 6 digits are entered
-  useEffect(() => {
-    if (emailOTP.length === 6 && emailOTPSent && !emailOTPVerified && !verifyingEmailOTP) {
-      handleVerifyEmailOTP();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [emailOTP]);
-
-  // Auto-verify Mobile OTP when 6 digits are entered
-  useEffect(() => {
-    if (mobileOTP.length === 6 && mobileOTPSent && !mobileOTPVerified && !verifyingMobileOTP) {
-      handleVerifyMobileOTP();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mobileOTP]);
+  // OTP verification functions removed - no longer required
 
   const handleSubmitWithoutPayment = async () => {
     const selectedDate = new Date(formData.date);
@@ -242,10 +134,7 @@ const Book = () => {
       return;
     }
     
-    if (paymentOption === 'with-payment' && (!emailOTPVerified || !mobileOTPVerified)) {
-      toast.error('Please verify your email and mobile before proceeding');
-      return;
-    }
+    // OTP verification removed - no longer required
 
     setLoading(true);
     try {
@@ -562,7 +451,7 @@ const Book = () => {
                     type="button"
                     onClick={() => {
                       if (paymentOption === 'with-payment') {
-                        setStep(3);
+                        setStep(3); // Skip OTP steps, go directly to payment
                       } else {
                         handleSubmitWithoutPayment();
                       }
@@ -575,174 +464,8 @@ const Book = () => {
               </motion.div>
             )}
 
-            {/* Step 3: Email OTP */}
-            {step === 3 && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-6"
-              >
-                <h2 className="text-3xl font-bold mb-4">Verify Your Email</h2>
-                
-                <div className="bg-white/5 p-6 rounded-xl border border-white/10 mb-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <FiMail className="text-3xl text-[#D4AF37]" />
-                    <div>
-                      <h3 className="text-lg font-bold">Email Verification</h3>
-                      <p className="text-sm text-gray-400">{user?.email}</p>
-                    </div>
-                  </div>
-
-                  {!emailOTPSent ? (
-                    <button
-                      type="button"
-                      onClick={handleSendEmailOTP}
-                      disabled={sendingEmailOTP}
-                      className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-semibold hover:bg-[#FFD700] transition-colors disabled:opacity-50"
-                    >
-                      {sendingEmailOTP ? 'Sending...' : 'Send OTP to Email'}
-                    </button>
-                  ) : (
-                    <div className="space-y-4">
-                      <input
-                        type="text"
-                        value={emailOTP}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                          setEmailOTP(value);
-                        }}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-center text-2xl font-bold tracking-widest focus:outline-none focus:border-[#D4AF37]"
-                        placeholder="000000"
-                        maxLength={6}
-                      />
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={handleSendEmailOTP}
-                          disabled={sendingEmailOTP}
-                          className="flex-1 bg-white/5 border border-white/10 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors"
-                        >
-                          Resend OTP
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleVerifyEmailOTP}
-                          disabled={verifyingEmailOTP || emailOTP.length !== 6 || emailOTPVerified}
-                          className="flex-1 bg-[#D4AF37] text-black py-3 rounded-lg font-semibold hover:bg-[#FFD700] transition-colors disabled:opacity-50"
-                        >
-                          {emailOTPVerified ? 'Verified ✓' : verifyingEmailOTP ? 'Verifying...' : 'Verify Email'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setStep(2)}
-                    className="flex-1 bg-white/5 border border-white/10 py-4 rounded-lg font-semibold hover:bg-white/10 transition-colors"
-                  >
-                    Back
-                  </button>
-                  {emailOTPVerified && (
-                    <button
-                      type="button"
-                      onClick={() => setStep(4)}
-                      className="flex-1 bg-[#D4AF37] text-black py-4 rounded-lg font-semibold hover:bg-[#FFD700] transition-colors"
-                    >
-                      Next: Verify Mobile
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 4: Mobile OTP */}
-            {step === 4 && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-6"
-              >
-                <h2 className="text-3xl font-bold mb-4">Verify Your Mobile</h2>
-                
-                <div className="bg-white/5 p-6 rounded-xl border border-white/10 mb-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <FiPhone className="text-3xl text-[#D4AF37]" />
-                    <div>
-                      <h3 className="text-lg font-bold">Mobile Verification</h3>
-                      <p className="text-sm text-gray-400">{user?.phone}</p>
-                    </div>
-                  </div>
-
-                  {!mobileOTPSent ? (
-                    <button
-                      type="button"
-                      onClick={handleSendMobileOTP}
-                      disabled={sendingMobileOTP}
-                      className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-semibold hover:bg-[#FFD700] transition-colors disabled:opacity-50"
-                    >
-                      {sendingMobileOTP ? 'Sending...' : 'Send OTP to Mobile'}
-                    </button>
-                  ) : (
-                    <div className="space-y-4">
-                      <input
-                        type="text"
-                        value={mobileOTP}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                          setMobileOTP(value);
-                        }}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-center text-2xl font-bold tracking-widest focus:outline-none focus:border-[#D4AF37]"
-                        placeholder="000000"
-                        maxLength={6}
-                      />
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={handleSendMobileOTP}
-                          disabled={sendingMobileOTP}
-                          className="flex-1 bg-white/5 border border-white/10 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors"
-                        >
-                          Resend OTP
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleVerifyMobileOTP}
-                          disabled={verifyingMobileOTP || mobileOTP.length !== 6 || mobileOTPVerified}
-                          className="flex-1 bg-[#D4AF37] text-black py-3 rounded-lg font-semibold hover:bg-[#FFD700] transition-colors disabled:opacity-50"
-                        >
-                          {mobileOTPVerified ? 'Verified ✓' : verifyingMobileOTP ? 'Verifying...' : 'Verify Mobile'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setStep(3)}
-                    className="flex-1 bg-white/5 border border-white/10 py-4 rounded-lg font-semibold hover:bg-white/10 transition-colors"
-                  >
-                    Back
-                  </button>
-                  {mobileOTPVerified && (
-                    <button
-                      type="button"
-                      onClick={() => setStep(5)}
-                      className="flex-1 bg-[#D4AF37] text-black py-4 rounded-lg font-semibold hover:bg-[#FFD700] transition-colors"
-                    >
-                      Proceed to Payment
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 5: Payment */}
-            {step === 5 && paymentOption === 'with-payment' && (
+            {/* Step 3: Payment (OTP steps removed) */}
+            {step === 3 && paymentOption === 'with-payment' && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -765,14 +488,14 @@ const Book = () => {
                 <div className="flex gap-4">
                   <button
                     type="button"
-                    onClick={() => setStep(4)}
+                    onClick={() => setStep(2)}
                     className="flex-1 bg-white/5 border border-white/10 py-4 rounded-lg font-semibold hover:bg-white/10 transition-colors"
                   >
                     Back
                   </button>
                   <button
                     type="submit"
-                    disabled={loading || !emailOTPVerified || !mobileOTPVerified}
+                    disabled={loading}
                     className="flex-1 bg-[#D4AF37] text-black py-4 rounded-lg font-semibold hover:bg-[#FFD700] transition-colors disabled:opacity-50"
                   >
                     {loading ? 'Processing...' : `Pay ₹${priceDetails?.totalAmount?.toLocaleString() || totalPrice.toLocaleString()}`}

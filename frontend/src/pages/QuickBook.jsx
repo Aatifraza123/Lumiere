@@ -6,7 +6,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import api from '../utils/api';
 import { loadRazorpay } from '../utils/razorpay';
-import { FiCalendar, FiClock, FiMapPin, FiUsers, FiDollarSign, FiCheckCircle, FiArrowRight, FiMail, FiPhone } from 'react-icons/fi';
+import { FiCalendar, FiClock, FiMapPin, FiUsers, FiDollarSign, FiArrowRight, FiMail, FiPhone } from 'react-icons/fi';
 
 // Mock Data for Venues (with valid ObjectId format)
 const MOCK_VENUES = [
@@ -171,21 +171,7 @@ const QuickBook = () => {
   const [submitting, setSubmitting] = useState(false);
   const [bookingOption, setBookingOption] = useState('only-booking'); // 'only-booking' or 'with-payment'
 
-  // OTP States
-  const [emailOTP, setEmailOTP] = useState('');
-  const [mobileOTP, setMobileOTP] = useState('');
-  const [emailOTPSent, setEmailOTPSent] = useState(false);
-  const [mobileOTPSent, setMobileOTPSent] = useState(false);
-  const [emailOTPVerified, setEmailOTPVerified] = useState(false);
-  const [mobileOTPVerified, setMobileOTPVerified] = useState(false);
-  const [sendingEmailOTP, setSendingEmailOTP] = useState(false);
-  const [sendingMobileOTP, setSendingMobileOTP] = useState(false);
-  const [verifyingEmailOTP, setVerifyingEmailOTP] = useState(false);
-  const [verifyingMobileOTP, setVerifyingMobileOTP] = useState(false);
-  
-  // OTP Timer States (60 seconds)
-  const [emailOTPTimer, setEmailOTPTimer] = useState(0);
-  const [mobileOTPTimer, setMobileOTPTimer] = useState(0);
+  // OTP verification removed - no longer required
 
   useEffect(() => {
     fetchHalls();
@@ -217,57 +203,7 @@ const QuickBook = () => {
     calculatePrice();
   }, [selectedVenue, selectedService]);
 
-  // Email OTP Timer
-  useEffect(() => {
-    let interval = null;
-    if (emailOTPTimer > 0) {
-      interval = setInterval(() => {
-        setEmailOTPTimer((prev) => {
-          if (prev <= 1) {
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [emailOTPTimer]);
-
-  // Mobile OTP Timer
-  useEffect(() => {
-    let interval = null;
-    if (mobileOTPTimer > 0) {
-      interval = setInterval(() => {
-        setMobileOTPTimer((prev) => {
-          if (prev <= 1) {
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [mobileOTPTimer]);
-
-  // Auto-verify Email OTP when 6 digits are entered
-  useEffect(() => {
-    if (emailOTP.length === 6 && emailOTPSent && !emailOTPVerified && !verifyingEmailOTP) {
-      handleVerifyEmailOTP();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [emailOTP]);
-
-  // Auto-verify Mobile OTP when 6 digits are entered
-  useEffect(() => {
-    if (mobileOTP.length === 6 && mobileOTPSent && !mobileOTPVerified && !verifyingMobileOTP) {
-      handleVerifyMobileOTP();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mobileOTP]);
+  // OTP verification removed - no longer required
 
   const fetchHalls = async () => {
     try {
@@ -390,107 +326,7 @@ const QuickBook = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSendEmailOTP = async () => {
-    if (!formData.email) {
-      toast.error('Please enter your email first');
-      return;
-    }
-    if (emailOTPTimer > 0) {
-      toast.error(`Please wait ${emailOTPTimer} seconds before resending`);
-      return;
-    }
-    setSendingEmailOTP(true);
-    try {
-      const response = await api.post('/auth/send-otp', { email: formData.email });
-      if (response.data.success) {
-        setEmailOTPSent(true);
-        setEmailOTPTimer(60); // Start 60 second timer
-        // In development, show OTP in toast if provided
-        if (response.data.otp) {
-          toast.success(`OTP sent! (Dev: ${response.data.otp})`, { duration: 5000 });
-        } else {
-          toast.success('OTP sent to your email!');
-        }
-      }
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || 'Failed to send email OTP';
-      toast.error(errorMsg);
-      // In development, still allow OTP input even if sending fails
-      if (import.meta.env.DEV) {
-        console.warn('OTP sending failed, but allowing manual entry in development');
-      }
-    } finally {
-      setSendingEmailOTP(false);
-    }
-  };
-
-  const handleVerifyEmailOTP = async () => {
-    if (!emailOTP || emailOTP.length !== 6) {
-      toast.error('Please enter a valid 6-digit OTP');
-      return;
-    }
-    setVerifyingEmailOTP(true);
-    try {
-      const response = await api.post('/auth/verify-otp', {
-        email: formData.email,
-        otp: emailOTP
-      });
-      if (response.data.success) {
-        setEmailOTPVerified(true);
-        toast.success('Email verified successfully!');
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid OTP');
-    } finally {
-      setVerifyingEmailOTP(false);
-    }
-  };
-
-  const handleSendMobileOTP = async () => {
-    if (!formData.mobile) {
-      toast.error('Please enter your mobile number first');
-      return;
-    }
-    if (mobileOTPTimer > 0) {
-      toast.error(`Please wait ${mobileOTPTimer} seconds before resending`);
-      return;
-    }
-    setSendingMobileOTP(true);
-    try {
-      const response = await api.post('/auth/send-mobile-otp', { phone: formData.mobile });
-      if (response.data.success) {
-        setMobileOTPSent(true);
-        setMobileOTPTimer(60); // Start 60 second timer
-        toast.success('OTP sent to your mobile!');
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to send mobile OTP');
-    } finally {
-      setSendingMobileOTP(false);
-    }
-  };
-
-  const handleVerifyMobileOTP = async () => {
-    if (!mobileOTP || mobileOTP.length !== 6) {
-      toast.error('Please enter a valid 6-digit OTP');
-      return;
-    }
-    setVerifyingMobileOTP(true);
-    try {
-      const response = await api.post('/auth/verify-mobile-otp', {
-        phone: formData.mobile,
-        otp: mobileOTP
-      });
-      if (response.data.success) {
-        setMobileOTPVerified(true);
-        toast.success('Mobile verified successfully!');
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid OTP');
-    } finally {
-      setVerifyingMobileOTP(false);
-    }
-  };
+  // OTP verification functions removed - no longer required
 
   const handleSubmit = async () => {
     // Validation
@@ -510,10 +346,7 @@ const QuickBook = () => {
       toast.error('Please fill in all your details');
       return;
     }
-    if (!emailOTPVerified || !mobileOTPVerified) {
-      toast.error('Please verify your email and mobile OTP');
-      return;
-    }
+    // OTP verification removed - no longer required
     if (!priceDetails) {
       toast.error('Price calculation error. Please try again.');
       return;
@@ -755,47 +588,7 @@ const QuickBook = () => {
                       className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-[#D4AF37] focus:outline-none text-sm mb-2"
                       placeholder="Email Address"
                     />
-                    {emailOTPSent && !emailOTPVerified && (
-                      <div className="flex gap-2 mb-2">
-                        <input
-                          type="text"
-                          value={emailOTP}
-                          onChange={(e) => setEmailOTP(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                          className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-white focus:border-[#D4AF37] focus:outline-none text-center text-sm"
-                          placeholder="OTP"
-                          maxLength={6}
-                        />
-                        <button
-                          type="button"
-                          onClick={handleVerifyEmailOTP}
-                          disabled={emailOTP.length !== 6 || verifyingEmailOTP}
-                          className="px-3 py-1.5 bg-[#D4AF37] text-black rounded-lg text-xs font-semibold disabled:opacity-50"
-                        >
-                          {verifyingEmailOTP ? '...' : '✓'}
-                        </button>
-                      </div>
-                    )}
-                    {!emailOTPVerified && formData.email && (
-                      <button
-                        type="button"
-                        onClick={handleSendEmailOTP}
-                        disabled={sendingEmailOTP || emailOTPTimer > 0}
-                        className="w-full py-1.5 bg-[#D4AF37]/20 text-[#D4AF37] rounded-lg text-xs font-medium disabled:opacity-50"
-                      >
-                        {sendingEmailOTP 
-                          ? 'Sending...' 
-                          : emailOTPTimer > 0 
-                            ? `Resend in ${emailOTPTimer}s` 
-                            : emailOTPSent 
-                              ? 'Resend OTP' 
-                              : 'Send OTP'}
-                      </button>
-                    )}
-                    {emailOTPVerified && (
-                      <p className="text-green-400 text-xs flex items-center gap-1">
-                        <FiCheckCircle /> Verified
-                      </p>
-                    )}
+                    {/* OTP verification removed */}
                   </div>
 
                   <div>
@@ -807,47 +600,7 @@ const QuickBook = () => {
                       className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-[#D4AF37] focus:outline-none text-sm mb-2"
                       placeholder="Mobile Number"
                     />
-                    {mobileOTPSent && !mobileOTPVerified && (
-                      <div className="flex gap-2 mb-2">
-                        <input
-                          type="text"
-                          value={mobileOTP}
-                          onChange={(e) => setMobileOTP(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                          className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-white focus:border-[#D4AF37] focus:outline-none text-center text-sm"
-                          placeholder="OTP"
-                          maxLength={6}
-                        />
-                        <button
-                          type="button"
-                          onClick={handleVerifyMobileOTP}
-                          disabled={mobileOTP.length !== 6 || verifyingMobileOTP}
-                          className="px-3 py-1.5 bg-[#D4AF37] text-black rounded-lg text-xs font-semibold disabled:opacity-50"
-                        >
-                          {verifyingMobileOTP ? '...' : '✓'}
-                        </button>
-                      </div>
-                    )}
-                    {!mobileOTPVerified && formData.mobile && (
-                      <button
-                        type="button"
-                        onClick={handleSendMobileOTP}
-                        disabled={sendingMobileOTP || mobileOTPTimer > 0}
-                        className="w-full py-1.5 bg-[#D4AF37]/20 text-[#D4AF37] rounded-lg text-xs font-medium disabled:opacity-50"
-                      >
-                        {sendingMobileOTP 
-                          ? 'Sending...' 
-                          : mobileOTPTimer > 0 
-                            ? `Resend in ${mobileOTPTimer}s` 
-                            : mobileOTPSent 
-                              ? 'Resend OTP' 
-                              : 'Send OTP'}
-                      </button>
-                    )}
-                    {mobileOTPVerified && (
-                      <p className="text-green-400 text-xs flex items-center gap-1">
-                        <FiCheckCircle /> Verified
-                      </p>
-                    )}
+                    {/* OTP verification removed */}
                   </div>
                 </div>
               </div>
@@ -901,7 +654,7 @@ const QuickBook = () => {
 
                 <button
                   onClick={handleSubmit}
-                  disabled={submitting || !emailOTPVerified || !mobileOTPVerified || !formData.name || !formData.guests}
+                  disabled={submitting || !formData.name || !formData.guests}
                   className="w-full py-2 bg-[#D4AF37] text-black rounded-lg font-bold hover:bg-[#FFD700] disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
                   {submitting ? 'Processing...' : bookingOption === 'with-payment' ? 'Pay & Book Now' : 'Confirm Booking'}

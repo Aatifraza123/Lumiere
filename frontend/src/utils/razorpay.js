@@ -1,5 +1,10 @@
 export const loadRazorpay = () => {
   return new Promise((resolve) => {
+    if (!document.body) {
+      resolve(null);
+      return;
+    }
+    
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.onload = () => {
@@ -11,6 +16,8 @@ export const loadRazorpay = () => {
     document.body.appendChild(script);
   });
 };
+
+
 
 
 

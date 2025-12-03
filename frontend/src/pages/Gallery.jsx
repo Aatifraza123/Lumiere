@@ -94,12 +94,16 @@ const Gallery = () => {
   const openLightbox = (image, index) => {
     setSelectedImage(image);
     setCurrentIndex(index);
-    document.body.style.overflow = 'hidden';
+    if (document.body) {
+      document.body.style.overflow = 'hidden';
+    }
   };
 
   const closeLightbox = () => {
     setSelectedImage(null);
-    document.body.style.overflow = 'unset';
+    if (document.body) {
+      document.body.style.overflow = 'unset';
+    }
   };
 
   const navigateImage = (direction) => {
