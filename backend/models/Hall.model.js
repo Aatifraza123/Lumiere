@@ -90,61 +90,105 @@ const hallSchema = new mongoose.Schema({
   }
 });
 
+// Helper function to generate slug from name
+function generateSlug(name) {
+  if (!name) return '';
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 // Generate slug from name before saving
 hallSchema.pre('save', async function(next) {
   try {
-    // Always generate slug if it's missing or null
-    if (!this.slug || this.slug === 'null' || this.slug.trim() === '') {
-      if (this.name) {
-        // Generate slug from name
-        let baseSlug = this.name
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '');
-        
-        // Ensure slug is unique
-        if (baseSlug) {
-          let slug = baseSlug;
-          let counter = 1;
-          let existingHall = await this.constructor.findOne({ slug: slug, _id: { $ne: this._id } });
-          
-          while (existingHall) {
-            slug = `${baseSlug}-${counter}`;
-            existingHall = await this.constructor.findOne({ slug: slug, _id: { $ne: this._id } });
-            counter++;
-            // Safety check to prevent infinite loop
-            if (counter > 1000) break;
-          }
-          
-          this.slug = slug;
-        }
-      }
-    } else if (this.isModified('name') && this.slug) {
-      // If name changed, regenerate slug
-      let baseSlug = this.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
+    // Always generate slug if it's missing, null, empty, or the string "null"
+    const slugValue = this.slug;
+    const isSlugInvalid = !slugValue || 
+                         slugValue === 'null' || 
+                         slugValue === null || 
+                         slugValue === undefined ||
+                         (typeof slugValue === 'string' && slugValue.trim() === '');
+    
+    if (isSlugInvalid && this.name) {
+      // Generate slug from name
+      let baseSlug = generateSlug(this.name);
       
+      // Ensure slug is unique
       if (baseSlug) {
         let slug = baseSlug;
         let counter = 1;
-        let existingHall = await this.constructor.findOne({ slug: slug, _id: { $ne: this._id } });
+        let existingHall = await this.constructor.findOne({ 
+          slug: slug, 
+          _id: { $ne: this._id } 
+        });
         
         while (existingHall) {
           slug = `${baseSlug}-${counter}`;
-          existingHall = await this.constructor.findOne({ slug: slug, _id: { $ne: this._id } });
+          existingHall = await this.constructor.findOne({ 
+            slug: slug, 
+            _id: { $ne: this._id } 
+          });
           counter++;
-          if (counter > 1000) break;
+          // Safety check to prevent infinite loop
+          if (counter > 1000) {
+            // Fallback: use timestamp
+            slug = `${baseSlug}-${Date.now()}`;
+            break;
+          }
+        }
+        
+        this.slug = slug;
+      } else {
+        // If name doesn't generate valid slug, use ID-based fallback
+        this.slug = `venue-${this._id || Date.now()}`;
+      }
+    } else if (this.isModified('name') && this.slug && this.slug !== 'null') {
+      // If name changed and slug exists, regenerate slug
+      let baseSlug = generateSlug(this.name);
+      
+      if (baseSlug && baseSlug !== this.slug) {
+        let slug = baseSlug;
+        let counter = 1;
+        let existingHall = await this.constructor.findOne({ 
+          slug: slug, 
+          _id: { $ne: this._id } 
+        });
+        
+        while (existingHall) {
+          slug = `${baseSlug}-${counter}`;
+          existingHall = await this.constructor.findOne({ 
+            slug: slug, 
+            _id: { $ne: this._id } 
+          });
+          counter++;
+          if (counter > 1000) {
+            slug = `${baseSlug}-${Date.now()}`;
+            break;
+          }
         }
         
         this.slug = slug;
       }
     }
     
+    // Final safety check: never allow "null" string
+    if (this.slug === 'null' || this.slug === null || this.slug === undefined) {
+      if (this.name) {
+        this.slug = generateSlug(this.name) || `venue-${this._id || Date.now()}`;
+      } else {
+        this.slug = `venue-${this._id || Date.now()}`;
+      }
+    }
+    
     next();
   } catch (error) {
-    next(error);
+    console.error('❌ Error in slug pre-save hook:', error);
+    // Fallback: generate basic slug
+    if (!this.slug || this.slug === 'null') {
+      this.slug = this.name ? generateSlug(this.name) : `venue-${Date.now()}`;
+    }
+    next();
   }
 });
 
