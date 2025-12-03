@@ -40,18 +40,31 @@ const Blog = () => {
       const response = await api.get('/blog');
       if (response.data && response.data.data && response.data.data.length > 0) {
         // Transform API data to match component structure
-        const transformedBlogs = response.data.data.map(blog => ({
-          _id: blog._id,
-          title: blog.title,
-          slug: blog.slug || blog.title.toLowerCase().replace(/\s+/g, '-'),
-          excerpt: blog.excerpt || blog.content?.substring(0, 150) + '...',
-          image: { url: blog.image || 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200' },
-          date: blog.publishedAt ? new Date(blog.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          readTime: '5 min read',
-          author: blog.author?.name || (typeof blog.author === 'string' ? blog.author : 'Admin'),
-          authorObj: blog.author,
-          category: blog.category || 'general'
-        }));
+        const transformedBlogs = response.data.data.map(blog => {
+          // Handle image URL - use blog.image if it exists and is valid, otherwise use default
+          let imageUrl = 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200';
+          if (blog.image && blog.image.trim() && blog.image !== 'undefined') {
+            imageUrl = blog.image.trim();
+            // If it's a relative path, prepend backend URL
+            if (imageUrl.startsWith('/uploads/')) {
+              const backendUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+              imageUrl = `${backendUrl}${imageUrl}`;
+            }
+          }
+          
+          return {
+            _id: blog._id,
+            title: blog.title,
+            slug: blog.slug || blog.title.toLowerCase().replace(/\s+/g, '-'),
+            excerpt: blog.excerpt || blog.content?.substring(0, 150) + '...',
+            image: { url: imageUrl },
+            date: blog.publishedAt ? new Date(blog.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            readTime: '5 min read',
+            author: blog.author?.name || (typeof blog.author === 'string' ? blog.author : 'Admin'),
+            authorObj: blog.author,
+            category: blog.category || 'general'
+          };
+        });
         setBlogs(transformedBlogs);
       } else {
         // No blogs in database - show empty state

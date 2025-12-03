@@ -24,6 +24,17 @@ const BlogDetail = () => {
       if (response.data && response.data.data) {
         const blogData = response.data.data;
         
+        // Handle image URL - use blogData.image if it exists and is valid, otherwise use default
+        let imageUrl = 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200';
+        if (blogData.image && blogData.image.trim() && blogData.image !== 'undefined') {
+          imageUrl = blogData.image.trim();
+          // If it's a relative path, prepend backend URL
+          if (imageUrl.startsWith('/uploads/')) {
+            const backendUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+            imageUrl = `${backendUrl}${imageUrl}`;
+          }
+        }
+        
         // Transform API data to match component structure
         const transformedBlog = {
           _id: blogData._id,
@@ -32,7 +43,7 @@ const BlogDetail = () => {
           content: blogData.content || '',
           excerpt: blogData.excerpt || '',
           image: {
-            url: blogData.image || 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200'
+            url: imageUrl
           },
           author: {
             name: blogData.author?.name || (typeof blogData.author === 'string' ? blogData.author : 'Admin'),

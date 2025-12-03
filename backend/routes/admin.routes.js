@@ -670,7 +670,7 @@ router.get('/blog/:id', async (req, res, next) => {
 
 router.post('/blog', upload.single('image'), async (req, res, next) => {
   try {
-    const { title, content, excerpt, category, tags, isPublished, author } = req.body;
+    const { title, content, excerpt, category, tags, isPublished, author, image } = req.body;
 
     // Parse author data
     let authorData = { name: 'Admin', title: '', bio: '' };
@@ -687,27 +687,48 @@ router.post('/blog', upload.single('image'), async (req, res, next) => {
       }
     }
 
+    // Handle image: prioritize uploaded file, then use provided URL
+    let imageUrl = undefined;
+    if (req.file) {
+      // File uploaded - use Cloudinary URL or construct full URL for local storage
+      if (req.file.secure_url) {
+        // Cloudinary URL
+        imageUrl = req.file.secure_url;
+      } else {
+        // Local file - construct full URL
+        const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
+        imageUrl = `${baseUrl}${req.file.path}`;
+      }
+      console.log('📸 Image file uploaded:', imageUrl);
+    } else if (image && image.trim()) {
+      // Image URL provided
+      imageUrl = image.trim();
+      console.log('📸 Image URL provided:', imageUrl);
+    }
+
     const blog = await Blog.create({
       title,
       content,
       excerpt,
       category: category || 'general',
       tags: Array.isArray(tags) ? tags : tags ? JSON.parse(tags) : [],
-      image: req.file ? req.file.path : undefined,
+      image: imageUrl,
       author: authorData,
       isPublished: isPublished === 'true',
       publishedAt: isPublished === 'true' ? new Date() : undefined
     });
 
+    console.log('✅ Blog created with image:', blog.image);
     res.status(201).json({ success: true, data: blog });
   } catch (error) {
+    console.error('❌ Error creating blog:', error);
     next(error);
   }
 });
 
 router.put('/blog/:id', upload.single('image'), async (req, res, next) => {
   try {
-    const { title, content, excerpt, category, tags, isPublished, author } = req.body;
+    const { title, content, excerpt, category, tags, isPublished, author, image } = req.body;
 
     const updateData = {};
     if (title) updateData.title = title;
@@ -736,7 +757,27 @@ router.put('/blog/:id', upload.single('image'), async (req, res, next) => {
         updateData.publishedAt = new Date();
       }
     }
-    if (req.file) updateData.image = req.file.path;
+    
+    // Handle image: prioritize uploaded file, then use provided URL
+    if (req.file) {
+      // File uploaded - use Cloudinary URL or construct full URL for local storage
+      if (req.file.secure_url) {
+        // Cloudinary URL
+        updateData.image = req.file.secure_url;
+      } else {
+        // Local file - construct full URL
+        const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
+        updateData.image = `${baseUrl}${req.file.path}`;
+      }
+      console.log('📸 Image file uploaded:', updateData.image);
+    } else if (image !== undefined) {
+      if (typeof image === 'string' && image.trim()) {
+        updateData.image = image.trim();
+        console.log('📸 Image URL provided:', updateData.image);
+      } else if (!image) {
+        updateData.image = '';
+      }
+    }
 
     const blog = await Blog.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
 
@@ -744,8 +785,10 @@ router.put('/blog/:id', upload.single('image'), async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Blog post not found' });
     }
 
+    console.log('✅ Blog updated with image:', blog.image);
     res.json({ success: true, data: blog });
   } catch (error) {
+    console.error('❌ Error updating blog:', error);
     next(error);
   }
 });
