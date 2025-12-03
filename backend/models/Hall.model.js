@@ -33,6 +33,12 @@ const hallSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  slug: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true
+  },
   description: {
     type: String,
     required: true
@@ -84,7 +90,66 @@ const hallSchema = new mongoose.Schema({
   }
 });
 
+// Generate slug from name before saving
+hallSchema.pre('save', async function(next) {
+  try {
+    // Always generate slug if it's missing or null
+    if (!this.slug || this.slug === 'null' || this.slug.trim() === '') {
+      if (this.name) {
+        // Generate slug from name
+        let baseSlug = this.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        
+        // Ensure slug is unique
+        if (baseSlug) {
+          let slug = baseSlug;
+          let counter = 1;
+          let existingHall = await this.constructor.findOne({ slug: slug, _id: { $ne: this._id } });
+          
+          while (existingHall) {
+            slug = `${baseSlug}-${counter}`;
+            existingHall = await this.constructor.findOne({ slug: slug, _id: { $ne: this._id } });
+            counter++;
+            // Safety check to prevent infinite loop
+            if (counter > 1000) break;
+          }
+          
+          this.slug = slug;
+        }
+      }
+    } else if (this.isModified('name') && this.slug) {
+      // If name changed, regenerate slug
+      let baseSlug = this.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      
+      if (baseSlug) {
+        let slug = baseSlug;
+        let counter = 1;
+        let existingHall = await this.constructor.findOne({ slug: slug, _id: { $ne: this._id } });
+        
+        while (existingHall) {
+          slug = `${baseSlug}-${counter}`;
+          existingHall = await this.constructor.findOne({ slug: slug, _id: { $ne: this._id } });
+          counter++;
+          if (counter > 1000) break;
+        }
+        
+        this.slug = slug;
+      }
+    }
+    
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
 hallSchema.index({ name: 1 });
+hallSchema.index({ slug: 1 }, { unique: true, sparse: true });
 hallSchema.index({ location: 1 });
 hallSchema.index({ isActive: 1, isFeatured: 1 });
 
