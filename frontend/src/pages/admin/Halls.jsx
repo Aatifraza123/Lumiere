@@ -183,6 +183,11 @@ const AdminHalls = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log('📝 Form submission started');
+      console.log('📝 Form data:', formData);
+      console.log('📝 Image files:', imageFiles.length);
+      console.log('📝 Image previews:', imagePreviews.length);
+      
       // Frontend validation
       if (!formData.name || !formData.name.trim()) {
         toast.error('Venue name is required');
@@ -208,18 +213,18 @@ const AdminHalls = () => {
       formDataToSend.append('name', formData.name.trim());
       formDataToSend.append('description', formData.description.trim());
       formDataToSend.append('location', formData.location.trim());
-      formDataToSend.append('capacity', capacityNum);
+      formDataToSend.append('capacity', capacityNum.toString());
       // Handle basePrice - convert empty string to 0
       const basePriceValue = formData.basePrice && formData.basePrice.toString().trim() !== '' 
         ? parseFloat(formData.basePrice) 
         : 0;
-      formDataToSend.append('basePrice', basePriceValue);
+      formDataToSend.append('basePrice', basePriceValue.toString());
       // Handle rating - convert to number, default to 5
       const ratingValue = formData.rating && formData.rating.toString().trim() !== '' 
         ? parseFloat(formData.rating) 
         : 5;
-      formDataToSend.append('rating', Math.min(Math.max(ratingValue, 0), 5)); // Clamp between 0 and 5
-      formDataToSend.append('amenities', JSON.stringify(formData.amenities));
+      formDataToSend.append('rating', Math.min(Math.max(ratingValue, 0), 5).toString()); // Clamp between 0 and 5
+      formDataToSend.append('amenities', JSON.stringify(formData.amenities || []));
       formDataToSend.append('priceSlots', JSON.stringify([]));
       formDataToSend.append('servicePricing', JSON.stringify([]));
       formDataToSend.append('isFeatured', formData.isFeatured.toString());
@@ -233,6 +238,16 @@ const AdminHalls = () => {
       // Add image URLs
       if (formData.images && formData.images.length > 0) {
         formDataToSend.append('imageUrls', JSON.stringify(formData.images));
+      }
+      
+      // Log FormData contents (for debugging)
+      console.log('📦 FormData contents:');
+      for (let [key, value] of formDataToSend.entries()) {
+        if (value instanceof File) {
+          console.log(`  ${key}: [File] ${value.name} (${value.size} bytes)`);
+        } else {
+          console.log(`  ${key}: ${value}`);
+        }
       }
 
       // Check if editing a mock venue (mock venues have specific IDs)
@@ -265,8 +280,40 @@ const AdminHalls = () => {
     } catch (error) {
       console.error('❌ Error saving venue:', error);
       console.error('❌ Error response:', error.response?.data);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to save venue';
-      toast.error(errorMessage);
+      console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error config:', error.config);
+      
+      // Log full error object
+      if (error.response?.data) {
+        console.error('❌ Full error response:', JSON.stringify(error.response.data, null, 2));
+        console.error('❌ Error message:', error.response.data.message);
+        console.error('❌ Error errors:', error.response.data.errors);
+      }
+      
+      // Get detailed error message
+      let errorMessage = 'Failed to save venue';
+      if (error.response?.data) {
+        // Try multiple ways to extract error message
+        if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response.data.error) {
+          errorMessage = error.response.data.error;
+        } else if (typeof error.response.data === 'string') {
+          errorMessage = error.response.data;
+        } else if (error.response.data.errors) {
+          // Handle validation errors
+          const errorMessages = Object.values(error.response.data.errors).map(e => e.message || e);
+          errorMessage = errorMessages.join(', ') || 'Validation failed';
+        } else {
+          // Try to stringify the whole response
+          errorMessage = JSON.stringify(error.response.data);
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      console.error('❌ Final error message:', errorMessage);
+      toast.error(errorMessage, { duration: 5000 });
     }
   };
 
