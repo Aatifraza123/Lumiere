@@ -38,6 +38,7 @@ CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 
 # Admin Configuration
+ADMIN_EMAIL=razaaatif658@gmail.com
 ADMIN_PASSWORD=Admin@123
 ```
 
@@ -64,6 +65,9 @@ ADMIN_PASSWORD=Admin@123
 5. **JWT Secret:**
    - Generate: `openssl rand -base64 32`
    - Or use any strong random string
+
+
+
 
 
 

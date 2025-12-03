@@ -28,7 +28,7 @@ router.post('/login', async (req, res, next) => {
 
     // Get admin password from environment variables
     const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123';
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@festo.com';
+    const adminEmail = process.env.ADMIN_EMAIL || 'razaaatif658@gmail.com';
 
     if (!password) {
       return res.status(400).json({

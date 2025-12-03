@@ -272,7 +272,7 @@ export const sendBookingConfirmation = async (booking, user, invoicePath = null)
 
 // Send admin notification email with customer booking details
 export const sendAdminBookingNotification = async (booking, customer) => {
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@lumiere.com';
+  const adminEmail = process.env.ADMIN_EMAIL || 'razaaatif658@gmail.com';
   const subject = `New Booking Received - ${booking.invoiceNumber} | Lumière Events`;
   
   // Debug: Log what we received
