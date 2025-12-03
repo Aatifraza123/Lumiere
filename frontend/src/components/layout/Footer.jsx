@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiFacebook, FiTwitter, FiInstagram, FiArrowRight, FiMail, FiMapPin } from 'react-icons/fi';
-import api from '../utils/api';
+import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
 const Footer = () => {
