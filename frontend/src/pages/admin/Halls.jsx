@@ -263,8 +263,10 @@ const AdminHalls = () => {
       closeModal();
       fetchHalls();
     } catch (error) {
-      console.error(error);
-      toast.error(error.response?.data?.message || 'Failed to save venue');
+      console.error('❌ Error saving venue:', error);
+      console.error('❌ Error response:', error.response?.data);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to save venue';
+      toast.error(errorMessage);
     }
   };
 

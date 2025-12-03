@@ -174,28 +174,53 @@ router.get('/halls/:id', async (req, res, next) => {
 
 router.post('/halls', upload.array('images', 10), async (req, res, next) => {
   try {
+    console.log('📥 POST /admin/halls - Request received');
+    console.log('📦 Body:', req.body);
+    console.log('📁 Files:', req.files ? req.files.length : 0);
+    
     const { name, description, location, capacity, basePrice, rating, amenities, priceSlots, servicePricing, isFeatured, isActive, imageUrls } = req.body;
 
     // Validation
     if (!name || !name.trim()) {
+      console.log('❌ Validation failed: Venue name is required');
       return res.status(400).json({ success: false, message: 'Venue name is required' });
     }
     if (!description || !description.trim()) {
+      console.log('❌ Validation failed: Description is required');
       return res.status(400).json({ success: false, message: 'Description is required' });
     }
     if (!location || !location.trim()) {
+      console.log('❌ Validation failed: Location is required');
       return res.status(400).json({ success: false, message: 'Location is required' });
     }
     
     // Validate capacity
     const capacityNum = parseInt(capacity);
     if (!capacity || isNaN(capacityNum) || capacityNum < 1) {
+      console.log('❌ Validation failed: Invalid capacity', { capacity, capacityNum });
       return res.status(400).json({ success: false, message: 'Valid capacity (minimum 1) is required' });
     }
 
     // Combine uploaded files and URLs
-    const uploadedImages = req.files ? req.files.map(file => file.path || file.secure_url || `/uploads/${file.filename}`) : [];
-    const urlImages = imageUrls ? (Array.isArray(imageUrls) ? imageUrls : JSON.parse(imageUrls)) : [];
+    const uploadedImages = req.files ? req.files.map(file => {
+      if (file.secure_url) return file.secure_url;
+      if (file.path) {
+        // If local file, construct full URL
+        const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
+        return `${baseUrl}${file.path}`;
+      }
+      return `/uploads/${file.filename}`;
+    }) : [];
+    
+    let urlImages = [];
+    if (imageUrls) {
+      try {
+        urlImages = Array.isArray(imageUrls) ? imageUrls : JSON.parse(imageUrls);
+      } catch (e) {
+        console.log('⚠️ Failed to parse imageUrls:', e.message);
+        urlImages = [];
+      }
+    }
     const images = [...uploadedImages, ...urlImages];
 
     // Parse amenities, priceSlots, servicePricing safely
@@ -203,6 +228,7 @@ router.post('/halls', upload.array('images', 10), async (req, res, next) => {
     try {
       parsedAmenities = Array.isArray(amenities) ? amenities : (amenities ? JSON.parse(amenities) : []);
     } catch (e) {
+      console.log('⚠️ Failed to parse amenities:', e.message);
       parsedAmenities = [];
     }
 
@@ -210,6 +236,7 @@ router.post('/halls', upload.array('images', 10), async (req, res, next) => {
     try {
       parsedPriceSlots = priceSlots ? JSON.parse(priceSlots) : [];
     } catch (e) {
+      console.log('⚠️ Failed to parse priceSlots:', e.message);
       parsedPriceSlots = [];
     }
 
@@ -217,10 +244,11 @@ router.post('/halls', upload.array('images', 10), async (req, res, next) => {
     try {
       parsedServicePricing = servicePricing ? JSON.parse(servicePricing) : [];
     } catch (e) {
+      console.log('⚠️ Failed to parse servicePricing:', e.message);
       parsedServicePricing = [];
     }
 
-    const hall = await Hall.create({
+    const hallData = {
       name: name.trim(),
       description: description.trim(),
       location: location.trim(),
@@ -233,19 +261,44 @@ router.post('/halls', upload.array('images', 10), async (req, res, next) => {
       amenities: parsedAmenities,
       priceSlots: parsedPriceSlots,
       servicePricing: parsedServicePricing,
-      isFeatured: isFeatured === 'true',
-      isActive: isActive !== 'false'
-    });
+      isFeatured: isFeatured === 'true' || isFeatured === true,
+      isActive: isActive !== 'false' && isActive !== false
+    };
 
+    console.log('💾 Creating hall with data:', JSON.stringify(hallData, null, 2));
+    
+    const hall = await Hall.create(hallData);
+
+    console.log('✅ Hall created successfully:', hall._id);
     res.status(201).json({ success: true, data: hall });
   } catch (error) {
-    console.error('Error creating hall:', error);
+    console.error('❌ Error creating hall:', error);
+    console.error('❌ Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+    
     // If it's a validation error, return it directly
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(e => e.message).join(', ');
-      return res.status(400).json({ success: false, message: messages });
+      return res.status(400).json({ success: false, message: messages, errors: error.errors });
     }
-    next(error);
+    
+    // If it's a duplicate key error
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'A venue with this name already exists' 
+      });
+    }
+    
+    // Generic error
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Failed to create venue',
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
