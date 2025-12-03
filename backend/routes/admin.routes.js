@@ -267,6 +267,20 @@ router.post('/halls', upload.array('images', 10), async (req, res, next) => {
 
     console.log('💾 Creating hall with data:', JSON.stringify(hallData, null, 2));
     
+    // Validate data before creating
+    if (!hallData.name || !hallData.name.trim()) {
+      return res.status(400).json({ success: false, message: 'Venue name is required' });
+    }
+    if (!hallData.description || !hallData.description.trim()) {
+      return res.status(400).json({ success: false, message: 'Description is required' });
+    }
+    if (!hallData.location || !hallData.location.trim()) {
+      return res.status(400).json({ success: false, message: 'Location is required' });
+    }
+    if (!hallData.capacity || hallData.capacity < 1) {
+      return res.status(400).json({ success: false, message: 'Valid capacity (minimum 1) is required' });
+    }
+    
     const hall = await Hall.create(hallData);
 
     console.log('✅ Hall created successfully:', hall._id);
@@ -276,13 +290,21 @@ router.post('/halls', upload.array('images', 10), async (req, res, next) => {
     console.error('❌ Error details:', {
       name: error.name,
       message: error.message,
+      code: error.code,
+      errors: error.errors,
       stack: error.stack
     });
     
     // If it's a validation error, return it directly
     if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(e => e.message).join(', ');
-      return res.status(400).json({ success: false, message: messages, errors: error.errors });
+      const errorMessages = Object.values(error.errors).map(e => e.message);
+      const messages = errorMessages.join(', ');
+      console.log('❌ Validation errors:', messages);
+      return res.status(400).json({ 
+        success: false, 
+        message: messages || 'Validation failed',
+        errors: error.errors 
+      });
     }
     
     // If it's a duplicate key error
@@ -681,29 +703,56 @@ router.delete('/services/:id', async (req, res, next) => {
 router.get('/bookings', async (req, res, next) => {
   try {
     console.log('📥 GET /admin/bookings - Request received');
+    console.log('📥 Query params:', req.query);
+    
     const { status, paymentStatus } = req.query;
     const query = {};
 
-    if (status) query.status = status;
-    if (paymentStatus) query.paymentStatus = paymentStatus;
+    // Only add filters if they are provided and not empty
+    if (status && status.trim() !== '') {
+      query.status = status.trim();
+    }
+    if (paymentStatus && paymentStatus.trim() !== '') {
+      query.paymentStatus = paymentStatus.trim();
+    }
 
-    console.log('🔍 Query:', query);
+    console.log('🔍 MongoDB Query:', JSON.stringify(query, null, 2));
 
+    // Fetch all bookings with populated fields
     const bookings = await Booking.find(query)
       .populate('userId', 'name email phone')
       .populate('hallId', 'name location images')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean(); // Use lean() for better performance
 
     console.log('✅ Found bookings:', bookings.length);
-    res.json({ success: true, count: bookings.length, data: bookings });
+    console.log('📦 Sample booking:', bookings.length > 0 ? {
+      _id: bookings[0]._id,
+      eventName: bookings[0].eventName,
+      customerName: bookings[0].customerName,
+      hallId: bookings[0].hallId?.name,
+      userId: bookings[0].userId?.name
+    } : 'No bookings found');
+
+    res.json({ 
+      success: true, 
+      count: bookings.length, 
+      data: bookings 
+    });
   } catch (error) {
     console.error('❌ Error fetching bookings:', error);
     console.error('❌ Error details:', {
       message: error.message,
       name: error.name,
+      code: error.code,
       stack: error.stack
     });
-    next(error);
+    
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Failed to fetch bookings',
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

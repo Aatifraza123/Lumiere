@@ -214,9 +214,18 @@ const AdminBookings = () => {
             <div className="p-12 flex justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#D4AF37]"></div>
             </div>
+          ) : bookings.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="text-gray-400 text-lg mb-2">No bookings found</div>
+              <div className="text-gray-600 text-sm">
+                {filters.status || filters.paymentStatus 
+                  ? 'Try adjusting your filters or check back later.' 
+                  : 'Bookings will appear here once customers make reservations.'}
+              </div>
+            </div>
           ) : filteredBookings.length === 0 ? (
             <div className="p-12 text-center text-gray-500">
-              No bookings found matching your criteria.
+              No bookings found matching your search criteria.
             </div>
           ) : (
             <div className="overflow-x-auto">
