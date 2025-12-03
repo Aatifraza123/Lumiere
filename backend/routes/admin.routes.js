@@ -281,6 +281,16 @@ router.post('/halls', upload.array('images', 10), async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Valid capacity (minimum 1) is required' });
     }
     
+    // Check if venue with same name already exists
+    const existingHall = await Hall.findOne({ name: hallData.name.trim() });
+    if (existingHall) {
+      console.log('❌ Duplicate venue name found:', hallData.name);
+      return res.status(400).json({ 
+        success: false, 
+        message: `A venue with the name "${hallData.name}" already exists. Please use a different name.` 
+      });
+    }
+    
     const hall = await Hall.create(hallData);
 
     console.log('✅ Hall created successfully:', hall._id);
@@ -309,9 +319,11 @@ router.post('/halls', upload.array('images', 10), async (req, res, next) => {
     
     // If it's a duplicate key error
     if (error.code === 11000) {
+      const duplicateField = error.keyPattern ? Object.keys(error.keyPattern)[0] : 'name';
+      const duplicateValue = error.keyValue ? error.keyValue[duplicateField] : '';
       return res.status(400).json({ 
         success: false, 
-        message: 'A venue with this name already exists' 
+        message: `A venue with the ${duplicateField} "${duplicateValue}" already exists. Please use a different ${duplicateField}.` 
       });
     }
     
@@ -415,6 +427,20 @@ router.put('/halls/:id', upload.array('images', 10), async (req, res, next) => {
         updateData.images = urlImages;
       } catch (e) {
         return res.status(400).json({ success: false, message: 'Invalid imageUrls format' });
+      }
+    }
+
+    // If name is being updated, check for duplicates (excluding current venue)
+    if (updateData.name) {
+      const existingHall = await Hall.findOne({ 
+        name: updateData.name.trim(),
+        _id: { $ne: req.params.id }
+      });
+      if (existingHall) {
+        return res.status(400).json({ 
+          success: false, 
+          message: `A venue with the name "${updateData.name}" already exists. Please use a different name.` 
+        });
       }
     }
 
@@ -545,6 +571,21 @@ router.post('/services', upload.single('image'), async (req, res, next) => {
 
     console.log('💾 Creating service with data:', JSON.stringify(serviceData, null, 2));
 
+    // Check if service with same name/title already exists
+    const existingService = await Service.findOne({ 
+      $or: [
+        { title: serviceData.title },
+        { name: serviceData.name }
+      ]
+    });
+    if (existingService) {
+      console.log('❌ Duplicate service name found:', serviceData.title);
+      return res.status(400).json({ 
+        success: false, 
+        message: `A service with the name "${serviceData.title}" already exists. Please use a different name.` 
+      });
+    }
+
     const service = await Service.create(serviceData);
 
     console.log('✅ Service created successfully:', service._id);
@@ -566,9 +607,11 @@ router.post('/services', upload.single('image'), async (req, res, next) => {
     
     // If it's a duplicate key error
     if (error.code === 11000) {
+      const duplicateField = error.keyPattern ? Object.keys(error.keyPattern)[0] : 'name';
+      const duplicateValue = error.keyValue ? error.keyValue[duplicateField] : '';
       return res.status(400).json({ 
         success: false, 
-        message: 'A service with this name already exists' 
+        message: `A service with the ${duplicateField} "${duplicateValue}" already exists. Please use a different ${duplicateField}.` 
       });
     }
     
@@ -596,9 +639,25 @@ router.put('/services/:id', upload.single('image'), async (req, res, next) => {
     const { title, name, description, category, type, price, features, isActive, image } = req.body;
 
     const updateData = {};
-    if (title || name) {
-      updateData.title = (title || name).trim();
-      updateData.name = (title || name).trim(); // Also update name for compatibility
+    const serviceName = (title || name)?.trim();
+    if (serviceName) {
+      updateData.title = serviceName;
+      updateData.name = serviceName; // Also update name for compatibility
+      
+      // Check if another service with same name exists (excluding current service)
+      const existingService = await Service.findOne({ 
+        $or: [
+          { title: serviceName },
+          { name: serviceName }
+        ],
+        _id: { $ne: req.params.id }
+      });
+      if (existingService) {
+        return res.status(400).json({ 
+          success: false, 
+          message: `A service with the name "${serviceName}" already exists. Please use a different name.` 
+        });
+      }
     }
     if (description !== undefined) {
       updateData.description = description.trim();
@@ -673,9 +732,11 @@ router.put('/services/:id', upload.single('image'), async (req, res, next) => {
     
     // If it's a duplicate key error
     if (error.code === 11000) {
+      const duplicateField = error.keyPattern ? Object.keys(error.keyPattern)[0] : 'name';
+      const duplicateValue = error.keyValue ? error.keyValue[duplicateField] : '';
       return res.status(400).json({ 
         success: false, 
-        message: 'A service with this name already exists' 
+        message: `A service with the ${duplicateField} "${duplicateValue}" already exists. Please use a different ${duplicateField}.` 
       });
     }
     
