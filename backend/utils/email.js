@@ -444,4 +444,94 @@ export const sendAdminBookingNotification = async (booking, customer) => {
   });
 };
 
+// Send bulk newsletter email to all active subscribers
+export const sendBulkNewsletter = async (subject, content, subscriberEmails) => {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.warn('⚠️  SMTP credentials not configured. Email sending skipped.');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📧 Bulk newsletter would be sent to:', subscriberEmails.length, 'subscribers');
+      return { sent: subscriberEmails.length, failed: 0 };
+    }
+    throw new Error('Email configuration missing');
+  }
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%); color: #000; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { padding: 30px; background: #f9f9f9; }
+        .newsletter-content { background: white; padding: 30px; margin: 20px 0; border-radius: 10px; border: 1px solid #e0e0e0; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+        .unsubscribe { text-align: center; padding: 15px; margin-top: 20px; font-size: 12px; color: #999; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1 style="margin: 0;">Lumière Events</h1>
+          <p style="margin: 10px 0 0 0; font-size: 18px;">Newsletter</p>
+        </div>
+        <div class="content">
+          <div class="newsletter-content">
+            ${content.replace(/\n/g, '<br>')}
+          </div>
+          <p>Best regards,<br><strong>Lumière Events Team</strong></p>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} Lumière Events. All rights reserved.</p>
+          <div class="unsubscribe">
+            <p>You are receiving this email because you subscribed to our newsletter.</p>
+            <p>To unsubscribe, please contact us or visit our website.</p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  let sent = 0;
+  let failed = 0;
+  const errors = [];
+
+  // Send emails in batches to avoid overwhelming the SMTP server
+  const batchSize = 10;
+  for (let i = 0; i < subscriberEmails.length; i += batchSize) {
+    const batch = subscriberEmails.slice(i, i + batchSize);
+    
+    await Promise.allSettled(
+      batch.map(async (email) => {
+        try {
+          await sendEmail({
+            email,
+            subject,
+            html
+          });
+          sent++;
+          console.log(`✅ Newsletter sent to: ${email}`);
+        } catch (error) {
+          failed++;
+          errors.push({ email, error: error.message });
+          console.error(`❌ Failed to send to ${email}:`, error.message);
+        }
+      })
+    );
+
+    // Small delay between batches to avoid rate limiting
+    if (i + batchSize < subscriberEmails.length) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+
+  return {
+    sent,
+    failed,
+    total: subscriberEmails.length,
+    errors: errors.length > 0 ? errors : undefined
+  };
+};
+
 

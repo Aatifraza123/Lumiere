@@ -1360,6 +1360,69 @@ router.delete('/subscribe/:id', async (req, res, next) => {
   }
 });
 
+// Send bulk newsletter email to all active subscribers
+router.post('/subscribe/send-newsletter', async (req, res, next) => {
+  try {
+    const { subject, content, sendToAll = false } = req.body;
+
+    // Validation
+    if (!subject || !subject.trim()) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email subject is required' 
+      });
+    }
+    if (!content || !content.trim()) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email content is required' 
+      });
+    }
+
+    // Get active subscribers
+    const query = { isActive: true };
+    const subscribers = await Subscribe.find(query).select('email name');
+    
+    if (subscribers.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No active subscribers found' 
+      });
+    }
+
+    const subscriberEmails = subscribers.map(sub => sub.email);
+
+    console.log(`📧 Sending newsletter to ${subscriberEmails.length} subscribers`);
+    console.log(`📧 Subject: ${subject}`);
+
+    // Import sendBulkNewsletter function
+    const { sendBulkNewsletter } = await import('../utils/email.js');
+    
+    // Send bulk email
+    const result = await sendBulkNewsletter(subject.trim(), content.trim(), subscriberEmails);
+
+    console.log(`✅ Newsletter sent: ${result.sent} successful, ${result.failed} failed`);
+
+    res.json({
+      success: true,
+      message: `Newsletter sent to ${result.sent} subscribers`,
+      data: {
+        sent: result.sent,
+        failed: result.failed,
+        total: result.total,
+        errors: result.errors
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error sending bulk newsletter:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to send newsletter',
+      error: error.message 
+    });
+  }
+});
+
 // ========== GALLERY ==========
 router.get('/gallery', async (req, res, next) => {
   try {

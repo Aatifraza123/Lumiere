@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { FiArrowLeft, FiMail, FiUser, FiCheckCircle, FiXCircle, FiTrash2, FiDownload } from 'react-icons/fi';
+import { FiArrowLeft, FiMail, FiUser, FiCheckCircle, FiXCircle, FiTrash2, FiDownload, FiSend, FiX } from 'react-icons/fi';
 import AdminNavbar from '../../components/admin/AdminNavbar';
 import api from '../../utils/api';
 
@@ -11,6 +11,12 @@ const AdminSubscribe = () => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [showNewsletterModal, setShowNewsletterModal] = useState(false);
+  const [sendingNewsletter, setSendingNewsletter] = useState(false);
+  const [newsletterForm, setNewsletterForm] = useState({
+    subject: '',
+    content: ''
+  });
 
   useEffect(() => {
     checkAuth();
@@ -26,15 +32,39 @@ const AdminSubscribe = () => {
 
   const fetchSubscriptions = async () => {
     try {
+      setLoading(true);
       const params = new URLSearchParams();
       if (filter === 'active') params.append('isActive', 'true');
       if (filter === 'inactive') params.append('isActive', 'false');
+      // If 'all', don't add isActive filter to get all subscriptions
 
+      console.log('📥 Fetching subscriptions with filter:', filter);
       const response = await api.get(`/admin/subscribe?${params.toString()}`);
-      setSubscriptions(response.data.data || []);
+      console.log('📦 Subscriptions response:', response.data);
+      
+      // Handle different response formats
+      let subscriptionsData = [];
+      if (response.data) {
+        if (Array.isArray(response.data)) {
+          subscriptionsData = response.data;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          subscriptionsData = response.data.data;
+        } else if (response.data.subscriptions && Array.isArray(response.data.subscriptions)) {
+          subscriptionsData = response.data.subscriptions;
+        }
+      }
+      
+      console.log('✅ Subscriptions loaded:', subscriptionsData.length);
+      setSubscriptions(subscriptionsData);
     } catch (error) {
-      console.error('Error fetching subscriptions:', error);
-      toast.error('Failed to fetch subscriptions');
+      console.error('❌ Error fetching subscriptions:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      toast.error(error.response?.data?.message || 'Failed to fetch subscriptions');
+      setSubscriptions([]);
     } finally {
       setLoading(false);
     }
@@ -73,6 +103,51 @@ const AdminSubscribe = () => {
     toast.success('Subscriptions exported successfully!');
   };
 
+  const handleSendNewsletter = async () => {
+    if (!newsletterForm.subject || !newsletterForm.subject.trim()) {
+      toast.error('Please enter email subject');
+      return;
+    }
+    if (!newsletterForm.content || !newsletterForm.content.trim()) {
+      toast.error('Please enter email content');
+      return;
+    }
+
+    const activeSubscribers = subscriptions.filter(sub => sub.isActive);
+    if (activeSubscribers.length === 0) {
+      toast.error('No active subscribers found');
+      return;
+    }
+
+    if (!window.confirm(`Send newsletter to ${activeSubscribers.length} active subscribers?`)) {
+      return;
+    }
+
+    setSendingNewsletter(true);
+    try {
+      const response = await api.post('/admin/subscribe/send-newsletter', {
+        subject: newsletterForm.subject.trim(),
+        content: newsletterForm.content.trim(),
+        sendToAll: true
+      });
+
+      if (response.data.success) {
+        toast.success(`Newsletter sent to ${response.data.data.sent} subscribers!`);
+        setShowNewsletterModal(false);
+        setNewsletterForm({ subject: '', content: '' });
+        
+        if (response.data.data.failed > 0) {
+          toast.error(`${response.data.data.failed} emails failed to send`);
+        }
+      }
+    } catch (error) {
+      console.error('Error sending newsletter:', error);
+      toast.error(error.response?.data?.message || 'Failed to send newsletter');
+    } finally {
+      setSendingNewsletter(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-[#0A0A0A] text-white min-h-screen flex items-center justify-center">
@@ -93,13 +168,22 @@ const AdminSubscribe = () => {
             <h1 className="font-['Cinzel'] text-2xl">Newsletter Subscriptions</h1>
             <p className="text-sm text-gray-400">Manage newsletter subscribers</p>
           </div>
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-black rounded-xl hover:bg-[#C5A028] transition-all font-semibold"
-          >
-            <FiDownload />
-            <span>Export CSV</span>
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowNewsletterModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-black rounded-xl hover:bg-[#C5A028] transition-all font-semibold"
+            >
+              <FiSend />
+              <span>Send Newsletter</span>
+            </button>
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all font-semibold"
+            >
+              <FiDownload />
+              <span>Export CSV</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -118,8 +202,15 @@ const AdminSubscribe = () => {
               <option value="active">Active Only</option>
               <option value="inactive">Inactive Only</option>
             </select>
-            <div className="ml-auto text-sm text-gray-400">
-              Total: <span className="text-white font-semibold">{subscriptions.length}</span>
+            <div className="ml-auto flex items-center gap-4 text-sm">
+              <div className="text-gray-400">
+                Active: <span className="text-green-400 font-semibold">
+                  {subscriptions.filter(sub => sub.isActive).length}
+                </span>
+              </div>
+              <div className="text-gray-400">
+                Total: <span className="text-white font-semibold">{subscriptions.length}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -193,6 +284,93 @@ const AdminSubscribe = () => {
           </div>
         )}
       </main>
+
+      {/* Newsletter Modal */}
+      <AnimatePresence>
+        {showNewsletterModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#121212] w-full max-w-2xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-[#1A1A1A]">
+                <h2 className="font-['Cinzel'] text-xl text-white">Send Newsletter</h2>
+                <button 
+                  onClick={() => setShowNewsletterModal(false)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <FiX size={24} />
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm text-gray-400 font-medium mb-2">
+                      Recipients
+                    </label>
+                    <div className="bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-3 text-sm text-gray-300">
+                      {subscriptions.filter(sub => sub.isActive).length} active subscribers
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-400 font-medium mb-2">
+                      Subject <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newsletterForm.subject}
+                      onChange={(e) => setNewsletterForm({ ...newsletterForm, subject: e.target.value })}
+                      placeholder="Newsletter Subject"
+                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-[#D4AF37] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-400 font-medium mb-2">
+                      Content <span className="text-red-400">*</span>
+                    </label>
+                    <textarea
+                      value={newsletterForm.content}
+                      onChange={(e) => setNewsletterForm({ ...newsletterForm, content: e.target.value })}
+                      placeholder="Write your newsletter content here..."
+                      rows={12}
+                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-[#D4AF37] focus:outline-none resize-none"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      You can use line breaks. HTML formatting will be preserved.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-6 py-4 border-t border-white/10 bg-[#1A1A1A] flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNewsletterModal(false);
+                    setNewsletterForm({ subject: '', content: '' });
+                  }}
+                  className="px-5 py-2 text-gray-400 hover:text-white transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSendNewsletter}
+                  disabled={sendingNewsletter || !newsletterForm.subject.trim() || !newsletterForm.content.trim()}
+                  className="px-6 py-2 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#b5952f] transition-colors shadow-lg shadow-[#D4AF37]/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {sendingNewsletter ? 'Sending...' : 'Send Newsletter'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

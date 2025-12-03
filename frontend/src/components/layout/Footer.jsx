@@ -1,8 +1,44 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiFacebook, FiTwitter, FiInstagram, FiArrowRight, FiMail, FiMapPin } from 'react-icons/fi';
+import api from '../utils/api';
+import toast from 'react-hot-toast';
 
 const Footer = () => {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+    
+    if (!email || !email.trim()) {
+      toast.error('Please enter your email address');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await api.post('/subscribe', { email: email.trim() });
+      if (response.data.success) {
+        toast.success('Successfully subscribed to newsletter!');
+        setEmail('');
+      }
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || 'Failed to subscribe. Please try again.';
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     // 1. Changed bg to #0A0A0A to match Home page
     <footer className="bg-[#0A0A0A] text-white relative overflow-hidden border-t border-white/10 pt-16 pb-10">
@@ -28,16 +64,28 @@ const Footer = () => {
             </p>
             
             {/* Newsletter Input */}
-            <div className="relative max-w-xs">
+            <form onSubmit={handleSubscribe} className="relative max-w-xs">
               <input 
                 type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email address" 
-                className="w-full bg-white/5 border border-white/10 rounded-full py-3.5 px-6 text-sm focus:outline-none focus:border-[#D4AF37] transition-colors"
+                required
+                disabled={loading}
+                className="w-full bg-white/5 border border-white/10 rounded-full py-3.5 px-6 pr-14 text-sm focus:outline-none focus:border-[#D4AF37] transition-colors disabled:opacity-50"
               />
-              <button className="absolute right-1.5 top-1.5 w-9 h-9 bg-[#D4AF37] rounded-full flex items-center justify-center text-black hover:scale-105 transition-transform">
-                <FiArrowRight className="text-lg" />
+              <button 
+                type="submit"
+                disabled={loading}
+                className="absolute right-1.5 top-1.5 w-9 h-9 bg-[#D4AF37] rounded-full flex items-center justify-center text-black hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <FiArrowRight className="text-lg" />
+                )}
               </button>
-            </div>
+            </form>
           </div>
 
           {/* --- LINKS COLUMNS --- */}
