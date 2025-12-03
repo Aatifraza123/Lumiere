@@ -458,13 +458,15 @@ router.post('/services', upload.single('image'), async (req, res, next) => {
 
     // Validate required fields
     if (!title && !name) {
+      console.log('❌ Validation failed: Service name or title is required');
       return res.status(400).json({
         success: false,
         message: 'Service name or title is required'
       });
     }
 
-    if (!description) {
+    if (!description || !description.trim()) {
+      console.log('❌ Validation failed: Description is required');
       return res.status(400).json({
         success: false,
         message: 'Description is required'
@@ -472,14 +474,20 @@ router.post('/services', upload.single('image'), async (req, res, next) => {
     }
 
     // Use name if title is not provided, or title if name is not provided
-    const serviceName = title || name;
-    const serviceCategory = category || type || 'other';
+    const serviceName = (title || name || '').trim();
+    const serviceCategory = (category || type || 'other').trim();
 
     // Handle image: uploaded file or URL
     let imageUrl = undefined;
     if (req.file) {
-      // If file uploaded, use the path (Cloudinary URL or local path)
-      imageUrl = req.file.path || req.file.secure_url || `/uploads/${req.file.filename}`;
+      // If file uploaded, use Cloudinary URL or construct full URL for local storage
+      if (req.file.secure_url) {
+        imageUrl = req.file.secure_url;
+      } else {
+        // Local file - construct full URL
+        const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
+        imageUrl = `${baseUrl}${req.file.path}`;
+      }
       console.log('📸 Image file uploaded:', imageUrl);
     } else if (image && typeof image === 'string' && image.trim()) {
       // If image URL provided directly
@@ -513,7 +521,7 @@ router.post('/services', upload.single('image'), async (req, res, next) => {
       isActive: isActive !== 'false' && isActive !== false
     };
 
-    console.log('💾 Creating service with data:', serviceData);
+    console.log('💾 Creating service with data:', JSON.stringify(serviceData, null, 2));
 
     const service = await Service.create(serviceData);
 
@@ -524,9 +532,30 @@ router.post('/services', upload.single('image'), async (req, res, next) => {
     console.error('❌ Error details:', {
       message: error.message,
       name: error.name,
+      code: error.code,
       stack: error.stack
     });
-    next(error);
+    
+    // If it's a validation error, return it directly
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(e => e.message).join(', ');
+      return res.status(400).json({ success: false, message: messages, errors: error.errors });
+    }
+    
+    // If it's a duplicate key error
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'A service with this name already exists' 
+      });
+    }
+    
+    // Generic error
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Failed to create service',
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
@@ -546,11 +575,18 @@ router.put('/services/:id', upload.single('image'), async (req, res, next) => {
 
     const updateData = {};
     if (title || name) {
-      updateData.title = title || name;
+      updateData.title = (title || name).trim();
+      updateData.name = (title || name).trim(); // Also update name for compatibility
     }
-    if (description) updateData.description = description.trim();
-    if (category || type) updateData.category = category || type;
-    if (price !== undefined) updateData.price = parseFloat(price) || 0;
+    if (description !== undefined) {
+      updateData.description = description.trim();
+    }
+    if (category || type) {
+      updateData.category = (category || type).trim();
+    }
+    if (price !== undefined) {
+      updateData.price = parseFloat(price) || 0;
+    }
     
     // Parse features
     if (features !== undefined) {
@@ -571,7 +607,14 @@ router.put('/services/:id', upload.single('image'), async (req, res, next) => {
     
     // Handle image: prioritize uploaded file, then use provided URL
     if (req.file) {
-      updateData.image = req.file.path || req.file.secure_url || `/uploads/${req.file.filename}`;
+      // If file uploaded, use Cloudinary URL or construct full URL for local storage
+      if (req.file.secure_url) {
+        updateData.image = req.file.secure_url;
+      } else {
+        // Local file - construct full URL
+        const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
+        updateData.image = `${baseUrl}${req.file.path}`;
+      }
       console.log('📸 Image file uploaded:', updateData.image);
     } else if (image !== undefined) {
       if (typeof image === 'string' && image.trim()) {
@@ -582,7 +625,7 @@ router.put('/services/:id', upload.single('image'), async (req, res, next) => {
       }
     }
 
-    console.log('💾 Updating service with data:', updateData);
+    console.log('💾 Updating service with data:', JSON.stringify(updateData, null, 2));
 
     const service = await Service.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
 
@@ -596,9 +639,29 @@ router.put('/services/:id', upload.single('image'), async (req, res, next) => {
     console.error('❌ Error updating service:', error);
     console.error('❌ Error details:', {
       message: error.message,
-      name: error.name
+      name: error.name,
+      code: error.code
     });
-    next(error);
+    
+    // If it's a validation error, return it directly
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(e => e.message).join(', ');
+      return res.status(400).json({ success: false, message: messages, errors: error.errors });
+    }
+    
+    // If it's a duplicate key error
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'A service with this name already exists' 
+      });
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Failed to update service',
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

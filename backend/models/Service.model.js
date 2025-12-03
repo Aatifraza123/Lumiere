@@ -6,14 +6,22 @@ const serviceSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  name: {
+    type: String,
+    trim: true
+  },
   description: {
     type: String,
     required: true
   },
   category: {
     type: String,
-    enum: ['wedding', 'corporate', 'party', 'anniversary', 'engagement', 'other'],
+    enum: ['wedding', 'corporate', 'party', 'birthday', 'anniversary', 'engagement', 'other'],
     required: true
+  },
+  type: {
+    type: String,
+    trim: true
   },
   price: {
     type: Number,
@@ -40,6 +48,8 @@ serviceSchema.index({ category: 1 });
 serviceSchema.index({ isActive: 1 });
 
 export default mongoose.model('Service', serviceSchema);
+
+
 
 
 
