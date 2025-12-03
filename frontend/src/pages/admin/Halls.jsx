@@ -183,11 +183,32 @@ const AdminHalls = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Frontend validation
+      if (!formData.name || !formData.name.trim()) {
+        toast.error('Venue name is required');
+        return;
+      }
+      if (!formData.description || !formData.description.trim()) {
+        toast.error('Description is required');
+        return;
+      }
+      if (!formData.location || !formData.location.trim()) {
+        toast.error('Location is required');
+        return;
+      }
+      
+      // Validate capacity
+      const capacityNum = parseInt(formData.capacity);
+      if (!formData.capacity || isNaN(capacityNum) || capacityNum < 1) {
+        toast.error('Valid capacity (minimum 1) is required');
+        return;
+      }
+
       const formDataToSend = new FormData();
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('location', formData.location);
-      formDataToSend.append('capacity', parseInt(formData.capacity));
+      formDataToSend.append('name', formData.name.trim());
+      formDataToSend.append('description', formData.description.trim());
+      formDataToSend.append('location', formData.location.trim());
+      formDataToSend.append('capacity', capacityNum);
       // Handle basePrice - convert empty string to 0
       const basePriceValue = formData.basePrice && formData.basePrice.toString().trim() !== '' 
         ? parseFloat(formData.basePrice) 

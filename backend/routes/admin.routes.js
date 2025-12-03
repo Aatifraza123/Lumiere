@@ -176,30 +176,75 @@ router.post('/halls', upload.array('images', 10), async (req, res, next) => {
   try {
     const { name, description, location, capacity, basePrice, rating, amenities, priceSlots, servicePricing, isFeatured, isActive, imageUrls } = req.body;
 
+    // Validation
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: 'Venue name is required' });
+    }
+    if (!description || !description.trim()) {
+      return res.status(400).json({ success: false, message: 'Description is required' });
+    }
+    if (!location || !location.trim()) {
+      return res.status(400).json({ success: false, message: 'Location is required' });
+    }
+    
+    // Validate capacity
+    const capacityNum = parseInt(capacity);
+    if (!capacity || isNaN(capacityNum) || capacityNum < 1) {
+      return res.status(400).json({ success: false, message: 'Valid capacity (minimum 1) is required' });
+    }
+
     // Combine uploaded files and URLs
     const uploadedImages = req.files ? req.files.map(file => file.path || file.secure_url || `/uploads/${file.filename}`) : [];
     const urlImages = imageUrls ? (Array.isArray(imageUrls) ? imageUrls : JSON.parse(imageUrls)) : [];
     const images = [...uploadedImages, ...urlImages];
 
+    // Parse amenities, priceSlots, servicePricing safely
+    let parsedAmenities = [];
+    try {
+      parsedAmenities = Array.isArray(amenities) ? amenities : (amenities ? JSON.parse(amenities) : []);
+    } catch (e) {
+      parsedAmenities = [];
+    }
+
+    let parsedPriceSlots = [];
+    try {
+      parsedPriceSlots = priceSlots ? JSON.parse(priceSlots) : [];
+    } catch (e) {
+      parsedPriceSlots = [];
+    }
+
+    let parsedServicePricing = [];
+    try {
+      parsedServicePricing = servicePricing ? JSON.parse(servicePricing) : [];
+    } catch (e) {
+      parsedServicePricing = [];
+    }
+
     const hall = await Hall.create({
-      name,
-      description,
-      location,
-      capacity: parseInt(capacity),
-      basePrice: basePrice ? parseFloat(basePrice) : 0,
+      name: name.trim(),
+      description: description.trim(),
+      location: location.trim(),
+      capacity: capacityNum,
+      basePrice: basePrice ? parseFloat(basePrice) || 0 : 0,
       rating: (rating !== undefined && rating !== null && rating !== '') 
         ? Math.min(Math.max(parseFloat(rating) || 5, 0), 5) 
         : 5, // Clamp between 0 and 5, default to 5
       images,
-      amenities: Array.isArray(amenities) ? amenities : amenities ? JSON.parse(amenities) : [],
-      priceSlots: priceSlots ? JSON.parse(priceSlots) : [],
-      servicePricing: servicePricing ? JSON.parse(servicePricing) : [],
+      amenities: parsedAmenities,
+      priceSlots: parsedPriceSlots,
+      servicePricing: parsedServicePricing,
       isFeatured: isFeatured === 'true',
       isActive: isActive !== 'false'
     });
 
     res.status(201).json({ success: true, data: hall });
   } catch (error) {
+    console.error('Error creating hall:', error);
+    // If it's a validation error, return it directly
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(e => e.message).join(', ');
+      return res.status(400).json({ success: false, message: messages });
+    }
     next(error);
   }
 });
@@ -209,10 +254,40 @@ router.put('/halls/:id', upload.array('images', 10), async (req, res, next) => {
     const { name, description, location, capacity, basePrice, rating, amenities, priceSlots, servicePricing, isFeatured, isActive, imageUrls } = req.body;
 
     const updateData = {};
-    if (name) updateData.name = name;
-    if (description) updateData.description = description;
-    if (location) updateData.location = location;
-    if (capacity) updateData.capacity = parseInt(capacity);
+    
+    // Validate and set name
+    if (name !== undefined) {
+      if (!name || !name.trim()) {
+        return res.status(400).json({ success: false, message: 'Venue name cannot be empty' });
+      }
+      updateData.name = name.trim();
+    }
+    
+    // Validate and set description
+    if (description !== undefined) {
+      if (!description || !description.trim()) {
+        return res.status(400).json({ success: false, message: 'Description cannot be empty' });
+      }
+      updateData.description = description.trim();
+    }
+    
+    // Validate and set location
+    if (location !== undefined) {
+      if (!location || !location.trim()) {
+        return res.status(400).json({ success: false, message: 'Location cannot be empty' });
+      }
+      updateData.location = location.trim();
+    }
+    
+    // Validate and set capacity
+    if (capacity !== undefined) {
+      const capacityNum = parseInt(capacity);
+      if (isNaN(capacityNum) || capacityNum < 1) {
+        return res.status(400).json({ success: false, message: 'Valid capacity (minimum 1) is required' });
+      }
+      updateData.capacity = capacityNum;
+    }
+    
     if (basePrice !== undefined) updateData.basePrice = parseFloat(basePrice) || 0;
     if (rating !== undefined && rating !== null && rating !== '') {
       const ratingValue = parseFloat(rating);
@@ -220,21 +295,52 @@ router.put('/halls/:id', upload.array('images', 10), async (req, res, next) => {
         updateData.rating = Math.min(Math.max(ratingValue, 0), 5); // Clamp between 0 and 5
       }
     }
-    if (amenities) updateData.amenities = Array.isArray(amenities) ? amenities : JSON.parse(amenities);
-    if (priceSlots) updateData.priceSlots = JSON.parse(priceSlots);
-    if (servicePricing) updateData.servicePricing = JSON.parse(servicePricing);
+    
+    // Safe parsing for arrays
+    if (amenities !== undefined) {
+      try {
+        updateData.amenities = Array.isArray(amenities) ? amenities : JSON.parse(amenities);
+      } catch (e) {
+        return res.status(400).json({ success: false, message: 'Invalid amenities format' });
+      }
+    }
+    
+    if (priceSlots !== undefined) {
+      try {
+        updateData.priceSlots = JSON.parse(priceSlots);
+      } catch (e) {
+        return res.status(400).json({ success: false, message: 'Invalid priceSlots format' });
+      }
+    }
+    
+    if (servicePricing !== undefined) {
+      try {
+        updateData.servicePricing = JSON.parse(servicePricing);
+      } catch (e) {
+        return res.status(400).json({ success: false, message: 'Invalid servicePricing format' });
+      }
+    }
+    
     if (isFeatured !== undefined) updateData.isFeatured = isFeatured === 'true';
     if (isActive !== undefined) updateData.isActive = isActive !== 'false';
     
     // Handle images: combine uploaded files and URLs
     if (req.files && req.files.length > 0) {
       const uploadedImages = req.files.map(file => file.path || file.secure_url || `/uploads/${file.filename}`);
-      const urlImages = imageUrls ? (Array.isArray(imageUrls) ? imageUrls : JSON.parse(imageUrls)) : [];
-      updateData.images = [...uploadedImages, ...urlImages];
+      try {
+        const urlImages = imageUrls ? (Array.isArray(imageUrls) ? imageUrls : JSON.parse(imageUrls)) : [];
+        updateData.images = [...uploadedImages, ...urlImages];
+      } catch (e) {
+        updateData.images = uploadedImages;
+      }
     } else if (imageUrls) {
       // If only URLs provided (no new files)
-      const urlImages = Array.isArray(imageUrls) ? imageUrls : JSON.parse(imageUrls);
-      updateData.images = urlImages;
+      try {
+        const urlImages = Array.isArray(imageUrls) ? imageUrls : JSON.parse(imageUrls);
+        updateData.images = urlImages;
+      } catch (e) {
+        return res.status(400).json({ success: false, message: 'Invalid imageUrls format' });
+      }
     }
 
     const hall = await Hall.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
@@ -245,6 +351,12 @@ router.put('/halls/:id', upload.array('images', 10), async (req, res, next) => {
 
     res.json({ success: true, data: hall });
   } catch (error) {
+    console.error('Error updating hall:', error);
+    // If it's a validation error, return it directly
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(e => e.message).join(', ');
+      return res.status(400).json({ success: false, message: messages });
+    }
     next(error);
   }
 });
