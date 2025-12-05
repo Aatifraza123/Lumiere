@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import toast from 'react-hot-toast';
-import { FiX, FiChevronRight, FiChevronLeft, FiCalendar, FiClock, FiUsers, FiMail, FiPhone, FiCheckCircle, FiDollarSign } from 'react-icons/fi';
+import { FiX, FiChevronRight, FiChevronLeft, FiCalendar, FiClock, FiUsers, FiMail, FiPhone, FiCheckCircle, FiDollarSign, FiCreditCard, FiWallet } from 'react-icons/fi';
 import api from '../utils/api';
 import { loadRazorpay } from '../utils/razorpay';
 
@@ -26,6 +26,7 @@ const BookingModal = ({ isOpen, onClose, hall, services }) => {
   
   // Step 3: Price & Payment
   const [priceDetails, setPriceDetails] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('online'); // 'online' or 'offline'
   
   // Time slots
   const timeSlots = [
@@ -157,7 +158,7 @@ const BookingModal = ({ isOpen, onClose, hall, services }) => {
         endTime: selectedTimeSlot.endTime,
         guestCount: parseInt(formData.guests) || 100,
         addons: [],
-        advancePercent: 10,
+        advancePercent: paymentMethod === 'online' ? 10 : 0,
         totalAmount: priceDetails.total,
         basePrice: priceDetails.basePrice,
         slotPrice: priceDetails.slotPrice,
@@ -172,7 +173,24 @@ const BookingModal = ({ isOpen, onClose, hall, services }) => {
       // Create booking
       const bookingResponse = await api.post('/bookings', bookingData);
       const bookingId = bookingResponse.data.data._id;
+
+      if (paymentMethod === 'offline') {
+        // Offline payment - booking confirmed without payment
+        toast.success('Booking confirmed! You can pay later. Check your email for confirmation.');
+        onClose();
+        // Reset form
+        setCurrentStep(1);
+        setFormData({ name: '', email: '', mobile: '', guests: '' });
+        setSelectedService(null);
+        setSelectedDate(new Date());
+        setSelectedTimeSlot(null);
+        setPriceDetails(null);
+        setPaymentMethod('online');
+        setSubmitting(false);
+        return;
+      }
       
+      // Online payment flow
       // Calculate advance amount (10% of total)
       const advanceAmount = Math.round(priceDetails.total * 0.1);
       
@@ -218,6 +236,7 @@ const BookingModal = ({ isOpen, onClose, hall, services }) => {
             setSelectedDate(new Date());
             setSelectedTimeSlot(null);
             setPriceDetails(null);
+            setPaymentMethod('online');
           } catch (error) {
             toast.error('Payment verification failed. Please contact support.');
           }
@@ -522,6 +541,59 @@ const BookingModal = ({ isOpen, onClose, hall, services }) => {
                       </div>
                     </div>
                   )}
+
+                  {/* Payment Method Selection */}
+                  <div className="bg-[#0A0A0A] rounded-lg p-6 space-y-4 border border-white/10">
+                    <h4 className="text-lg font-bold text-white mb-4">Select Payment Method</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Online Payment */}
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('online')}
+                        className={`p-4 rounded-lg border-2 text-left transition-all ${
+                          paymentMethod === 'online'
+                            ? 'border-[#D4AF37] bg-[#D4AF37]/10'
+                            : 'border-white/10 bg-white/5 hover:border-[#D4AF37]/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <FiCreditCard className={`text-xl ${paymentMethod === 'online' ? 'text-[#D4AF37]' : 'text-gray-400'}`} />
+                          <span className="font-semibold text-white">Online Payment</span>
+                        </div>
+                        <p className="text-sm text-gray-400 mb-2">Pay 10% advance now via Razorpay</p>
+                        <div className="text-[#D4AF37] font-bold">
+                          ₹{Math.round(priceDetails?.total * 0.1 || 0).toLocaleString()}
+                        </div>
+                      </button>
+
+                      {/* Offline Payment */}
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('offline')}
+                        className={`p-4 rounded-lg border-2 text-left transition-all ${
+                          paymentMethod === 'offline'
+                            ? 'border-[#D4AF37] bg-[#D4AF37]/10'
+                            : 'border-white/10 bg-white/5 hover:border-[#D4AF37]/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <FiWallet className={`text-xl ${paymentMethod === 'offline' ? 'text-[#D4AF37]' : 'text-gray-400'}`} />
+                          <span className="font-semibold text-white">Pay Later (Offline)</span>
+                        </div>
+                        <p className="text-sm text-gray-400 mb-2">Book now, pay later at venue</p>
+                        <div className="text-gray-500 font-bold">
+                          ₹0 (Pay at venue)
+                        </div>
+                      </button>
+                    </div>
+                    {paymentMethod === 'offline' && (
+                      <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                        <p className="text-sm text-blue-400">
+                          <strong>Note:</strong> Your booking will be confirmed. You can pay the full amount later at the venue or contact us for payment details.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -541,7 +613,9 @@ const BookingModal = ({ isOpen, onClose, hall, services }) => {
               disabled={submitting}
               className="px-6 py-2 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#b5952f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              {submitting ? 'Processing...' : currentStep === 3 ? 'Proceed to Payment' : 'Next'}
+              {submitting ? 'Processing...' : currentStep === 3 
+                ? (paymentMethod === 'online' ? 'Proceed to Payment' : 'Confirm Booking') 
+                : 'Next'}
               {currentStep < 3 && <FiChevronRight />}
             </button>
           </div>
