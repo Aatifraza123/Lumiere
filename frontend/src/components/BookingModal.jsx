@@ -610,7 +610,7 @@ const BookingModal = ({ isOpen, onClose, hall, services }) => {
             </button>
             {currentStep === 3 ? (
               <div className="flex gap-3">
-                {/* Book Now Pay Later (Offline) */}
+                {/* Book Now (No Payment) */}
                 <button
                   onClick={() => {
                     setPaymentMethod('offline');
@@ -619,10 +619,10 @@ const BookingModal = ({ isOpen, onClose, hall, services }) => {
                   disabled={submitting}
                   className="px-6 py-2 bg-white/10 text-white font-bold rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 border border-white/20"
                 >
-                  {submitting && paymentMethod === 'offline' ? 'Processing...' : 'Book Now Pay Later'}
+                  {submitting && paymentMethod === 'offline' ? 'Processing...' : 'Book Now'}
                   <FiWallet />
                 </button>
-                {/* Book Now (Online) */}
+                {/* Online Booking (With Payment) */}
                 <button
                   onClick={() => {
                     setPaymentMethod('online');
@@ -631,7 +631,7 @@ const BookingModal = ({ isOpen, onClose, hall, services }) => {
                   disabled={submitting}
                   className="px-6 py-2 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#b5952f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  {submitting && paymentMethod === 'online' ? 'Processing...' : 'Book Now'}
+                  {submitting && paymentMethod === 'online' ? 'Processing...' : 'Online Booking'}
                   <FiCreditCard />
                 </button>
               </div>
