@@ -176,21 +176,26 @@ const AdminBlog = () => {
 
   const generateContentFromSections = () => {
     let html = '';
-    contentSections.forEach((section) => {
+    contentSections.forEach((section, index) => {
       if (section.type === 'heading') {
-        html += `<h${section.level}>${section.text || ''}</h${section.level}>`;
+        const marginTop = index === 0 ? '' : ' style="margin-top: 2rem;"';
+        html += `<h${section.level}${marginTop}>${section.text || ''}</h${section.level}>`;
       } else if (section.type === 'paragraph') {
-        html += `<p>${section.text || ''}</p>`;
+        html += `<p style="margin-bottom: 1.5rem; line-height: 1.8;">${section.text || ''}</p>`;
       } else if (section.type === 'bullet-list') {
-        html += '<ul>';
+        html += '<ul style="margin: 1.5rem 0; padding-left: 2rem; list-style-type: disc;">';
         (section.items || []).forEach(item => {
-          html += `<li>${item}</li>`;
+          if (item.trim()) {
+            html += `<li style="margin-bottom: 0.75rem; line-height: 1.8;">${item}</li>`;
+          }
         });
         html += '</ul>';
       } else if (section.type === 'number-list') {
-        html += '<ol>';
+        html += '<ol style="margin: 1.5rem 0; padding-left: 2rem; list-style-type: decimal;">';
         (section.items || []).forEach(item => {
-          html += `<li>${item}</li>`;
+          if (item.trim()) {
+            html += `<li style="margin-bottom: 0.75rem; line-height: 1.8;">${item}</li>`;
+          }
         });
         html += '</ol>';
       }
@@ -521,16 +526,16 @@ const AdminBlog = () => {
                           </div>
                         </div>
                         
-                        <div className="space-y-4 bg-[#0A0A0A] border border-white/10 rounded-lg p-4 max-h-[500px] overflow-y-auto custom-scrollbar">
+                        <div className="space-y-6 bg-[#0A0A0A] border border-white/10 rounded-lg p-6 max-h-[600px] overflow-y-auto custom-scrollbar">
                           {contentSections.map((section, index) => (
-                            <div key={section.id} className="group relative p-4 bg-[#050505] rounded-lg border border-white/5 hover:border-white/10 transition-all">
+                            <div key={section.id} className="group relative p-5 bg-[#050505] rounded-xl border-2 border-white/10 hover:border-[#D4AF37]/50 transition-all shadow-lg">
                               {/* Section Header */}
-                              <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs text-gray-500 font-mono bg-white/5 px-2 py-1 rounded">
+                              <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+                                <div className="flex items-center gap-3">
+                                  <span className="text-sm font-bold text-[#D4AF37] bg-[#D4AF37]/10 px-3 py-1 rounded-full border border-[#D4AF37]/30">
                                     {index + 1}
                                   </span>
-                                  <span className="text-xs text-gray-400 uppercase font-medium">
+                                  <span className="text-sm text-white uppercase font-bold tracking-wider">
                                     {section.type === 'heading' ? `H${section.level} Heading` : 
                                      section.type === 'paragraph' ? 'Paragraph' :
                                      section.type === 'number-list' ? 'Numbered List' :
@@ -563,56 +568,60 @@ const AdminBlog = () => {
 
                               {/* Section Content */}
                               {section.type === 'heading' && (
-                                <input
-                                  type="text"
-                                  value={section.text || ''}
-                                  onChange={(e) => updateContentSection(section.id, { text: e.target.value })}
-                                  className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2 text-white focus:border-[#D4AF37] focus:outline-none font-bold"
-                                  style={{ fontSize: `${24 - (section.level - 1) * 4}px` }}
-                                  placeholder={`Enter H${section.level} heading...`}
-                                />
+                                <div className="mt-4">
+                                  <input
+                                    type="text"
+                                    value={section.text || ''}
+                                    onChange={(e) => updateContentSection(section.id, { text: e.target.value })}
+                                    className="w-full bg-[#0A0A0A] border-2 border-white/20 rounded-lg px-5 py-3 text-white focus:border-[#D4AF37] focus:outline-none font-bold"
+                                    style={{ fontSize: `${28 - (section.level - 1) * 4}px` }}
+                                    placeholder={`Enter H${section.level} heading...`}
+                                  />
+                                </div>
                               )}
 
                               {section.type === 'paragraph' && (
-                                <textarea
-                                  value={section.text || ''}
-                                  onChange={(e) => updateContentSection(section.id, { text: e.target.value })}
-                                  rows="3"
-                                  className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2 text-gray-300 focus:border-[#D4AF37] focus:outline-none resize-none text-sm"
-                                  placeholder="Enter paragraph text..."
-                                />
+                                <div className="mt-4">
+                                  <textarea
+                                    value={section.text || ''}
+                                    onChange={(e) => updateContentSection(section.id, { text: e.target.value })}
+                                    rows="4"
+                                    className="w-full bg-[#0A0A0A] border-2 border-white/20 rounded-lg px-5 py-3 text-gray-300 focus:border-[#D4AF37] focus:outline-none resize-none text-base leading-relaxed"
+                                    placeholder="Enter paragraph text..."
+                                  />
+                                </div>
                               )}
 
                               {(section.type === 'number-list' || section.type === 'bullet-list') && (
-                                <div className="space-y-2">
+                                <div className="mt-4 space-y-3">
                                   {(section.items || ['']).map((item, itemIndex) => (
-                                    <div key={itemIndex} className="flex items-start gap-2">
-                                      <span className="text-gray-500 text-sm mt-2 min-w-[24px]">
+                                    <div key={itemIndex} className="flex items-start gap-3 p-3 bg-[#0A0A0A] rounded-lg border border-white/10 hover:border-white/20 transition-colors">
+                                      <span className="text-[#D4AF37] font-bold text-base mt-1 min-w-[32px] flex-shrink-0">
                                         {section.type === 'number-list' ? `${itemIndex + 1}.` : '•'}
                                       </span>
                                       <input
                                         type="text"
                                         value={item}
                                         onChange={(e) => updateListItem(section.id, itemIndex, e.target.value)}
-                                        className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2 text-gray-300 focus:border-[#D4AF37] focus:outline-none text-sm"
+                                        className="flex-1 bg-transparent border-none text-gray-300 focus:outline-none text-base"
                                         placeholder={`List item ${itemIndex + 1}...`}
                                       />
                                       <button
                                         type="button"
                                         onClick={() => removeListItem(section.id, itemIndex)}
-                                        className="p-1.5 hover:bg-red-500/20 text-red-400 rounded transition-colors mt-1"
+                                        className="p-2 hover:bg-red-500/20 text-red-400 rounded transition-colors flex-shrink-0"
                                         title="Remove Item"
                                       >
-                                        <FiX size={12} />
+                                        <FiX size={14} />
                                       </button>
                                     </div>
                                   ))}
                                   <button
                                     type="button"
                                     onClick={() => addListItem(section.id)}
-                                    className="mt-2 flex items-center gap-1 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-gray-400 hover:text-white transition-colors"
+                                    className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/30 rounded-lg text-sm text-[#D4AF37] hover:text-white transition-colors font-medium"
                                   >
-                                    <FiPlus size={12} /> Add Item
+                                    <FiPlus size={14} /> Add New Item
                                   </button>
                                 </div>
                               )}
