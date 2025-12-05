@@ -68,6 +68,8 @@ const AdminHalls = () => {
     basePrice: '',
     rating: 5,
     amenities: [],
+    servicePricing: [],
+    priceSlots: [],
     isFeatured: false,
     isActive: true,
     images: []
@@ -75,6 +77,12 @@ const AdminHalls = () => {
   const [amenityInput, setAmenityInput] = useState('');
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  
+  // Service Pricing State
+  const [servicePricingInput, setServicePricingInput] = useState({
+    serviceType: '',
+    basePrice: ''
+  });
 
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('adminAuthenticated');
@@ -139,6 +147,40 @@ const AdminHalls = () => {
     setFormData(prev => ({
       ...prev,
       amenities: prev.amenities.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Service Pricing Management
+  const handleAddServicePricing = (e) => {
+    e?.preventDefault();
+    if (servicePricingInput.serviceType && servicePricingInput.basePrice) {
+      const price = parseFloat(servicePricingInput.basePrice);
+      if (isNaN(price) || price < 0) {
+        toast.error('Please enter a valid price');
+        return;
+      }
+      
+      // Check if service type already exists
+      if (formData.servicePricing.some(sp => sp.serviceType === servicePricingInput.serviceType)) {
+        toast.error('Service type already added');
+        return;
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        servicePricing: [...prev.servicePricing, {
+          serviceType: servicePricingInput.serviceType,
+          basePrice: price
+        }]
+      }));
+      setServicePricingInput({ serviceType: '', basePrice: '' });
+    }
+  };
+
+  const handleRemoveServicePricing = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      servicePricing: prev.servicePricing.filter((_, i) => i !== index)
     }));
   };
 
@@ -226,7 +268,7 @@ const AdminHalls = () => {
       formDataToSend.append('rating', Math.min(Math.max(ratingValue, 0), 5).toString()); // Clamp between 0 and 5
       formDataToSend.append('amenities', JSON.stringify(formData.amenities || []));
       formDataToSend.append('priceSlots', JSON.stringify([]));
-      formDataToSend.append('servicePricing', JSON.stringify([]));
+      formDataToSend.append('servicePricing', JSON.stringify(formData.servicePricing || []));
       formDataToSend.append('isFeatured', formData.isFeatured.toString());
       formDataToSend.append('isActive', formData.isActive.toString());
       
@@ -334,6 +376,8 @@ const AdminHalls = () => {
         basePrice: hall.basePrice || '',
         rating: hall.rating || 5,
         amenities: hall.amenities || [],
+        servicePricing: hall.servicePricing || [],
+        priceSlots: hall.priceSlots || [],
         isFeatured: hall.isFeatured || false,
         isActive: hall.isActive !== false,
         images: images
@@ -348,7 +392,7 @@ const AdminHalls = () => {
       setEditingHall(null);
       setFormData({
         name: '', description: '', location: '', capacity: '', basePrice: '', rating: 5,
-        amenities: [], isFeatured: false, isActive: true, images: []
+        amenities: [], servicePricing: [], priceSlots: [], isFeatured: false, isActive: true, images: []
       });
       setImagePreviews([]);
     }
@@ -812,6 +856,93 @@ const AdminHalls = () => {
                         </div>
                         <p className="text-xs text-gray-500">Enter image URL and click "Add URL" or press Enter</p>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Service Pricing Section */}
+                  <div className="space-y-3">
+                    <label className="text-sm text-gray-400 font-medium flex justify-between">
+                      <span>Service Pricing</span>
+                      <span className="text-xs text-gray-500">{formData.servicePricing.length} service{formData.servicePricing.length !== 1 ? 's' : ''} added</span>
+                    </label>
+                    <p className="text-xs text-gray-500">Set different prices for different service types (Wedding, Corporate, Party, etc.)</p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <label className="text-xs text-gray-500">Service Type</label>
+                        <select
+                          value={servicePricingInput.serviceType}
+                          onChange={(e) => setServicePricingInput(prev => ({ ...prev, serviceType: e.target.value }))}
+                          className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:border-[#D4AF37] focus:outline-none"
+                        >
+                          <option value="">Select Service Type</option>
+                          <option value="wedding">Wedding</option>
+                          <option value="corporate">Corporate</option>
+                          <option value="party">Party</option>
+                          <option value="anniversary">Anniversary</option>
+                          <option value="engagement">Engagement</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs text-gray-500">Price (₹)</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="number"
+                            value={servicePricingInput.basePrice}
+                            onChange={(e) => setServicePricingInput(prev => ({ ...prev, basePrice: e.target.value }))}
+                            min="0"
+                            step="1000"
+                            placeholder="e.g. 300000"
+                            className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:border-[#D4AF37] focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddServicePricing}
+                            className="px-4 py-2.5 bg-[#D4AF37] text-black rounded-lg hover:bg-[#b5952f] transition-colors text-sm font-semibold"
+                          >
+                            Add
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Service Pricing List */}
+                    <div className="flex flex-wrap gap-2 p-4 bg-[#0A0A0A] rounded-xl border border-white/5 min-h-[80px]">
+                      {formData.servicePricing.length === 0 && (
+                        <span className="text-xs text-gray-600 italic">No service pricing added yet.</span>
+                      )}
+                      {formData.servicePricing.map((pricing, index) => {
+                        const serviceTypeLabels = {
+                          wedding: 'Wedding',
+                          corporate: 'Corporate',
+                          party: 'Party',
+                          anniversary: 'Anniversary',
+                          engagement: 'Engagement',
+                          other: 'Other'
+                        };
+                        return (
+                          <motion.span
+                            layout
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            key={index}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-full text-sm"
+                          >
+                            <span className="text-[#D4AF37] font-semibold">
+                              {serviceTypeLabels[pricing.serviceType] || pricing.serviceType}
+                            </span>
+                            <span className="text-white">₹{pricing.basePrice?.toLocaleString() || '0'}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveServicePricing(index)}
+                              className="hover:bg-[#D4AF37]/20 rounded-full p-0.5 ml-1 transition-colors"
+                            >
+                              <FiX size={14} className="text-[#D4AF37]" />
+                            </button>
+                          </motion.span>
+                        );
+                      })}
                     </div>
                   </div>
 
