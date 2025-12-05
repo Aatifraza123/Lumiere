@@ -164,7 +164,7 @@ const About = () => {
             {/* Image */}
             <motion.div 
               style={{ y: yStory }}
-              className="relative h-[280px] w-full overflow-hidden rounded-lg"
+              className="relative h-[220px] w-full overflow-hidden rounded-lg"
             >
               <img 
                 src={IMAGES.lobby} 
