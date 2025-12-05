@@ -1222,14 +1222,30 @@ router.put('/bookings/:id', async (req, res, next) => {
   }
 });
 
+// DELETE route must come before GET /bookings/:id/invoice to avoid route conflicts
 router.delete('/bookings/:id', async (req, res, next) => {
   try {
     console.log('🗑️ DELETE /admin/bookings/:id - Request received');
+    console.log('📦 Request params:', req.params);
     console.log('📦 Booking ID:', req.params.id);
+    console.log('📦 Request method:', req.method);
+    console.log('📦 Request URL:', req.url);
+    console.log('📦 Request path:', req.path);
+
+    if (!req.params.id) {
+      return res.status(400).json({ success: false, message: 'Booking ID is required' });
+    }
+
+    // Validate MongoDB ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      console.log('❌ Invalid booking ID format:', req.params.id);
+      return res.status(400).json({ success: false, message: 'Invalid booking ID format' });
+    }
 
     const booking = await Booking.findById(req.params.id);
     
     if (!booking) {
+      console.log('❌ Booking not found:', req.params.id);
       return res.status(404).json({ success: false, message: 'Booking not found' });
     }
 
@@ -1239,6 +1255,11 @@ router.delete('/bookings/:id', async (req, res, next) => {
     res.json({ success: true, message: 'Booking deleted successfully' });
   } catch (error) {
     console.error('❌ Error deleting booking:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     next(error);
   }
 });

@@ -96,12 +96,21 @@ app.use('/api/subscribe', subscribeRoutes);
 console.log('✅ Routes registered:');
 console.log('  - GET  /api/health');
 console.log('  - POST /api/bookings (public)');
+console.log('  - DELETE /api/admin/bookings/:id (admin)');
 
 // 404 handler
 app.use((req, res) => {
+  console.log('❌ 404 - Route not found:', req.method, req.path);
+  console.log('❌ Request URL:', req.url);
+  console.log('❌ Request headers:', {
+    authorization: req.headers.authorization ? 'Present' : 'Missing',
+    'content-type': req.headers['content-type']
+  });
   res.status(404).json({
     success: false,
-    message: 'Route not found'
+    message: 'Route not found',
+    method: req.method,
+    path: req.path
   });
 });
 
