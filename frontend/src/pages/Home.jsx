@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform, useMotionValue, useInView } from 'framer-motion';
+import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { FiArrowUpRight, FiMapPin, FiStar, FiPlay, FiCheckCircle, FiZap, FiAward, FiHeart, FiUsers, FiCalendar, FiClock, FiShield } from 'react-icons/fi';
 import { useEffect, useState, useRef } from 'react';
 import api from '../utils/api';
@@ -18,16 +18,8 @@ const VIDEO_BREAK_SOURCE = "https://cdn.coverr.co/videos/coverr-wedding-celebrat
 const Home = () => {
   const [featuredHalls, setFeaturedHalls] = useState([]);
   const [loading, setLoading] = useState(true);
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
   
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    
     fetchFeaturedHalls();
     
     return () => window.removeEventListener('mousemove', handleMouseMove);
@@ -196,9 +188,6 @@ const Home = () => {
       
       {/* FILM GRAIN */}
       <div className="fixed inset-0 opacity-[0.03] pointer-events-none z-[100] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
-
-      {/* CUSTOM CURSOR */}
-      <MagneticCursor mouseX={mouseX} mouseY={mouseY} />
 
       {/* SECTIONS */}
       <HeroSection />
@@ -866,173 +855,9 @@ const WhyChooseUsSection = () => {
 
 // ===== CTA =====
 const CTASection = () => {
-  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
-  const [isHovering, setIsHovering] = useState(false);
-  const sectionRef = useRef(null);
-  const textRef = useRef(null);
-
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (sectionRef.current) {
-        const rect = sectionRef.current.getBoundingClientRect();
-        setCursorPosition({
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top
-        });
-      }
-    };
-
-    const section = sectionRef.current;
-    if (section) {
-      section.addEventListener('mousemove', handleMouseMove);
-      return () => section.removeEventListener('mousemove', handleMouseMove);
-    }
-  }, []);
-
   return (
-    <section 
-      ref={sectionRef} 
-      className="py-40 px-6 bg-[#0A0A0A] relative overflow-hidden cursor-none"
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
-    >
-      {/* Advanced Custom Cursor Effect - Multiple Layers */}
-      
-      {/* Outer Glow Ring */}
-      <motion.div
-        className="fixed pointer-events-none z-[300]"
-        style={{
-          left: cursorPosition.x,
-          top: cursorPosition.y,
-          transform: 'translate(-50%, -50%)'
-        }}
-        animate={{
-          scale: isHovering ? [1, 1.3, 1] : [1, 1.1, 1],
-          opacity: [0.3, 0.6, 0.3],
-        }}
-        transition={{
-          duration: 2.5,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      >
-        <div className="w-24 h-24 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#FFD700] to-[#D4AF37] opacity-40 blur-xl"></div>
-      </motion.div>
-
-      {/* Middle Pulsing Ring */}
-      <motion.div
-        className="fixed pointer-events-none z-[301]"
-        style={{
-          left: cursorPosition.x,
-          top: cursorPosition.y,
-          transform: 'translate(-50%, -50%)'
-        }}
-        animate={{
-          scale: [1, 1.8, 1],
-          opacity: [0.4, 0, 0.4],
-          rotate: [0, 180, 360]
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeOut"
-        }}
-      >
-        <div className="w-20 h-20 rounded-full border-2 border-[#D4AF37]"></div>
-      </motion.div>
-
-      {/* Golden Glow Dot */}
-      <motion.div
-        className="fixed pointer-events-none z-[302] mix-blend-difference"
-        style={{
-          left: cursorPosition.x,
-          top: cursorPosition.y,
-          transform: 'translate(-50%, -50%)'
-        }}
-        animate={{
-          scale: isHovering ? [1, 1.2, 1] : [1, 1.1, 1],
-        }}
-        transition={{
-          duration: 1.5,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      >
-        <div className="w-12 h-12 rounded-full bg-[#D4AF37] opacity-90 blur-md" style={{
-          background: 'radial-gradient(circle, #FFD700, #D4AF37, transparent)'
-        }}></div>
-      </motion.div>
-      
-      {/* White Center Dot */}
-      <motion.div
-        className="fixed pointer-events-none z-[303]"
-        style={{
-          left: cursorPosition.x,
-          top: cursorPosition.y,
-          transform: 'translate(-50%, -50%)'
-        }}
-        animate={{
-          scale: isHovering ? [1, 1.3, 1] : [1, 1.1, 1],
-        }}
-        transition={{
-          duration: 1,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      >
-        <div className="w-6 h-6 rounded-full bg-white shadow-lg shadow-[#D4AF37]/50"></div>
-      </motion.div>
-
-      {/* Inner Glow */}
-      <motion.div
-        className="fixed pointer-events-none z-[304]"
-        style={{
-          left: cursorPosition.x,
-          top: cursorPosition.y,
-          transform: 'translate(-50%, -50%)'
-        }}
-        animate={{
-          scale: [1, 1.5, 1],
-          opacity: [0.6, 0, 0.6]
-        }}
-        transition={{
-          duration: 1.2,
-          repeat: Infinity,
-          ease: "easeOut"
-        }}
-      >
-        <div className="w-8 h-8 rounded-full bg-[#D4AF37] opacity-60 blur-sm"></div>
-      </motion.div>
-
-      {/* Particle Trail Effect */}
-      {[...Array(3)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="fixed pointer-events-none z-[299]"
-          style={{
-            left: cursorPosition.x,
-            top: cursorPosition.y,
-            transform: 'translate(-50%, -50%)'
-          }}
-          animate={{
-            x: [0, (i + 1) * 20 * (i % 2 === 0 ? 1 : -1)],
-            y: [0, (i + 1) * 20 * (i % 2 === 0 ? -1 : 1)],
-            opacity: [0.8, 0],
-            scale: [1, 0.5]
-          }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            delay: i * 0.2,
-            ease: "easeOut"
-          }}
-        >
-          <div className="w-2 h-2 rounded-full bg-[#D4AF37]"></div>
-        </motion.div>
-      ))}
-
+    <section className="py-40 px-6 bg-[#0A0A0A] relative overflow-hidden">
       <motion.div 
-        ref={textRef}
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true, margin: "-100px" }}
@@ -1087,42 +912,40 @@ const CTASection = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <MagneticButton>
-            <motion.button 
-              className="inline-block text-5xl md:text-7xl font-['Playfair_Display'] font-normal text-white hover:text-[#D4AF37] transition-colors duration-500 relative"
+          <motion.button 
+            className="inline-block text-5xl md:text-7xl font-['Playfair_Display'] font-normal text-white hover:text-[#D4AF37] transition-colors duration-500 relative"
+            animate={{
+              textShadow: [
+                "0 0 0px rgba(212, 175, 55, 0)",
+                "0 0 20px rgba(212, 175, 55, 0.5)",
+                "0 0 0px rgba(212, 175, 55, 0)"
+              ]
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            START
+            {/* Glowing Underline Effect */}
+            <motion.div
+              className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent"
+              initial={{ scaleX: 0, opacity: 0 }}
+              whileInView={{ scaleX: 1, opacity: 1 }}
+              viewport={{ once: true }}
               animate={{
-                textShadow: [
-                  "0 0 0px rgba(212, 175, 55, 0)",
-                  "0 0 20px rgba(212, 175, 55, 0.5)",
-                  "0 0 0px rgba(212, 175, 55, 0)"
-                ]
+                opacity: [0.5, 1, 0.5],
+                scaleX: [0.8, 1, 0.8]
               }}
               transition={{
                 duration: 2,
                 repeat: Infinity,
-                ease: "easeInOut"
+                ease: "easeInOut",
+                delay: 1.5
               }}
-            >
-              START
-              {/* Glowing Underline Effect */}
-              <motion.div
-                className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent"
-                initial={{ scaleX: 0, opacity: 0 }}
-                whileInView={{ scaleX: 1, opacity: 1 }}
-                viewport={{ once: true }}
-                animate={{
-                  opacity: [0.5, 1, 0.5],
-                  scaleX: [0.8, 1, 0.8]
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 1.5
-                }}
-              />
-            </motion.button>
-          </MagneticButton>
+            />
+          </motion.button>
         </motion.div>
       </motion.div>
     </section>
@@ -1130,34 +953,6 @@ const CTASection = () => {
 };
 
 // ===== HELPER COMPONENTS =====
-
-const MagneticCursor = ({ mouseX, mouseY }) => (
-  <>
-    <motion.div className="hidden md:block fixed w-2 h-2 bg-[#D4AF37] rounded-full pointer-events-none z-[200] top-0 left-0"
-      style={{ x: mouseX, y: mouseY, translateX: '-50%', translateY: '-50%' }} />
-    <motion.div className="hidden md:block fixed w-8 h-8 border border-[#D4AF37]/50 rounded-full pointer-events-none z-[200] top-0 left-0"
-      style={{ x: mouseX, y: mouseY, translateX: '-50%', translateY: '-50%' }}
-      transition={{ type: "spring", stiffness: 150, damping: 20 }} />
-  </>
-);
-
-const MagneticButton = ({ children }) => {
-  const ref = useRef(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const handleMouse = (e) => {
-    if (!ref.current) return;
-    const { clientX, clientY } = e;
-    const { left, top, width, height } = ref.current.getBoundingClientRect();
-    const x = (clientX - left - width / 2) * 0.2;
-    const y = (clientY - top - height / 2) * 0.2;
-    setPosition({ x, y });
-  };
-  return (
-    <motion.div ref={ref} onMouseMove={handleMouse} onMouseLeave={() => setPosition({ x: 0, y: 0 })} animate={{ x: position.x, y: position.y }} className="inline-block">
-      {children}
-    </motion.div>
-  );
-};
 
 const GlassButton = ({ children }) => (
   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex items-center px-6 py-4 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm text-white hover:bg-white/10 transition-all text-sm font-medium">
