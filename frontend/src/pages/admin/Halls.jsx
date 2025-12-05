@@ -267,7 +267,7 @@ const AdminHalls = () => {
         : 5;
       formDataToSend.append('rating', Math.min(Math.max(ratingValue, 0), 5).toString()); // Clamp between 0 and 5
       formDataToSend.append('amenities', JSON.stringify(formData.amenities || []));
-      formDataToSend.append('priceSlots', JSON.stringify([]));
+      formDataToSend.append('priceSlots', JSON.stringify(formData.priceSlots || []));
       formDataToSend.append('servicePricing', JSON.stringify(formData.servicePricing || []));
       formDataToSend.append('isFeatured', formData.isFeatured.toString());
       formDataToSend.append('isActive', formData.isActive.toString());

@@ -160,7 +160,6 @@ const AdminServices = () => {
         description: service.description || '',
         category: service.category || service.type || '',
         type: service.type || service.category || '',
-        price: service.price || '',
         features: service.features || [],
         isActive: service.isActive !== false,
         image: service.image || ''
@@ -175,7 +174,7 @@ const AdminServices = () => {
       setEditingService(null);
       setFormData({
         title: '', name: '', description: '', category: '', 
-        type: '', price: '', features: [], isActive: true, image: ''
+        type: '', features: [], isActive: true, image: ''
       });
       setImagePreview(null);
     }
