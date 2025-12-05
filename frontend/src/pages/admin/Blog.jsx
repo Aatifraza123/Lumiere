@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { 
   FiPlus, FiEdit2, FiTrash2, FiImage, FiEye, FiEyeOff, 
-  FiTag, FiLayers, FiX, FiType, FiAlignLeft, FiCheck, FiUser 
+  FiTag, FiLayers, FiX, FiType, FiAlignLeft, FiCheck, FiUser,
+  FiHeading, FiList, FiMinus 
 } from 'react-icons/fi';
 import AdminNavbar from '../../components/admin/AdminNavbar';
 import api from '../../utils/api';
@@ -32,6 +33,10 @@ const AdminBlog = () => {
     }
   });
   const [tagInput, setTagInput] = useState('');
+  const [contentSections, setContentSections] = useState([
+    { id: 1, type: 'heading', level: 1, text: '' },
+    { id: 2, type: 'paragraph', text: '' }
+  ]);
 
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('adminAuthenticated');
@@ -103,8 +108,10 @@ const AdminBlog = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const generatedContent = generateContentFromSections();
       const submitData = {
         ...formData,
+        content: generatedContent,
         tags: JSON.stringify(formData.tags),
         isPublished: formData.isPublished.toString(),
         author: JSON.stringify(formData.author)
@@ -125,6 +132,135 @@ const AdminBlog = () => {
     }
   };
 
+  const parseContentToSections = (content) => {
+    if (!content) return [
+      { id: 1, type: 'heading', level: 1, text: '' },
+      { id: 2, type: 'paragraph', text: '' }
+    ];
+    
+    // Try to parse HTML content
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+    const sections = [];
+    let id = 1;
+    
+    Array.from(doc.body.children).forEach((el) => {
+      if (el.tagName.match(/^H[1-6]$/)) {
+        sections.push({
+          id: id++,
+          type: 'heading',
+          level: parseInt(el.tagName[1]),
+          text: el.textContent || ''
+        });
+      } else if (el.tagName === 'UL' || el.tagName === 'OL') {
+        const items = Array.from(el.querySelectorAll('li')).map(li => li.textContent || '');
+        sections.push({
+          id: id++,
+          type: el.tagName === 'UL' ? 'bullet-list' : 'number-list',
+          items: items
+        });
+      } else if (el.tagName === 'P') {
+        sections.push({
+          id: id++,
+          type: 'paragraph',
+          text: el.textContent || ''
+        });
+      }
+    });
+    
+    return sections.length > 0 ? sections : [
+      { id: 1, type: 'heading', level: 1, text: '' },
+      { id: 2, type: 'paragraph', text: '' }
+    ];
+  };
+
+  const generateContentFromSections = () => {
+    let html = '';
+    contentSections.forEach((section) => {
+      if (section.type === 'heading') {
+        html += `<h${section.level}>${section.text || ''}</h${section.level}>`;
+      } else if (section.type === 'paragraph') {
+        html += `<p>${section.text || ''}</p>`;
+      } else if (section.type === 'bullet-list') {
+        html += '<ul>';
+        (section.items || []).forEach(item => {
+          html += `<li>${item}</li>`;
+        });
+        html += '</ul>';
+      } else if (section.type === 'number-list') {
+        html += '<ol>';
+        (section.items || []).forEach(item => {
+          html += `<li>${item}</li>`;
+        });
+        html += '</ol>';
+      }
+    });
+    return html;
+  };
+
+  const addContentSection = (type, afterId = null) => {
+    const newSection = {
+      id: Date.now(),
+      type: type,
+      ...(type === 'heading' ? { level: 2, text: '' } : {}),
+      ...(type === 'paragraph' ? { text: '' } : {}),
+      ...(type.includes('list') ? { items: [''] } : {})
+    };
+    
+    if (afterId === null) {
+      setContentSections([...contentSections, newSection]);
+    } else {
+      const index = contentSections.findIndex(s => s.id === afterId);
+      setContentSections([
+        ...contentSections.slice(0, index + 1),
+        newSection,
+        ...contentSections.slice(index + 1)
+      ]);
+    }
+  };
+
+  const removeContentSection = (id) => {
+    if (contentSections.length > 1) {
+      setContentSections(contentSections.filter(s => s.id !== id));
+    }
+  };
+
+  const updateContentSection = (id, updates) => {
+    setContentSections(contentSections.map(s => 
+      s.id === id ? { ...s, ...updates } : s
+    ));
+  };
+
+  const updateListItem = (sectionId, itemIndex, value) => {
+    setContentSections(contentSections.map(s => {
+      if (s.id === sectionId) {
+        const newItems = [...(s.items || [])];
+        newItems[itemIndex] = value;
+        return { ...s, items: newItems };
+      }
+      return s;
+    }));
+  };
+
+  const addListItem = (sectionId) => {
+    setContentSections(contentSections.map(s => {
+      if (s.id === sectionId) {
+        return { ...s, items: [...(s.items || []), ''] };
+      }
+      return s;
+    }));
+  };
+
+  const removeListItem = (sectionId, itemIndex) => {
+    setContentSections(contentSections.map(s => {
+      if (s.id === sectionId) {
+        const newItems = s.items.filter((_, i) => i !== itemIndex);
+        return { ...s, items: newItems.length > 0 ? newItems : [''] };
+      }
+      return s;
+    }));
+  };
+
   const openModal = (blog = null) => {
     if (blog) {
       setEditingBlog(blog);
@@ -142,6 +278,7 @@ const AdminBlog = () => {
           bio: blog.author?.bio || ''
         }
       });
+      setContentSections(parseContentToSections(blog.content));
     } else {
       setEditingBlog(null);
       setFormData({
@@ -158,6 +295,10 @@ const AdminBlog = () => {
           bio: ''
         }
       });
+      setContentSections([
+        { id: 1, type: 'heading', level: 1, text: '' },
+        { id: 2, type: 'paragraph', text: '' }
+      ]);
     }
     setIsModalOpen(true);
   };
@@ -341,19 +482,142 @@ const AdminBlog = () => {
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <label className="text-sm text-gray-400 font-medium">Main Content</label>
-                        <div className="relative">
-                           <FiAlignLeft className="absolute left-3 top-4 text-gray-500" />
-                           <textarea
-                            name="content"
-                            required
-                            rows="12"
-                            value={formData.content}
-                            onChange={handleInputChange}
-                            className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg pl-10 pr-4 py-3 text-gray-300 focus:border-[#D4AF37] focus:outline-none leading-relaxed font-sans"
-                            placeholder="Start writing your story..."
-                          />
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm text-gray-400 font-medium">Main Content</label>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => addContentSection('heading')}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-gray-400 hover:text-white transition-colors"
+                              title="Add Heading"
+                            >
+                              <FiHeading /> Heading
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => addContentSection('paragraph')}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-gray-400 hover:text-white transition-colors"
+                              title="Add Paragraph"
+                            >
+                              <FiAlignLeft /> Paragraph
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => addContentSection('number-list')}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-gray-400 hover:text-white transition-colors"
+                              title="Add Numbered List"
+                            >
+                              <FiList /> Numbered
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => addContentSection('bullet-list')}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-gray-400 hover:text-white transition-colors"
+                              title="Add Bullet List"
+                            >
+                              <FiList /> Bullets
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-4 bg-[#0A0A0A] border border-white/10 rounded-lg p-4 max-h-[500px] overflow-y-auto custom-scrollbar">
+                          {contentSections.map((section, index) => (
+                            <div key={section.id} className="group relative p-4 bg-[#050505] rounded-lg border border-white/5 hover:border-white/10 transition-all">
+                              {/* Section Header */}
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-gray-500 font-mono bg-white/5 px-2 py-1 rounded">
+                                    {index + 1}
+                                  </span>
+                                  <span className="text-xs text-gray-400 uppercase font-medium">
+                                    {section.type === 'heading' ? `H${section.level} Heading` : 
+                                     section.type === 'paragraph' ? 'Paragraph' :
+                                     section.type === 'number-list' ? 'Numbered List' :
+                                     section.type === 'bullet-list' ? 'Bullet List' : section.type}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {section.type === 'heading' && (
+                                    <select
+                                      value={section.level}
+                                      onChange={(e) => updateContentSection(section.id, { level: parseInt(e.target.value) })}
+                                      className="bg-[#0A0A0A] border border-white/10 rounded px-2 py-1 text-xs text-white"
+                                    >
+                                      <option value={1}>H1</option>
+                                      <option value={2}>H2</option>
+                                      <option value={3}>H3</option>
+                                      <option value={4}>H4</option>
+                                    </select>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => removeContentSection(section.id)}
+                                    className="p-1.5 hover:bg-red-500/20 text-red-400 rounded transition-colors"
+                                    title="Remove Section"
+                                  >
+                                    <FiMinus size={14} />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Section Content */}
+                              {section.type === 'heading' && (
+                                <input
+                                  type="text"
+                                  value={section.text || ''}
+                                  onChange={(e) => updateContentSection(section.id, { text: e.target.value })}
+                                  className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2 text-white focus:border-[#D4AF37] focus:outline-none font-bold"
+                                  style={{ fontSize: `${24 - (section.level - 1) * 4}px` }}
+                                  placeholder={`Enter H${section.level} heading...`}
+                                />
+                              )}
+
+                              {section.type === 'paragraph' && (
+                                <textarea
+                                  value={section.text || ''}
+                                  onChange={(e) => updateContentSection(section.id, { text: e.target.value })}
+                                  rows="3"
+                                  className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2 text-gray-300 focus:border-[#D4AF37] focus:outline-none resize-none text-sm"
+                                  placeholder="Enter paragraph text..."
+                                />
+                              )}
+
+                              {(section.type === 'number-list' || section.type === 'bullet-list') && (
+                                <div className="space-y-2">
+                                  {(section.items || ['']).map((item, itemIndex) => (
+                                    <div key={itemIndex} className="flex items-start gap-2">
+                                      <span className="text-gray-500 text-sm mt-2 min-w-[24px]">
+                                        {section.type === 'number-list' ? `${itemIndex + 1}.` : '•'}
+                                      </span>
+                                      <input
+                                        type="text"
+                                        value={item}
+                                        onChange={(e) => updateListItem(section.id, itemIndex, e.target.value)}
+                                        className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2 text-gray-300 focus:border-[#D4AF37] focus:outline-none text-sm"
+                                        placeholder={`List item ${itemIndex + 1}...`}
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => removeListItem(section.id, itemIndex)}
+                                        className="p-1.5 hover:bg-red-500/20 text-red-400 rounded transition-colors mt-1"
+                                        title="Remove Item"
+                                      >
+                                        <FiX size={12} />
+                                      </button>
+                                    </div>
+                                  ))}
+                                  <button
+                                    type="button"
+                                    onClick={() => addListItem(section.id)}
+                                    className="mt-2 flex items-center gap-1 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-gray-400 hover:text-white transition-colors"
+                                  >
+                                    <FiPlus size={12} /> Add Item
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       </div>
 
