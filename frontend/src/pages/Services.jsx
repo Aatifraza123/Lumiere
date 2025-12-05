@@ -173,11 +173,22 @@ const Services = () => {
 
   const filterServices = () => {
     let filtered = [...services];
-    if (selectedCategory !== 'all') filtered = filtered.filter(s => s.category === selectedCategory);
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(s => s.title.toLowerCase().includes(q));
+    
+    // Category filter
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(s => s.category === selectedCategory);
     }
+    
+    // Search filter - search in title and description
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(s => 
+        s.title.toLowerCase().includes(q) ||
+        (s.shortDescription && s.shortDescription.toLowerCase().includes(q)) ||
+        (s.description && s.description.toLowerCase().includes(q))
+      );
+    }
+    
     setFilteredServices(filtered);
   };
 
@@ -244,15 +255,23 @@ const Services = () => {
           </div>
         </motion.div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#D4AF37]"></div>
+          </div>
+        )}
+
         {/* Services Grid */}
-        <motion.div 
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-        >
-          <AnimatePresence>
-            {filteredServices.map((service) => {
+        {!loading && (
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
+            <AnimatePresence>
+              {filteredServices.map((service) => {
               const isExpanded = expandedCard === service._id;
               return (
                 <motion.div
@@ -383,16 +402,23 @@ const Services = () => {
                   </div>
                 </motion.div>
               );
-            })}
-          </AnimatePresence>
-        </motion.div>
+              })}
+            </AnimatePresence>
+          </motion.div>
+        )}
 
         {/* Empty State */}
-        {filteredServices.length === 0 && (
+        {!loading && filteredServices.length === 0 && (
           <div className="text-center py-20">
             <h3 className="text-2xl font-bold text-white mb-2">No services found</h3>
             <p className="text-gray-400">Try adjusting your search or filters</p>
-            <button onClick={() => { setSelectedCategory('all'); setSearchQuery(''); }} className="mt-6 text-[#D4AF37] hover:underline">
+            <button 
+              onClick={() => { 
+                setSelectedCategory('all'); 
+                setSearchQuery(''); 
+              }} 
+              className="mt-6 px-6 py-2 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#b5952f] transition-colors"
+            >
               Clear all filters
             </button>
           </div>
