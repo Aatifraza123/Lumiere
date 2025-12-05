@@ -29,11 +29,6 @@ const serviceSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  price: {
-    type: Number,
-    required: true,
-    min: 0
-  },
   image: {
     type: String
   },

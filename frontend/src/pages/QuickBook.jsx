@@ -278,7 +278,7 @@ const QuickBook = () => {
           _id: service._id,
           name: service.title || service.name,
           title: service.title || service.name,
-          price: service.price || 0,
+          price: 0,
           description: service.description || '',
           type: service.category || service.type || 'other',
           category: service.category || service.type || 'other'
@@ -320,7 +320,7 @@ const QuickBook = () => {
       matchedServiceType: serviceType,
       servicePricing: selectedVenue.servicePricing,
       venueBasePrice: selectedVenue.basePrice,
-      servicePrice: selectedService.price
+      servicePrice: 0
     });
 
     if (selectedVenue.servicePricing && selectedVenue.servicePricing.length > 0) {
@@ -355,7 +355,7 @@ const QuickBook = () => {
       }
     } else {
       // Fallback to venue basePrice or service price
-      basePrice = selectedVenue.basePrice || selectedService.price || 0;
+      basePrice = selectedVenue.basePrice || 0;
       console.warn('⚠️ No servicePricing found, using fallback:', basePrice);
     }
     
@@ -613,8 +613,8 @@ const QuickBook = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                   {services.map((service) => {
                     // Calculate price from selected venue's servicePricing
-                    let displayPrice = service.price || 0;
-                    let priceSource = 'service'; // 'service', 'venue-servicePricing', 'venue-basePrice'
+                    let displayPrice = 0;
+                    let priceSource = 'venue-basePrice'; // 'venue-servicePricing', 'venue-basePrice'
                     
                     if (selectedVenue && selectedVenue.servicePricing && selectedVenue.servicePricing.length > 0) {
                       const serviceType = service.category || service.type || 'other';
@@ -628,7 +628,7 @@ const QuickBook = () => {
                         displayPrice = selectedVenue.basePrice;
                         priceSource = 'venue-basePrice';
                       }
-                    } else if (selectedVenue.basePrice && selectedVenue.basePrice > 0) {
+                    } else if (selectedVenue && selectedVenue.basePrice && selectedVenue.basePrice > 0) {
                       displayPrice = selectedVenue.basePrice;
                       priceSource = 'venue-basePrice';
                     }

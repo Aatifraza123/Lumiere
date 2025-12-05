@@ -105,7 +105,6 @@ const AdminServices = () => {
       formDataToSend.append('description', formData.description);
       formDataToSend.append('category', formData.category || formData.type);
       formDataToSend.append('type', formData.category || formData.type);
-      formDataToSend.append('price', parseFloat(formData.price) || 0);
       formDataToSend.append('features', JSON.stringify(formData.features || []));
       formDataToSend.append('isActive', formData.isActive.toString());
       

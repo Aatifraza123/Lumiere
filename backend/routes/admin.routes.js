@@ -738,7 +738,7 @@ router.post('/services', upload.single('image'), async (req, res, next) => {
     console.log('📝 Body:', req.body);
     console.log('📝 File:', req.file ? 'File uploaded' : 'No file');
     
-    const { title, name, description, category, type, price, features, isActive, image } = req.body;
+    const { title, name, description, category, type, features, isActive, image } = req.body;
 
     // Validate required fields
     if (!title && !name) {
@@ -799,7 +799,6 @@ router.post('/services', upload.single('image'), async (req, res, next) => {
       name: serviceName, // Also set name for compatibility
       description: description.trim(),
       category: serviceCategory,
-      price: parseFloat(price) || 0,
       image: imageUrl,
       features: featuresArray,
       isActive: isActive !== 'false' && isActive !== false
@@ -879,7 +878,7 @@ router.put('/services/:id', upload.single('image'), async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Invalid service ID format' });
     }
     
-    const { title, name, description, category, type, price, features, isActive, image } = req.body;
+    const { title, name, description, category, type, features, isActive, image } = req.body;
 
     const updateData = {};
     const serviceName = (title || name)?.trim();
@@ -907,9 +906,6 @@ router.put('/services/:id', upload.single('image'), async (req, res, next) => {
     }
     if (category || type) {
       updateData.category = (category || type).trim();
-    }
-    if (price !== undefined) {
-      updateData.price = parseFloat(price) || 0;
     }
     
     // Parse features

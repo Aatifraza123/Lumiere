@@ -145,7 +145,7 @@ const Services = () => {
             icon: getFeatureIcon(typeof f === 'string' ? f : f.name)
           })),
           pricing: {
-            startingFrom: service.price || 0,
+            startingFrom: 0,
             currency: 'INR'
           },
           isPopular: service.isFeatured || false
