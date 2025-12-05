@@ -2,12 +2,14 @@ import { useCallback } from "react";
 import Particles from "react-particles";
 import { loadSlim } from "tsparticles-slim"; 
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { FiAward, FiHeart, FiUsers, FiTarget, FiArrowRight } from 'react-icons/fi';
+import { FiAward, FiHeart, FiUsers, FiArrowRight, FiShield, FiHome, FiCoffee, FiLock, FiStar, FiMapPin } from 'react-icons/fi';
 
 // --- ASSETS ---
 const IMAGES = {
-  founder: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=80",
-  story: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=1200&q=80"
+  hero: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80",
+  rooms: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80",
+  restaurant: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
+  lobby: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1200&q=80"
 };
 
 const About = () => {
@@ -16,16 +18,16 @@ const About = () => {
   // Parallax & Opacity Transforms
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
-  const yStory = useTransform(scrollYProgress, [0.1, 0.4], [100, 0]);
+  const yStory = useTransform(scrollYProgress, [0.1, 0.4], [50, -50]);
 
   const particlesInit = useCallback(async (engine) => {
     await loadSlim(engine);
   }, []);
 
   return (
-    <div className="bg-[#050505] text-white min-h-screen font-['Lato'] overflow-x-hidden relative selection:bg-[#D4AF37] selection:text-black">
+    <div className="bg-[#050505] text-white min-h-screen font-['Lato'] overflow-x-hidden relative selection:bg-white selection:text-black">
       
-      {/* === NEXT-LEVEL PARTICLES === */}
+      {/* === 0. SUBTLE PARTICLES (Clean & Minimal) === */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <Particles
           id="tsparticles"
@@ -35,189 +37,397 @@ const About = () => {
             background: { color: { value: "transparent" } },
             fpsLimit: 120,
             particles: {
-              color: { value: "#D4AF37" },
+              color: { value: "#ffffff" },
               links: {
-                color: "#D4AF37",
+                color: "#ffffff",
                 distance: 150,
                 enable: true,
-                opacity: 0.2,
+                opacity: 0.1,
                 width: 1,
               },
               move: {
                 enable: true,
-                speed: 0.6,
+                speed: 0.4,
                 direction: "none",
                 random: true,
                 straight: false,
                 outModes: { default: "out" },
               },
-              number: { density: { enable: true, area: 800 }, value: 60 },
-              opacity: { value: 0.3, animation: { enable: true, speed: 1, minimumValue: 0.1 } },
+              number: { density: { enable: true, area: 800 }, value: 40 },
+              opacity: { value: 0.2, animation: { enable: true, speed: 0.5, minimumValue: 0.1 } },
               shape: { type: "circle" },
-              size: { value: { min: 1, max: 3 } },
+              size: { value: { min: 1, max: 2 } },
             },
             detectRetina: true,
           }}
           className="absolute inset-0 h-full w-full"
         />
-        {/* Gradient Overlay for Depth */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#050505]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#050505]" />
       </div>
 
-      {/* === 1. CINEMATIC HERO SECTION === */}
+      {/* === 1. HERO SECTION === */}
       <motion.section 
         style={{ opacity: heroOpacity, scale: heroScale }}
         className="relative h-screen flex flex-col items-center justify-center px-6 z-10"
       >
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={IMAGES.hero} 
+            alt="Hotel Lobby" 
+            className="w-full h-full object-cover opacity-30"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
+        </div>
+        
         <motion.div
-          initial={{ opacity: 0, y: 60 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          className="text-center"
+          transition={{ duration: 1.2, ease: "easeOut" }}
+          className="text-center relative z-10"
         >
-          <span className="font-['Cinzel'] text-[#D4AF37] text-sm md:text-base font-bold tracking-[0.5em] uppercase mb-8 block relative">
-            Since 2010
-            <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-12 h-[1px] bg-[#D4AF37]/50"></span>
+          <span className="font-['Cinzel'] text-white/60 text-xs md:text-sm font-medium tracking-[0.6em] uppercase mb-6 block">
+            Welcome to
           </span>
           
-          <h1 className="font-['Cinzel'] text-5xl md:text-8xl lg:text-9xl font-medium mb-8 leading-[1.1] tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/60">
-            Beyond <br /> 
-            <span className="italic font-serif text-[#D4AF37]">Expectation</span>
+          <h1 className="font-['Cinzel'] text-6xl md:text-8xl lg:text-9xl font-medium mb-6 leading-none tracking-tight text-white">
+            [HOTEL NAME]
           </h1>
 
-          <p className="text-lg md:text-2xl text-gray-400 max-w-2xl mx-auto font-light leading-relaxed tracking-wide">
-            We architect moments that linger in memory long after the lights dim.
+          <div className="flex items-center justify-center gap-2 text-gray-400 mb-8">
+            <FiMapPin className="text-[#D4AF37]" />
+            <span className="text-lg md:text-xl">[CITY/LOCATION]</span>
+          </div>
+
+          <div className="h-[1px] w-24 bg-[#D4AF37]/50 mx-auto mb-8"></div>
+
+          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto font-light leading-relaxed">
+            Where comfort meets elegance, and every stay becomes a cherished memory. 
+            Experience unparalleled hospitality in the heart of [CITY/LOCATION].
           </p>
         </motion.div>
 
-        {/* Scroll Indicator */}
+        {/* Clean Scroll Indicator */}
         <motion.div 
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1, y: [0, 10, 0] }}
-          transition={{ delay: 1.5, duration: 2, repeat: Infinity }}
-          className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5, duration: 1 }}
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10"
         >
-          <div className="w-[1px] h-16 bg-gradient-to-b from-[#D4AF37] to-transparent" />
-          <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37]/70 font-['Cinzel']">Explore</span>
+           <div className="w-[1px] h-24 bg-gradient-to-b from-white/50 to-transparent mx-auto"></div>
         </motion.div>
       </motion.section>
 
-      {/* === 2. IMMERSIVE STORY SECTION === */}
-      <section className="py-32 px-6 relative z-10 bg-black/20 backdrop-blur-sm border-t border-white/5">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-          
-          {/* Parallax Image Container */}
+      {/* === 2. OUR STORY === */}
+      <section className="py-32 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto">
           <motion.div 
-            style={{ y: yStory }}
-            className="relative h-[700px] w-full rounded-[20px] overflow-hidden border border-white/10"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-16"
           >
-            <img 
-              src={IMAGES.story} 
-              alt="Our Story" 
-              className="absolute inset-0 w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000 scale-110" 
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-            <div className="absolute bottom-10 left-10 right-10">
-               <div className="text-6xl text-[#D4AF37] font-['Cinzel'] mb-2">15+</div>
-               <div className="text-sm uppercase tracking-[0.2em]">Years of Excellence</div>
-            </div>
+            <span className="text-white/40 text-sm tracking-[0.3em] uppercase font-medium mb-4 block">Our Journey</span>
+            <h2 className="font-['Cinzel'] text-4xl md:text-5xl text-white mb-6">
+              The Story of <span className="text-[#D4AF37] italic font-serif">[HOTEL NAME]</span>
+            </h2>
           </motion.div>
 
-          {/* Text Content */}
-          <motion.div 
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="font-['Cinzel'] text-4xl md:text-6xl mb-10 leading-tight">
-              The Art of <br />
-              <span className="text-[#D4AF37] italic">Perfection</span>
-            </h2>
-            <div className="space-y-8 text-gray-400 text-lg font-light leading-relaxed">
-              <p>
-                Lumière began as a whisper—a desire to bring cinematic grandeur to personal celebrations. 
-                What started in a small studio has blossomed into an international collective of designers, 
-                planners, and dreamers.
-              </p>
-              <p>
-                We don't just coordinate vendors; we conduct symphonies. From the precise timing of a 
-                spotlight to the texture of a linen napkin, every element is a deliberate stroke on your canvas.
-              </p>
-            </div>
-            
-            <div className="mt-16 grid grid-cols-2 gap-8 border-t border-white/10 pt-8">
-               <div>
-                 <h4 className="text-[#D4AF37] font-['Cinzel'] text-xl mb-2">Vision</h4>
-                 <p className="text-sm text-gray-500">To redefine the boundaries of celebration.</p>
-               </div>
-               <div>
-                 <h4 className="text-[#D4AF37] font-['Cinzel'] text-xl mb-2">Craft</h4>
-                 <p className="text-sm text-gray-500">Uncompromising quality in every detail.</p>
-               </div>
-            </div>
-          </motion.div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center mb-20">
+            {/* Text Content */}
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+            >
+              <div className="space-y-6 text-gray-300 text-lg font-light leading-relaxed">
+                <p>
+                  Nestled in the vibrant heart of [CITY/LOCATION], [HOTEL NAME] stands as a testament to 
+                  timeless hospitality and modern luxury. What began as a vision to create a home away from 
+                  home has evolved into a sanctuary where every guest is treated like family.
+                </p>
+                <p>
+                  Our story is woven from countless moments of warmth, dedication, and an unwavering 
+                  commitment to excellence. From the moment you step through our doors, you'll discover 
+                  that we're not just a hotel—we're a destination where memories are made, business is 
+                  conducted with ease, and families find their perfect retreat.
+                </p>
+                <p>
+                  Over the years, we've hosted thousands of guests, each with unique needs and expectations. 
+                  This diversity has shaped us into a hotel that seamlessly blends the comfort families 
+                  seek with the efficiency business travelers demand.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Image */}
+            <motion.div 
+              style={{ y: yStory }}
+              className="relative h-[500px] w-full overflow-hidden rounded-lg"
+            >
+              <img 
+                src={IMAGES.lobby} 
+                alt="Hotel Lobby" 
+                className="absolute inset-0 w-full h-full object-cover grayscale contrast-110 hover:scale-105 transition-transform duration-[2s]" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* === 3. PHILOSOPHY (Horizontal Scroll Feel) === */}
-      <section className="py-40 px-6 relative z-10">
+      {/* === 3. MISSION & VALUES === */}
+      <section className="py-32 px-6 relative z-10 bg-[#080808] border-y border-white/5">
         <div className="max-w-7xl mx-auto">
           <motion.div 
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-24"
+            className="text-center mb-20"
           >
-            <span className="text-[#D4AF37] text-xs font-bold tracking-[0.4em] uppercase mb-4 block">Core Values</span>
-            <h2 className="font-['Cinzel'] text-4xl md:text-6xl">Our Philosophy</h2>
+            <h2 className="font-['Cinzel'] text-3xl md:text-4xl text-white mb-4">Our Mission & Values</h2>
+            <p className="text-gray-400 max-w-3xl mx-auto text-lg font-light">
+              The principles that guide everything we do
+            </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             {[
-              { title: 'Precision', icon: <FiTarget />, desc: 'Accuracy is not an option, it is our baseline.' },
-              { title: 'Empathy', icon: <FiHeart />, desc: 'We feel the pulse of your emotions.' },
-              { title: 'Innovation', icon: <FiAward />, desc: 'Pioneering new standards in luxury.' }
+              { 
+                title: 'Our Mission', 
+                icon: <FiStar />, 
+                desc: 'To provide exceptional hospitality experiences that exceed expectations, creating lasting memories for every guest while maintaining the highest standards of service, comfort, and care.' 
+              },
+              { 
+                title: 'Excellence', 
+                icon: <FiAward />, 
+                desc: 'We strive for perfection in every detail, from the cleanliness of our rooms to the quality of our cuisine, ensuring every aspect of your stay is flawless.' 
+              },
+              { 
+                title: 'Genuine Care', 
+                icon: <FiHeart />, 
+                desc: 'Your comfort and satisfaction are our top priorities. We treat every guest with warmth, respect, and personalized attention that makes you feel truly valued.' 
+              }
             ].map((item, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 50 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.2, duration: 0.6 }}
-                whileHover={{ y: -15, borderColor: 'rgba(212, 175, 55, 0.3)' }}
-                className="group p-12 rounded-[2rem] bg-[#0A0A0A] border border-white/5 hover:bg-white/[0.02] transition-all duration-500"
+                transition={{ delay: index * 0.2 }}
+                className="group p-8 bg-[#0A0A0A] border border-white/10 rounded-xl hover:border-[#D4AF37]/30 transition-all duration-500"
               >
-                <div className="text-4xl text-[#D4AF37] mb-8 group-hover:scale-110 transition-transform duration-500">{item.icon}</div>
-                <h3 className="font-['Cinzel'] text-2xl mb-4 group-hover:text-[#D4AF37] transition-colors">{item.title}</h3>
-                <p className="text-gray-500 font-light leading-relaxed group-hover:text-gray-300 transition-colors">{item.desc}</p>
+                <div className="text-4xl text-[#D4AF37] mb-6 group-hover:scale-110 transition-transform duration-500">
+                  {item.icon}
+                </div>
+                <h3 className="font-['Cinzel'] text-xl mb-4 text-white">{item.title}</h3>
+                <p className="text-gray-400 font-light leading-relaxed text-sm">
+                  {item.desc}
+                </p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* === 4. GRANDEUR CTA === */}
-      <section className="py-32 px-6 text-center relative z-10 overflow-hidden">
-        {/* Animated Ring Background */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-[#D4AF37]/10 rounded-full animate-[spin_20s_linear_infinite]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-[#D4AF37]/5 rounded-full animate-[spin_15s_linear_infinite_reverse]" />
+      {/* === 4. WHAT MAKES US UNIQUE === */}
+      <section className="py-32 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <span className="text-white/40 text-sm tracking-[0.3em] uppercase font-medium mb-4 block">Why Choose Us</span>
+            <h2 className="font-['Cinzel'] text-4xl md:text-5xl text-white mb-6">
+              What Makes <span className="text-[#D4AF37] italic font-serif">[HOTEL NAME]</span> Unique
+            </h2>
+          </motion.div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            {[
+              {
+                title: "Prime Location",
+                desc: "Strategically located in [CITY/LOCATION], we offer easy access to business districts, shopping centers, and cultural attractions, making us the perfect base for both work and leisure."
+              },
+              {
+                title: "Personalized Service",
+                desc: "Our dedicated team goes above and beyond to understand your needs. Whether you're here for business or pleasure, we tailor our services to ensure your stay is exactly what you envision."
+              },
+              {
+                title: "Modern Amenities",
+                desc: "We've thoughtfully equipped our hotel with the latest technology and modern conveniences, ensuring you stay connected, comfortable, and productive throughout your visit."
+              },
+              {
+                title: "Family-Friendly & Business-Ready",
+                desc: "Our versatile spaces and services cater perfectly to families seeking comfort and fun, while also providing business travelers with everything they need for a successful trip."
+              }
+            ].map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.15 }}
+                className="p-8 bg-[#0A0A0A] border-l-4 border-[#D4AF37] rounded-lg hover:bg-[#111] transition-colors"
+              >
+                <h3 className="font-['Cinzel'] text-2xl text-white mb-4">{item.title}</h3>
+                <p className="text-gray-400 font-light leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* === 5. FACILITIES === */}
+      <section className="py-32 px-6 relative z-10 bg-[#080808]">
+        <div className="max-w-7xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-20"
+          >
+            <span className="text-white/40 text-sm tracking-[0.3em] uppercase font-medium mb-4 block">World-Class Facilities</span>
+            <h2 className="font-['Cinzel'] text-4xl md:text-5xl text-white mb-6">
+              Everything You Need for a <span className="text-[#D4AF37] italic font-serif">Perfect Stay</span>
+            </h2>
+            <p className="text-gray-400 max-w-3xl mx-auto text-lg font-light">
+              We've carefully curated every facility to ensure your comfort, safety, and satisfaction
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                icon: <FiHome />,
+                title: "Luxurious Rooms",
+                desc: "Spacious, elegantly designed rooms and suites featuring premium bedding, modern furnishings, and thoughtful amenities. Each room is a haven of comfort, equipped with high-speed Wi-Fi, climate control, and stunning views."
+              },
+              {
+                icon: <FiCoffee />,
+                title: "Exquisite Restaurant",
+                desc: "Savor culinary excellence at our in-house restaurant, where our talented chefs craft delicious meals using the finest ingredients. From hearty breakfasts to gourmet dinners, every meal is a celebration of flavor."
+              },
+              {
+                icon: <FiShield />,
+                title: "Secure Parking",
+                desc: "Travel with peace of mind knowing your vehicle is safe in our well-lit, 24/7 monitored parking facility. Ample space for cars, with easy access to the hotel entrance."
+              },
+              {
+                icon: <FiLock />,
+                title: "24/7 Security",
+                desc: "Your safety is paramount. Our round-the-clock security team, advanced surveillance systems, and secure access controls ensure you and your belongings are always protected."
+              },
+              {
+                icon: <FiStar />,
+                title: "Impeccable Hygiene",
+                desc: "We maintain the highest standards of cleanliness and sanitation. Our rigorous cleaning protocols, regular deep-cleaning sessions, and use of hospital-grade disinfectants guarantee a spotless environment."
+              },
+              {
+                icon: <FiUsers />,
+                title: "Exceptional Staff",
+                desc: "Our professional, courteous, and well-trained team is always ready to assist you. From the front desk to housekeeping, every staff member is committed to making your stay memorable."
+              }
+            ].map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="group p-8 bg-[#0A0A0A] border border-white/10 rounded-xl hover:border-[#D4AF37]/50 hover:bg-[#111] transition-all duration-500"
+              >
+                <div className="text-5xl text-[#D4AF37] mb-6 group-hover:scale-110 transition-transform duration-500">
+                  {item.icon}
+                </div>
+                <h3 className="font-['Cinzel'] text-xl mb-4 text-white">{item.title}</h3>
+                <p className="text-gray-400 font-light leading-relaxed text-sm">
+                  {item.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* === 6. GUEST EXPERIENCE === */}
+      <section className="py-32 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <motion.div 
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="relative h-[600px] w-full overflow-hidden rounded-lg"
+            >
+              <img 
+                src={IMAGES.rooms} 
+                alt="Luxurious Room" 
+                className="absolute inset-0 w-full h-full object-cover grayscale contrast-110 hover:scale-105 transition-transform duration-[2s]" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              <span className="text-white/40 text-sm tracking-[0.3em] uppercase font-medium mb-4 block">Your Experience</span>
+              <h2 className="font-['Cinzel'] text-4xl md:text-5xl text-white mb-8">
+                A Stay That <span className="text-[#D4AF37] italic font-serif">Exceeds Expectations</span>
+              </h2>
+              
+              <div className="space-y-6 text-gray-300 text-lg font-light leading-relaxed">
+                <p>
+                  At [HOTEL NAME], we believe that exceptional hospitality is about creating moments that matter. 
+                  Whether you're traveling for business or leisure, with family or solo, we ensure every aspect 
+                  of your stay is thoughtfully considered.
+                </p>
+                <p>
+                  Our commitment to guest experience means we're constantly evolving. We listen to your feedback, 
+                  anticipate your needs, and go the extra mile to make your time with us truly special. From the 
+                  moment you make your reservation to the time you check out, we're here to ensure your comfort 
+                  and satisfaction.
+                </p>
+                <p>
+                  Join thousands of satisfied guests who have made [HOTEL NAME] their preferred choice in [CITY/LOCATION]. 
+                  Experience the difference that genuine care, attention to detail, and unwavering commitment to excellence 
+                  can make.
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* === 7. CTA SECTION === */}
+      <section className="py-32 px-6 text-center relative z-10 bg-[#080808] border-t border-white/5">
         <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="relative z-10 max-w-4xl mx-auto"
+          className="relative z-10 max-w-2xl mx-auto"
         >
-          <h2 className="font-['Cinzel'] text-5xl md:text-7xl mb-8">Meet The Curators</h2>
-          <p className="text-gray-400 mb-12 max-w-xl mx-auto font-light text-lg">
-            The minds behind the magic. A collective of visionary planners and designers.
+          <h2 className="font-['Cinzel'] text-4xl md:text-6xl mb-6 text-white">
+            Experience <span className="text-[#D4AF37] italic font-serif">[HOTEL NAME]</span>
+          </h2>
+          <p className="text-gray-400 text-lg mb-10 font-light">
+            Book your stay today and discover why we're the preferred choice for travelers in [CITY/LOCATION]
           </p>
           
-          <button className="group relative inline-flex items-center gap-4 px-12 py-5 bg-white text-black rounded-full font-['Cinzel'] font-bold tracking-wider overflow-hidden hover:bg-[#D4AF37] transition-colors duration-500">
-            <span>View Our Team</span>
+          <a 
+            href="/book" 
+            className="group relative inline-flex items-center gap-4 px-8 py-4 bg-[#D4AF37] text-black rounded-lg hover:bg-[#b5952f] transition-all duration-500 font-semibold"
+          >
+            <span className="uppercase tracking-widest text-sm">Book Your Stay</span>
             <FiArrowRight className="group-hover:translate-x-2 transition-transform duration-300" />
-          </button>
+          </a>
         </motion.div>
       </section>
 
@@ -226,8 +436,3 @@ const About = () => {
 };
 
 export default About;
-
-
-
-
-
