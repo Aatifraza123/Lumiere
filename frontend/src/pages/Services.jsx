@@ -363,22 +363,21 @@ const Services = () => {
                         )}
                       </AnimatePresence>
 
-                      <div className="border-t border-white/10 pt-3 flex items-center justify-between mt-auto">
+                      <div className="border-t border-white/10 pt-3 flex items-center justify-end mt-auto">
                         <Link 
                           to={`/services/${service._id}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="flex flex-col"
+                          className="flex items-center gap-2 text-sm text-[#D4AF37] hover:text-[#FFD700] transition-colors"
                         >
-                          <p className="text-[10px] text-gray-500 uppercase tracking-wider">Starting from</p>
-                          <p className="text-base font-bold text-[#D4AF37]">₹{service.pricing.startingFrom || 0}</p>
+                          <span>View Details</span>
+                          <motion.span 
+                            animate={{ rotate: isExpanded ? 180 : 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="w-7 h-7 rounded-full border border-[#D4AF37]/50 flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all"
+                          >
+                            <FiArrowRight className="text-sm" />
+                          </motion.span>
                         </Link>
-                        <motion.span 
-                          animate={{ rotate: isExpanded ? 180 : 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="w-7 h-7 rounded-full border border-white/20 flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
-                        >
-                          <FiArrowRight className="text-sm" />
-                        </motion.span>
                       </div>
                     </div>
                   </div>
