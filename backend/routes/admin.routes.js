@@ -1536,10 +1536,10 @@ router.delete('/subscribe/:id', async (req, res, next) => {
   }
 });
 
-// Send bulk newsletter email to all active subscribers
+// Send bulk newsletter email to all active subscribers or custom recipient list
 router.post('/subscribe/send-newsletter', async (req, res, next) => {
   try {
-    const { subject, content, sendToAll = false } = req.body;
+    const { subject, content, sendToAll = false, recipientEmails } = req.body;
 
     // Validation
     if (!subject || !subject.trim()) {
@@ -1555,33 +1555,51 @@ router.post('/subscribe/send-newsletter', async (req, res, next) => {
       });
     }
 
-    // Get active subscribers
-    const query = { isActive: true };
-    const subscribers = await Subscribe.find(query).select('email name');
-    
-    if (subscribers.length === 0) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'No active subscribers found' 
-      });
+    let emailList = [];
+
+    // If custom recipientEmails provided, use them
+    if (recipientEmails && Array.isArray(recipientEmails) && recipientEmails.length > 0) {
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      emailList = recipientEmails.filter(email => email && emailRegex.test(email.trim()));
+      
+      if (emailList.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'No valid email addresses found in recipient list' 
+        });
+      }
+
+      console.log(`📧 Sending newsletter to ${emailList.length} custom recipients`);
+    } else {
+      // Get active subscribers (default behavior)
+      const query = { isActive: true };
+      const subscribers = await Subscribe.find(query).select('email name');
+      
+      if (subscribers.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'No active subscribers found' 
+        });
+      }
+
+      emailList = subscribers.map(sub => sub.email);
+      console.log(`📧 Sending newsletter to ${emailList.length} subscribers`);
     }
 
-    const subscriberEmails = subscribers.map(sub => sub.email);
-
-    console.log(`📧 Sending newsletter to ${subscriberEmails.length} subscribers`);
     console.log(`📧 Subject: ${subject}`);
 
     // Import sendBulkNewsletter function
     const { sendBulkNewsletter } = await import('../utils/email.js');
     
     // Send bulk email
-    const result = await sendBulkNewsletter(subject.trim(), content.trim(), subscriberEmails);
+    const result = await sendBulkNewsletter(subject.trim(), content.trim(), emailList);
 
     console.log(`✅ Newsletter sent: ${result.sent} successful, ${result.failed} failed`);
 
     res.json({
       success: true,
-      message: `Newsletter sent to ${result.sent} subscribers`,
+      message: `Newsletter sent to ${result.sent} recipients`,
       data: {
         sent: result.sent,
         failed: result.failed,

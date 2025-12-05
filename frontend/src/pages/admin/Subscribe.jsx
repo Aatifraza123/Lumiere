@@ -13,6 +13,8 @@ const AdminSubscribe = () => {
   const [filter, setFilter] = useState('all');
   const [showNewsletterModal, setShowNewsletterModal] = useState(false);
   const [sendingNewsletter, setSendingNewsletter] = useState(false);
+  const [allEmails, setAllEmails] = useState([]);
+  const [recipientType, setRecipientType] = useState('subscribe'); // subscribe, contact, booking, all
   const [newsletterForm, setNewsletterForm] = useState({
     subject: '',
     content: ''
@@ -21,7 +23,66 @@ const AdminSubscribe = () => {
   useEffect(() => {
     checkAuth();
     fetchSubscriptions();
+    fetchAllEmails();
   }, [filter]);
+
+  const fetchAllEmails = async () => {
+    try {
+      // Fetch subscribe emails
+      const subscribeResponse = await api.get('/admin/subscribe');
+      const subscribeEmails = (subscribeResponse.data.data || [])
+        .filter(sub => sub.isActive)
+        .map(sub => ({ email: sub.email, name: sub.name, type: 'subscribe' }));
+      
+      // Fetch contact emails
+      const contactResponse = await api.get('/admin/contact');
+      const contactEmails = (contactResponse.data.data || []).map(c => ({
+        email: c.email,
+        name: c.name,
+        type: 'contact'
+      }));
+      
+      // Fetch booking emails
+      const bookingResponse = await api.get('/admin/bookings');
+      const bookingEmails = [];
+      (bookingResponse.data.data || []).forEach(booking => {
+        if (booking.customerEmail) {
+          bookingEmails.push({
+            email: booking.customerEmail,
+            name: booking.customerName,
+            type: 'booking'
+          });
+        }
+        if (booking.userId?.email) {
+          bookingEmails.push({
+            email: booking.userId.email,
+            name: booking.userId.name,
+            type: 'booking'
+          });
+        }
+      });
+      
+      // Combine all emails and remove duplicates
+      const emailMap = new Map();
+      [...subscribeEmails, ...contactEmails, ...bookingEmails].forEach(item => {
+        if (!emailMap.has(item.email)) {
+          emailMap.set(item.email, item);
+        } else {
+          // If email exists, merge types
+          const existing = emailMap.get(item.email);
+          if (!existing.types) existing.types = [existing.type];
+          if (!existing.types.includes(item.type)) {
+            existing.types.push(item.type);
+          }
+          existing.type = existing.types.join(', ');
+        }
+      });
+      
+      setAllEmails(Array.from(emailMap.values()).sort((a, b) => a.email.localeCompare(b.email)));
+    } catch (error) {
+      console.error('Error fetching all emails:', error);
+    }
+  };
 
   const checkAuth = () => {
     const isAuthenticated = localStorage.getItem('adminAuthenticated');
@@ -101,6 +162,21 @@ const AdminSubscribe = () => {
     toast.success('Subscriptions exported successfully!');
   };
 
+  const getRecipientEmails = () => {
+    switch (recipientType) {
+      case 'subscribe':
+        return allEmails.filter(e => e.type === 'subscribe' || e.type?.includes('subscribe'));
+      case 'contact':
+        return allEmails.filter(e => e.type === 'contact' || e.type?.includes('contact'));
+      case 'booking':
+        return allEmails.filter(e => e.type === 'booking' || e.type?.includes('booking'));
+      case 'all':
+        return allEmails;
+      default:
+        return [];
+    }
+  };
+
   const handleSendNewsletter = async () => {
     if (!newsletterForm.subject || !newsletterForm.subject.trim()) {
       toast.error('Please enter email subject');
@@ -111,28 +187,42 @@ const AdminSubscribe = () => {
       return;
     }
 
-    const activeSubscribers = subscriptions.filter(sub => sub.isActive);
-    if (activeSubscribers.length === 0) {
-      toast.error('No active subscribers found');
+    const recipientEmails = getRecipientEmails();
+    if (recipientEmails.length === 0) {
+      toast.error(`No recipients found for ${recipientType}`);
       return;
     }
 
-    if (!window.confirm(`Send newsletter to ${activeSubscribers.length} active subscribers?`)) {
+    const recipientTypeLabel = {
+      subscribe: 'Subscribers',
+      contact: 'Contacts',
+      booking: 'Bookings',
+      all: 'All Recipients'
+    }[recipientType] || recipientType;
+
+    if (!window.confirm(`Send newsletter to ${recipientEmails.length} ${recipientTypeLabel.toLowerCase()}?`)) {
       return;
     }
 
     setSendingNewsletter(true);
     try {
+      // Get unique email addresses
+      const emailList = [...new Set(recipientEmails.map(e => e.email))];
+      
+      // For now, we'll use the existing endpoint but we might need to create a new one
+      // that accepts custom email list
       const response = await api.post('/admin/subscribe/send-newsletter', {
         subject: newsletterForm.subject.trim(),
         content: newsletterForm.content.trim(),
-        sendToAll: true
+        sendToAll: recipientType === 'subscribe', // Only use sendToAll for subscribe
+        recipientEmails: recipientType !== 'subscribe' ? emailList : undefined // Custom list for non-subscribe
       });
 
       if (response.data.success) {
-        toast.success(`Newsletter sent to ${response.data.data.sent} subscribers!`);
+        toast.success(`Newsletter sent to ${response.data.data.sent} recipients!`);
         setShowNewsletterModal(false);
         setNewsletterForm({ subject: '', content: '' });
+        setRecipientType('subscribe');
         
         if (response.data.data.failed > 0) {
           toast.error(`${response.data.data.failed} emails failed to send`);
@@ -187,6 +277,38 @@ const AdminSubscribe = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* All Emails Section */}
+        <div className="bg-[#121212] border border-white/10 rounded-2xl p-6 mb-6">
+          <h3 className="text-lg font-semibold text-white mb-4">All Emails (Contact + Booking + Subscribe)</h3>
+          <div className="relative">
+            <select
+              multiple
+              size={8}
+              className="w-full bg-[#0A0A0A] border border-cyan-500/30 rounded-lg px-4 py-3 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
+              style={{ overflowY: 'auto' }}
+              onChange={(e) => {
+                if (e.target.value) {
+                  window.open(`mailto:${e.target.value}`, '_blank');
+                }
+              }}
+            >
+              {allEmails.map((item, index) => (
+                <option key={index} value={item.email} className="bg-[#0A0A0A] text-white py-1">
+                  {item.email} {item.name ? `(${item.name})` : ''} [{item.type}]
+                </option>
+              ))}
+            </select>
+            {allEmails.length === 0 && (
+              <div className="bg-[#0A0A0A] border border-cyan-500/30 rounded-lg px-4 py-3 text-sm text-gray-500">
+                No emails found
+              </div>
+            )}
+            <p className="text-xs text-gray-400 mt-2">
+              Total: {allEmails.length} emails | Click on an email to open mail client
+            </p>
+          </div>
+        </div>
+
         {/* Filter */}
         <div className="bg-[#121212] border border-white/10 rounded-2xl p-6 mb-6">
           <div className="flex items-center gap-4">
@@ -307,11 +429,42 @@ const AdminSubscribe = () => {
                 <div className="space-y-6">
                   <div>
                     <label className="block text-sm text-gray-400 font-medium mb-2">
-                      Recipients
+                      Select Recipients <span className="text-red-400">*</span>
                     </label>
-                    <div className="bg-[#0A0A0A] border border-cyan-500/30 rounded-lg px-4 py-3 text-sm text-cyan-400">
-                      {subscriptions.filter(sub => sub.isActive).length} active subscribers
-                    </div>
+                    <select
+                      value={recipientType}
+                      onChange={(e) => setRecipientType(e.target.value)}
+                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 focus:outline-none transition-colors mb-3"
+                    >
+                      <option value="subscribe" className="bg-[#0A0A0A] text-white">Newsletter Subscribers</option>
+                      <option value="contact" className="bg-[#0A0A0A] text-white">Contact Inquiries</option>
+                      <option value="booking" className="bg-[#0A0A0A] text-white">Booking Customers</option>
+                      <option value="all" className="bg-[#0A0A0A] text-white">All Emails (Subscribe + Contact + Booking)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-400 font-medium mb-2">
+                      Recipients List ({getRecipientEmails().length} emails)
+                    </label>
+                    <select
+                      multiple
+                      size={10}
+                      className="w-full bg-[#0A0A0A] border border-cyan-500/30 rounded-lg px-4 py-3 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
+                      style={{ overflowY: 'auto' }}
+                      disabled
+                    >
+                      {getRecipientEmails().map((item, index) => (
+                        <option key={index} value={item.email} className="bg-[#0A0A0A] text-white py-1">
+                          {item.email} {item.name ? `(${item.name})` : ''} [{item.type}]
+                        </option>
+                      ))}
+                    </select>
+                    {getRecipientEmails().length === 0 && (
+                      <div className="bg-[#0A0A0A] border border-cyan-500/30 rounded-lg px-4 py-3 text-sm text-gray-500">
+                        No recipients found for selected type
+                      </div>
+                    )}
                   </div>
 
                   <div>
