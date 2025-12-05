@@ -141,7 +141,7 @@ const About = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
             >
-              <div className="space-y-6 text-gray-300 text-lg font-light leading-relaxed">
+              <div className="space-y-6 text-gray-700 text-lg font-light leading-relaxed">
                 <p>
                   Nestled in the vibrant heart of Boring Road Patna, Lumiere stands as a testament to 
                   timeless hospitality and modern luxury. What began as a vision to create a home away from 
