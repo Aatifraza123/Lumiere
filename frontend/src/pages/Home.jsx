@@ -808,10 +808,26 @@ const TestimonialsSection = () => {
 // ===== WHY CHOOSE US =====
 const WhyChooseUsSection = () => {
   const features = [
-    { icon: <FiAward />, title: 'Award Winning', desc: '50+ industry recognitions' },
-    { icon: <FiZap />, title: 'Fast Turnaround', desc: 'Events in 2 weeks' },
-    { icon: <FiShield />, title: 'Full Insurance', desc: 'Comprehensive coverage' },
-    { icon: <FiClock />, title: '24/7 Support', desc: 'Always available' },
+    { 
+      icon: <FiAward />, 
+      title: 'Excellence in Every Detail', 
+      desc: 'With years of expertise in luxury event planning and hospitality, Lumière has established itself as a trusted name in Boring Road, Patna. Our commitment to perfection has earned us recognition for delivering exceptional experiences that exceed expectations.' 
+    },
+    { 
+      icon: <FiHeart />, 
+      title: 'Personalized Service', 
+      desc: 'We understand that every event is unique. Our dedicated team works closely with you to bring your vision to life, ensuring every detail reflects your personal style and preferences. From intimate gatherings to grand celebrations, we tailor our services to meet your specific needs.' 
+    },
+    { 
+      icon: <FiUsers />, 
+      title: 'Experienced Professionals', 
+      desc: 'Our team of skilled event coordinators, designers, and hospitality experts brings years of industry experience to every project. We combine creativity with meticulous planning to ensure flawless execution, making your special moments truly memorable.' 
+    },
+    { 
+      icon: <FiShield />, 
+      title: 'Trusted & Reliable', 
+      desc: 'At Lumière, we prioritize your peace of mind. With comprehensive planning, transparent communication, and a proven track record of successful events, you can trust us to handle every aspect of your celebration with professionalism and care.' 
+    },
   ];
 
   return (
@@ -838,8 +854,8 @@ const WhyChooseUsSection = () => {
               className="bg-white/5 border border-white/10 rounded-3xl p-8"
             >
               <div className="text-5xl mb-6 text-[#D4AF37]">{feature.icon}</div>
-              <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-              <p className="text-gray-400 text-sm font-light">{feature.desc}</p>
+              <h3 className="text-xl font-bold mb-4 text-white">{feature.title}</h3>
+              <p className="text-gray-400 text-sm font-light leading-relaxed">{feature.desc}</p>
             </motion.div>
           ))}
         </div>
