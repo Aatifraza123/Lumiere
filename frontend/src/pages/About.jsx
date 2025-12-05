@@ -171,7 +171,7 @@ const About = () => {
                 alt="Hotel Lobby" 
                 className="absolute inset-0 w-full h-full object-cover grayscale contrast-110 hover:scale-105 transition-transform duration-[2s]" 
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             </motion.div>
           </div>
         </div>
@@ -369,7 +369,7 @@ const About = () => {
                 alt="Luxurious Room" 
                 className="absolute inset-0 w-full h-full object-cover grayscale contrast-110 hover:scale-105 transition-transform duration-[2s]" 
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             </motion.div>
 
             <motion.div 
