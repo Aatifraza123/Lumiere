@@ -28,7 +28,13 @@ if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
 // @access  Public (with optional auth for guest bookings)
 router.post('/razorpay/create-order', optionalAuth, async (req, res, next) => {
   try {
+    console.log('📥 POST /api/payments/razorpay/create-order - Request received');
+    console.log('📦 Request body:', req.body);
+    console.log('👤 User authenticated:', !!req.user);
+    console.log('👤 User ID:', req.user ? req.user._id : 'guest');
+
     if (!razorpay) {
+      console.error('❌ Razorpay not initialized');
       return res.status(503).json({ 
         success: false, 
         message: 'Payment gateway not configured. Please contact administrator.' 
@@ -37,22 +43,49 @@ router.post('/razorpay/create-order', optionalAuth, async (req, res, next) => {
 
     const { bookingId, amount } = req.body;
 
+    if (!bookingId) {
+      return res.status(400).json({ success: false, message: 'Booking ID is required' });
+    }
+
     const booking = await Booking.findById(bookingId);
     if (!booking) {
       return res.status(404).json({ success: false, message: 'Booking not found' });
     }
 
-    // If user is authenticated, verify they own the booking
-    // If not authenticated (guest booking), allow payment if booking has no userId or userId is null
+    // Check if this is a guest booking (has customerEmail/customerName)
+    const isGuestBooking = booking.customerEmail && booking.customerName;
+
+    console.log('📋 Booking details:', {
+      bookingId: booking._id,
+      userId: booking.userId,
+      customerEmail: booking.customerEmail,
+      customerName: booking.customerName,
+      isGuestBooking: isGuestBooking
+    });
+
+    // Authorization logic:
+    // 1. If user is authenticated, verify they own the booking
+    // 2. If not authenticated, allow if it's a guest booking (has customerEmail)
+    // 3. If not authenticated and not a guest booking, require authentication
     if (req.user) {
+      // Authenticated user - verify they own the booking
       if (booking.userId && booking.userId.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ success: false, message: 'Not authorized' });
+        console.error('❌ Authorization failed: User does not own this booking');
+        console.error('   Booking userId:', booking.userId);
+        console.error('   Request userId:', req.user._id);
+        return res.status(403).json({ success: false, message: 'Not authorized to pay for this booking' });
       }
+      console.log('✅ Authenticated user authorized');
     } else {
-      // Guest booking - allow if booking has no userId or userId is null
-      if (booking.userId) {
-        return res.status(403).json({ success: false, message: 'This booking requires authentication' });
+      // Not authenticated - only allow if it's a guest booking
+      if (!isGuestBooking) {
+        console.error('❌ Authorization failed: Guest booking but no customerEmail/customerName');
+        return res.status(403).json({ 
+          success: false, 
+          message: 'This booking requires authentication. Please log in to proceed with payment.' 
+        });
       }
+      console.log('✅ Guest booking authorized');
     }
 
     const paymentAmount = amount || booking.totalAmount;

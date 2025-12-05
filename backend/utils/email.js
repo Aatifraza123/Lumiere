@@ -26,12 +26,26 @@ export const sendEmail = async (options) => {
       throw new Error('Email configuration missing');
     }
 
+    // Validate SMTP_USER is a valid email (not admin@lumiere.com which doesn't exist)
+    const smtpUser = process.env.SMTP_USER;
+    if (!smtpUser || !smtpUser.trim()) {
+      throw new Error('SMTP_USER is not configured');
+    }
+
+    // Warn if SMTP_USER is set to admin@lumiere.com (invalid email)
+    if (smtpUser.toLowerCase().includes('admin@lumiere.com')) {
+      console.error('❌ WARNING: SMTP_USER is set to admin@lumiere.com which is not a valid email address.');
+      console.error('❌ Please set SMTP_USER to a valid Gmail address (e.g., razaaatif658@gmail.com)');
+      throw new Error('SMTP_USER is set to an invalid email address. Please use a valid Gmail address.');
+    }
+
     const mailOptions = {
-      from: `${process.env.SMTP_FROM || 'Lumière Events'} <${process.env.SMTP_USER}>`,
-      to: options.email,
+      from: `${process.env.SMTP_FROM || 'Lumière Events'} <${smtpUser.trim()}>`,
+      to: options.email.trim(),
       subject: options.subject,
       html: options.html,
-      text: options.text
+      text: options.text,
+      replyTo: process.env.ADMIN_EMAIL || smtpUser.trim() // Set reply-to to admin email
     };
 
     if (options.attachments) {
@@ -120,6 +134,29 @@ export const sendOTPEmail = async (email, otp) => {
 };
 
 export const sendBookingConfirmation = async (booking, user, invoicePath = null) => {
+  // Validate that we have a valid customer email
+  if (!user || !user.email || !user.email.trim()) {
+    console.error('❌ Cannot send booking confirmation: No customer email provided');
+    throw new Error('Customer email is required for booking confirmation');
+  }
+
+  // Prevent sending customer emails to admin address
+  const adminEmail = process.env.ADMIN_EMAIL || 'razaaatif658@gmail.com';
+  if (user.email.trim().toLowerCase() === adminEmail.toLowerCase()) {
+    console.error('❌ Cannot send booking confirmation: Customer email matches admin email');
+    throw new Error('Customer email cannot be the same as admin email');
+  }
+
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(user.email.trim())) {
+    console.error('❌ Cannot send booking confirmation: Invalid email format');
+    throw new Error('Invalid customer email format');
+  }
+
+  console.log('📧 Sending booking confirmation to customer:', user.email);
+  console.log('📧 Customer name:', user.name);
+
   const subject = `Booking Confirmation - ${booking.invoiceNumber} | Lumière Events`;
   const paymentStatusText = booking.paymentStatus === 'paid' 
     ? 'Paid' 
@@ -263,7 +300,7 @@ export const sendBookingConfirmation = async (booking, user, invoicePath = null)
   }
 
   return sendEmail({
-    email: user.email,
+    email: user.email.trim(),
     subject,
     html,
     attachments: attachments.length > 0 ? attachments : undefined
@@ -273,6 +310,21 @@ export const sendBookingConfirmation = async (booking, user, invoicePath = null)
 // Send admin notification email with customer booking details
 export const sendAdminBookingNotification = async (booking, customer) => {
   const adminEmail = process.env.ADMIN_EMAIL || 'razaaatif658@gmail.com';
+  
+  // Validate admin email
+  if (!adminEmail || !adminEmail.trim()) {
+    console.error('❌ Cannot send admin notification: No admin email configured');
+    throw new Error('Admin email is not configured');
+  }
+
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(adminEmail.trim())) {
+    console.error('❌ Cannot send admin notification: Invalid admin email format');
+    throw new Error('Invalid admin email format');
+  }
+
+  console.log('📧 Sending admin notification to:', adminEmail);
   const subject = `New Booking Received - ${booking.invoiceNumber} | Lumière Events`;
   
   // Debug: Log what we received
@@ -435,10 +487,8 @@ export const sendAdminBookingNotification = async (booking, customer) => {
     console.log('📧 HTML sample (Customer Information section):', htmlSample);
   }
   
-  console.log('📧 Sending admin notification email to:', adminEmail);
-  
   return sendEmail({
-    email: adminEmail,
+    email: adminEmail.trim(),
     subject,
     html
   });

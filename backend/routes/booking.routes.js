@@ -56,6 +56,16 @@ router.post('/', [
       customerMobile
     } = req.body;
 
+    // Validate customer email is not the admin email
+    const adminEmail = process.env.ADMIN_EMAIL || 'razaaatif658@gmail.com';
+    if (customerEmail && customerEmail.trim().toLowerCase() === adminEmail.toLowerCase()) {
+      console.error('❌ Validation failed: Customer email cannot be the same as admin email');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Customer email cannot be the same as admin email. Please use a different email address.' 
+      });
+    }
+
     // IMPORTANT: Always create/find guest user based on customerEmail
     // This ensures bookings are associated with the customer, not the admin making the booking
     let userId = null;

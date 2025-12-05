@@ -25,9 +25,11 @@ RAZORPAY_KEY_SECRET=your-razorpay-key-secret
 # Email Configuration (SMTP)
 # For Gmail: Enable 2FA and use App Password
 # Get App Password: https://myaccount.google.com/apppasswords
+# IMPORTANT: SMTP_USER must be a valid Gmail address (e.g., razaaatif658@gmail.com)
+# DO NOT use admin@lumiere.com or any invalid email address
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
+SMTP_USER=razaaatif658@gmail.com
 SMTP_PASS=your-app-password
 SMTP_FROM=Lumière Events
 
@@ -57,6 +59,9 @@ ADMIN_PASSWORD=Admin@123
    - Enable 2-Factor Authentication
    - Generate App Password: https://myaccount.google.com/apppasswords
    - Use App Password (not regular password)
+   - **IMPORTANT:** SMTP_USER must be set to a valid Gmail address (e.g., razaaatif658@gmail.com)
+   - DO NOT use admin@lumiere.com or any invalid/non-existent email address
+   - The SMTP_USER email will be used as the "FROM" address for all emails
 
 4. **Cloudinary:**
    - Sign up at https://cloudinary.com
