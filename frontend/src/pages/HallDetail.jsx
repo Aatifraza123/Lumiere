@@ -6,6 +6,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { FiMapPin, FiStar, FiArrowRight, FiShield, FiInfo, FiCheckCircle, FiCalendar, FiMail, FiPhone, FiUsers, FiClock } from 'react-icons/fi';
 import api from '../utils/api';
+import BookingModal from '../components/BookingModal';
 
 // --- MOCK DATA ---
 const MOCK_HALLS = {
@@ -133,36 +134,28 @@ const HallDetail = () => {
   
   const [hall, setHall] = useState(null);
   const [services, setServices] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
-  const [selectedService, setSelectedService] = useState(null);
-  const [selectedServiceType, setSelectedServiceType] = useState('');
-  const [showCalendar, setShowCalendar] = useState(false); // Toggle for mobile/compact view if needed
+  const [loading, setLoading] = useState(true);
   
-  // User Fields
+  // Booking Modal States
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+  
+  // Step 1: Customer Details
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     mobile: '',
     guests: ''
   });
-
-  const [priceDetails, setPriceDetails] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [paymentOption, setPaymentOption] = useState('with-payment'); // 'with-payment' or 'without-payment'
-  const [submitting, setSubmitting] = useState(false);
   
-  // OTP States
-  const [emailOTP, setEmailOTP] = useState('');
-  const [mobileOTP, setMobileOTP] = useState('');
-  const [emailOTPSent, setEmailOTPSent] = useState(false);
-  const [mobileOTPSent, setMobileOTPSent] = useState(false);
-  const [emailOTPVerified, setEmailOTPVerified] = useState(false);
-  const [mobileOTPVerified, setMobileOTPVerified] = useState(false);
-  const [sendingEmailOTP, setSendingEmailOTP] = useState(false);
-  const [sendingMobileOTP, setSendingMobileOTP] = useState(false);
-  const [verifyingEmailOTP, setVerifyingEmailOTP] = useState(false);
-  const [verifyingMobileOTP, setVerifyingMobileOTP] = useState(false);
+  // Step 2: Service, Date & Time
+  const [selectedService, setSelectedService] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+  
+  // Step 3: Price & Payment
+  const [priceDetails, setPriceDetails] = useState(null);
   
   const { scrollY } = useScroll();
   const y1 = useTransform(scrollY, [0, 500], [0, 150]);
@@ -642,7 +635,7 @@ const HallDetail = () => {
               <motion.button
                 whileHover={{ scale: 1.03, boxShadow: '0 0 30px rgba(212, 175, 55, 0.3)' }}
                 whileTap={{ scale: 0.97 }}
-                onClick={() => navigate(`/quick-book?venueId=${hall._id}`)}
+                onClick={() => setShowBookingModal(true)}
                 className="group relative px-6 py-3 bg-gradient-to-r from-[#8B4513] via-[#D4AF37] to-[#FFD700] text-white rounded-full font-semibold text-sm overflow-hidden shadow-xl"
               >
                 <span className="relative z-10 flex items-center gap-2">
@@ -660,6 +653,14 @@ const HallDetail = () => {
           </section>
         </div>
       </div>
+      
+      {/* Booking Modal */}
+      <BookingModal
+        isOpen={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        hall={hall}
+        services={services}
+      />
     </div>
   );
 };
