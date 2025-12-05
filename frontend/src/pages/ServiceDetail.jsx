@@ -145,22 +145,6 @@ const ServiceDetail = () => {
 
       <div className="max-w-6xl mx-auto px-6 relative z-20 -mt-10">
         
-        {/* 1. OVERVIEW STATS STRIP */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
-           {[
-             { label: 'Starting Price', value: `₹${service.pricing?.startingFrom || service.price || 0}`, icon: <FiDollarSign /> },
-             { label: 'Duration', value: service.duration || 'Full Day', icon: <FiClock /> },
-             { label: 'Capacity', value: `${service.capacity?.min || 50}-${service.capacity?.max || 1000}`, icon: <FiUsers /> },
-             { label: 'Category', value: (service.category || 'other').charAt(0).toUpperCase() + (service.category || 'other').slice(1), icon: getCategoryIcon(service.category || 'other') },
-           ].map((stat, i) => (
-             <div key={i} className="bg-[#111] border border-white/10 p-6 rounded-2xl text-center hover:border-[#D4AF37]/30 transition-colors">
-               <div className="text-[#D4AF37] text-2xl mb-2 flex justify-center">{stat.icon}</div>
-               <div className="text-lg font-bold text-white">{stat.value}</div>
-               <div className="text-xs text-gray-500 uppercase tracking-widest">{stat.label}</div>
-             </div>
-           ))}
-        </div>
-
         {/* 2. DESCRIPTION & BROCHURE */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-20">
           <div className="lg:col-span-8">
