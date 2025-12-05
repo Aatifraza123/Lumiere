@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import { FiMapPin, FiUsers, FiSearch, FiFilter, FiArrowRight, FiStar } from 'react-icons/fi';
+import { FiMapPin, FiUsers, FiSearch, FiFilter, FiArrowRight, FiStar, FiCheckCircle, FiCoffee, FiShield, FiWifi, FiMusic, FiCamera, FiHome, FiHeart, FiBriefcase, FiAward } from 'react-icons/fi';
 
 // Mock data for fallback
 const MOCK_HALLS = [
@@ -39,7 +39,7 @@ const MOCK_HALLS = [
   }
 ];
 
-// Featured mock venues (matching Home.jsx and HallDetail.jsx)
+// Featured mock venues
 const FEATURED_MOCK_HALLS = [
   {
     _id: 'royal-palace',
@@ -116,15 +116,11 @@ const Halls = () => {
       const data = response.data?.data || [];
       console.log(`📖 Found ${data.length} halls in database`);
       
-      // Get deleted mock venues from localStorage
       const deletedMockVenues = JSON.parse(localStorage.getItem('deletedMockVenues') || '[]');
-      
-      // Filter out deleted mock venues
       const availableMockVenues = FEATURED_MOCK_HALLS.filter(
         venue => !deletedMockVenues.includes(venue._id)
       );
       
-      // Add available mock venues to the list
       const allHalls = [...data, ...availableMockVenues];
       console.log(`✅ Total halls (including available mock): ${allHalls.length}`);
       
@@ -137,12 +133,6 @@ const Halls = () => {
       }
     } catch (error) {
       console.error('❌ Error fetching halls:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      });
-      // On error, show available mock venues
       const deletedMockVenues = JSON.parse(localStorage.getItem('deletedMockVenues') || '[]');
       const availableMockVenues = FEATURED_MOCK_HALLS.filter(
         venue => !deletedMockVenues.includes(venue._id)
@@ -156,7 +146,6 @@ const Halls = () => {
   const filterHalls = () => {
     let filtered = [...halls];
 
-    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(hall =>
@@ -165,19 +154,16 @@ const Halls = () => {
       );
     }
 
-    // Location filter
     if (locationFilter) {
       filtered = filtered.filter(hall =>
         hall.location.toLowerCase().includes(locationFilter.toLowerCase())
       );
     }
 
-    // Capacity filter
     if (capacityFilter) {
       filtered = filtered.filter(hall => hall.capacity >= parseInt(capacityFilter));
     }
 
-    // Price range filter
     if (priceRange.min) filtered = filtered.filter(hall => hall.basePrice >= parseFloat(priceRange.min));
     if (priceRange.max) filtered = filtered.filter(hall => hall.basePrice <= parseFloat(priceRange.max));
 
@@ -185,7 +171,6 @@ const Halls = () => {
   };
 
   const uniqueLocations = [...new Set(halls.map(hall => hall.location))];
-
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans relative selection:bg-[#D4AF37] selection:text-black">
@@ -195,18 +180,318 @@ const Halls = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-32 relative z-20">
         
+        {/* Hero Section */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          className="text-center mb-20"
         >
           <span className="text-[#D4AF37] text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Premium Venues</span>
-          <h1 className="text-5xl md:text-7xl font-light mb-4">Our <span className="text-[#D4AF37] font-serif italic">Venues</span></h1>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Discover our premium collection of event venues, each carefully selected for elegance and excellence.
+          <h1 className="text-5xl md:text-7xl font-light mb-6">Our <span className="text-[#D4AF37] font-serif italic">Venues</span></h1>
+          <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
+            Discover our exquisite collection of premium event venues, each meticulously designed to transform your celebrations into unforgettable experiences.
           </p>
         </motion.div>
+
+        {/* Venue Overview Section */}
+        <section className="mb-24">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="mb-12"
+          >
+            <h2 className="font-['Playfair_Display'] text-4xl md:text-5xl mb-6 text-center">
+              Venue <span className="text-[#D4AF37] italic">Overview</span>
+            </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div className="space-y-6 text-gray-300 text-lg font-light leading-relaxed">
+                <p>
+                  At Lumière, we understand that the perfect venue sets the stage for extraordinary moments. Our carefully curated collection of premium venues in Boring Road, Patna, represents the pinnacle of elegance, sophistication, and functionality.
+                </p>
+                <p>
+                  Each venue in our portfolio has been selected for its unique character, exceptional amenities, and ability to accommodate events of all scales—from intimate gatherings to grand celebrations. Whether you're planning a dream wedding, an elegant engagement ceremony, a memorable reception, or a professional corporate event, our venues provide the perfect backdrop.
+                </p>
+                <p>
+                  Our venues boast impressive capacities ranging from intimate spaces for 50 guests to grand halls accommodating over 800 attendees. Every space is thoughtfully designed with modern amenities, ensuring comfort, convenience, and an atmosphere that reflects your vision.
+                </p>
+              </div>
+              <div className="relative h-[400px] rounded-2xl overflow-hidden">
+                <img 
+                  src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200" 
+                  alt="Venue Overview" 
+                  className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Hall Types Section */}
+        <section className="mb-24">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="font-['Playfair_Display'] text-4xl md:text-5xl mb-12 text-center">
+              Hall <span className="text-[#D4AF37] italic">Types</span>
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[
+                {
+                  icon: <FiHeart />,
+                  title: 'Wedding Halls',
+                  desc: 'Spacious, elegantly designed halls perfect for traditional and modern weddings. Features include grand stages, bridal suites, and dedicated areas for ceremonies and receptions.',
+                  capacity: '200-800 guests'
+                },
+                {
+                  icon: <FiCoffee />,
+                  title: 'Reception Venues',
+                  desc: 'Sophisticated spaces ideal for post-wedding receptions and celebrations. Equipped with dance floors, premium sound systems, and elegant lighting for memorable evenings.',
+                  capacity: '150-500 guests'
+                },
+                {
+                  icon: <FiBriefcase />,
+                  title: 'Corporate Halls',
+                  desc: 'Professional venues designed for business events, conferences, and corporate gatherings. Features include AV equipment, meeting rooms, and high-speed WiFi.',
+                  capacity: '50-300 guests'
+                },
+                {
+                  icon: <FiStar />,
+                  title: 'Engagement Venues',
+                  desc: 'Intimate and romantic spaces perfect for engagement ceremonies. Beautifully decorated with attention to detail, creating the perfect atmosphere for this special milestone.',
+                  capacity: '50-200 guests'
+                },
+                {
+                  icon: <FiHome />,
+                  title: 'Banquet Halls',
+                  desc: 'Versatile spaces suitable for various celebrations including anniversaries, birthdays, and family gatherings. Flexible layouts accommodate different event styles.',
+                  capacity: '100-400 guests'
+                },
+                {
+                  icon: <FiAward />,
+                  title: 'Premium Suites',
+                  desc: 'Exclusive, luxury venues for VIP events and intimate celebrations. Featuring premium amenities, personalized service, and bespoke decor options.',
+                  capacity: '30-150 guests'
+                }
+              ].map((hall, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-[#111] border border-white/10 rounded-2xl p-8 hover:border-[#D4AF37]/50 transition-all duration-500"
+                >
+                  <div className="text-5xl text-[#D4AF37] mb-6">{hall.icon}</div>
+                  <h3 className="text-2xl font-bold mb-3 text-white">{hall.title}</h3>
+                  <p className="text-gray-400 mb-4 font-light leading-relaxed">{hall.desc}</p>
+                  <div className="flex items-center gap-2 text-sm text-[#D4AF37]">
+                    <FiUsers />
+                    <span>{hall.capacity}</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Features Section */}
+        <section className="mb-24">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="font-['Playfair_Display'] text-4xl md:text-5xl mb-12 text-center">
+              Premium <span className="text-[#D4AF37] italic">Features</span>
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { icon: <FiShield />, title: '24/7 Security', desc: 'Round-the-clock security and surveillance for your peace of mind' },
+                { icon: <FiWifi />, title: 'High-Speed WiFi', desc: 'Complimentary high-speed internet connectivity throughout the venue' },
+                { icon: <FiMusic />, title: 'Premium Sound System', desc: 'State-of-the-art audio equipment for crystal-clear sound quality' },
+                { icon: <FiCamera />, title: 'Photography Setup', desc: 'Dedicated spaces and lighting for professional photography' },
+                { icon: <FiCoffee />, title: 'In-House Catering', desc: 'Exquisite culinary experiences with customizable menus' },
+                { icon: <FiHome />, title: 'Bridal Suites', desc: 'Luxurious private spaces for preparation and relaxation' },
+                { icon: <FiCheckCircle />, title: 'Valet Parking', desc: 'Complimentary valet parking services for all guests' },
+                { icon: <FiAward />, title: 'Event Coordination', desc: 'Dedicated event managers to ensure flawless execution' }
+              ].map((feature, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-[#111] border border-white/10 rounded-xl p-6 hover:border-[#D4AF37]/50 transition-all duration-500 text-center"
+                >
+                  <div className="text-4xl text-[#D4AF37] mb-4 flex justify-center">{feature.icon}</div>
+                  <h3 className="text-lg font-bold mb-2 text-white">{feature.title}</h3>
+                  <p className="text-sm text-gray-400 font-light">{feature.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </section>
+
+        {/* What Makes Us Special Section */}
+        <section className="mb-24 bg-[#111] border border-white/10 rounded-3xl p-12">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-12"
+          >
+            <h2 className="font-['Playfair_Display'] text-4xl md:text-5xl mb-6">
+              What Makes <span className="text-[#D4AF37] italic">Lumière</span> Special
+            </h2>
+            <p className="text-gray-400 text-lg max-w-3xl mx-auto font-light">
+              Discover why discerning clients choose us for their most important celebrations
+            </p>
+          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {[
+              {
+                title: 'Prime Location',
+                desc: 'Strategically located in Boring Road, Patna, our venues offer easy access to major transportation hubs, hotels, and attractions. The prestigious location adds to the exclusivity of your event.'
+              },
+              {
+                title: 'Flexible Event Suitability',
+                desc: 'Our versatile venues seamlessly adapt to various event types—from traditional weddings and modern receptions to corporate conferences and intimate engagements. Each space can be customized to match your vision.'
+              },
+              {
+                title: 'Comprehensive Facilities',
+                desc: 'Every venue is equipped with modern amenities including climate control, premium lighting, sound systems, staging areas, and dedicated spaces for ceremonies, dining, and entertainment.'
+              },
+              {
+                title: 'Customizable Decor Options',
+                desc: 'Work with our expert design team to create bespoke decor that reflects your style. From traditional elegance to contemporary sophistication, we bring your vision to life with attention to every detail.'
+              },
+              {
+                title: 'Guest Amenities',
+                desc: 'We prioritize guest comfort with amenities including comfortable seating, climate-controlled environments, premium restroom facilities, and attentive service staff ensuring a memorable experience for all attendees.'
+              },
+              {
+                title: 'Proven Excellence',
+                desc: 'With years of experience hosting thousands of successful events, we have built a reputation for reliability, professionalism, and excellence. Our track record speaks to our commitment to making every event extraordinary.'
+              }
+            ].map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="p-6 bg-[#0A0A0A] rounded-xl border-l-4 border-[#D4AF37]"
+              >
+                <h3 className="text-xl font-bold mb-3 text-white">{item.title}</h3>
+                <p className="text-gray-400 font-light leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* Gallery Intro Section */}
+        <section className="mb-24">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center"
+          >
+            <h2 className="font-['Playfair_Display'] text-4xl md:text-5xl mb-6">
+              Explore Our <span className="text-[#D4AF37] italic">Gallery</span>
+            </h2>
+            <p className="text-gray-400 text-lg max-w-3xl mx-auto mb-12 font-light leading-relaxed">
+              Step into a world of elegance and sophistication. Our gallery showcases the beauty and versatility of our venues, 
+              capturing moments from real celebrations. Each image tells a story of perfection, attention to detail, and the 
+              joy of creating unforgettable memories. Browse through our collection to envision your event in these stunning spaces.
+            </p>
+            <Link
+              to="/gallery"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#b5952f] transition-colors"
+            >
+              View Gallery
+              <FiArrowRight />
+            </Link>
+          </motion.div>
+        </section>
+
+        {/* Packages Section */}
+        <section className="mb-24">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="font-['Playfair_Display'] text-4xl md:text-5xl mb-12 text-center">
+              Event <span className="text-[#D4AF37] italic">Packages</span>
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                {
+                  title: 'Wedding Package',
+                  events: ['Weddings', 'Receptions', 'Engagements'],
+                  features: ['Full venue access', 'Bridal suite', 'Decor setup', 'Catering options', 'Photography space', 'Sound system'],
+                  price: 'Custom Pricing'
+                },
+                {
+                  title: 'Corporate Package',
+                  events: ['Conferences', 'Seminars', 'Meetings'],
+                  features: ['AV equipment', 'Meeting rooms', 'WiFi access', 'Catering services', 'Projection screens', 'Business amenities'],
+                  price: 'Custom Pricing'
+                },
+                {
+                  title: 'Celebration Package',
+                  events: ['Anniversaries', 'Birthdays', 'Family Events'],
+                  features: ['Flexible layouts', 'Entertainment space', 'Catering options', 'Decor assistance', 'Photography setup', 'Guest amenities'],
+                  price: 'Custom Pricing'
+                }
+              ].map((pkg, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-[#111] border border-white/10 rounded-2xl p-8 hover:border-[#D4AF37]/50 transition-all duration-500"
+                >
+                  <h3 className="text-2xl font-bold mb-4 text-white">{pkg.title}</h3>
+                  <div className="mb-6">
+                    <p className="text-sm text-gray-500 mb-2 uppercase tracking-wider">Perfect For</p>
+                    <div className="flex flex-wrap gap-2">
+                      {pkg.events.map((event, i) => (
+                        <span key={i} className="px-3 py-1 bg-white/5 rounded-full text-xs text-gray-400">
+                          {event}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <ul className="space-y-3 mb-6">
+                    {pkg.features.map((feature, i) => (
+                      <li key={i} className="flex items-center gap-2 text-gray-300 text-sm">
+                        <FiCheckCircle className="text-[#D4AF37] flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="pt-6 border-t border-white/10">
+                    <p className="text-[#D4AF37] font-bold text-lg">{pkg.price}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </section>
 
         {/* Search & Filter Bar */}
         <motion.div 
@@ -295,7 +580,7 @@ const Halls = () => {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16"
         >
           <AnimatePresence>
             {filteredHalls.map((hall) => {
@@ -311,15 +596,12 @@ const Halls = () => {
                   <div 
                     className="bg-[#111] border border-white/10 rounded-2xl overflow-hidden h-full hover:border-[#D4AF37]/50 transition-all duration-500 flex flex-col cursor-pointer"
                     onClick={(e) => {
-                      // If clicking on the link, let it handle navigation
                       if (e.target.closest('a')) {
                         return;
                       }
-                      // Otherwise, navigate to detail page
                       navigate(`/halls/${hall._id}`);
                     }}
                   >
-                    
                     <div className="relative h-48 overflow-hidden">
                       <img 
                         src={
@@ -343,7 +625,6 @@ const Halls = () => {
                         {hall.name}
                       </h3>
                       
-                      {/* Description - expands on click */}
                       <motion.div 
                         className="relative overflow-hidden"
                         initial={false}
@@ -357,7 +638,6 @@ const Halls = () => {
                         </p>
                       </motion.div>
 
-                      {/* Compact info */}
                       <div className="flex items-center justify-between text-xs text-gray-400 mb-3">
                         <div className="flex items-center gap-1.5">
                           <FiUsers className="text-[#D4AF37] text-sm" /> 
@@ -369,7 +649,6 @@ const Halls = () => {
                         </div>
                       </div>
 
-                      {/* Details - shows on click with smooth animation */}
                       <AnimatePresence>
                         {isExpanded && (
                           <motion.div
@@ -452,10 +731,44 @@ const Halls = () => {
           </div>
         )}
 
+        {/* CTA Section */}
+        <section className="mt-24">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="bg-gradient-to-r from-[#111] to-[#0A0A0A] border border-[#D4AF37]/30 rounded-3xl p-12 text-center"
+          >
+            <h2 className="font-['Playfair_Display'] text-4xl md:text-5xl mb-6">
+              Ready to Create <span className="text-[#D4AF37] italic">Memories?</span>
+            </h2>
+            <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto font-light">
+              Let us help you find the perfect venue for your special occasion. Our team is here to guide you through every step, 
+              ensuring your event exceeds expectations.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                to="/book"
+                className="px-8 py-4 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#b5952f] transition-colors inline-flex items-center justify-center gap-2"
+              >
+                Book Your Venue
+                <FiArrowRight />
+              </Link>
+              <Link
+                to="/contact"
+                className="px-8 py-4 bg-white/5 border border-white/10 text-white font-bold rounded-lg hover:bg-white/10 transition-colors inline-flex items-center justify-center gap-2"
+              >
+                Contact Us
+                <FiArrowRight />
+              </Link>
+            </div>
+          </motion.div>
+        </section>
+
       </div>
     </div>
   );
 };
 
 export default Halls;
-
