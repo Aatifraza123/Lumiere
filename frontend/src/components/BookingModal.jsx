@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import toast from 'react-hot-toast';
-import { FiX, FiChevronRight, FiChevronLeft, FiCalendar, FiClock, FiUsers, FiMail, FiPhone, FiCheckCircle, FiDollarSign, FiCreditCard, FiWallet } from 'react-icons/fi';
+import { FiX, FiChevronRight, FiChevronLeft, FiCalendar, FiClock, FiUsers, FiMail, FiPhone, FiCheckCircle, FiDollarSign, FiCreditCard, FiSave } from 'react-icons/fi';
 import api from '../utils/api';
 import { loadRazorpay } from '../utils/razorpay';
 
@@ -577,7 +577,7 @@ const BookingModal = ({ isOpen, onClose, hall, services }) => {
                         }`}
                       >
                         <div className="flex items-center gap-3 mb-2">
-                          <FiWallet className={`text-xl ${paymentMethod === 'offline' ? 'text-[#D4AF37]' : 'text-gray-400'}`} />
+                          <FiSave className={`text-xl ${paymentMethod === 'offline' ? 'text-[#D4AF37]' : 'text-gray-400'}`} />
                           <span className="font-semibold text-white">Pay Later (Offline)</span>
                         </div>
                         <p className="text-sm text-gray-400 mb-2">Book now, pay later at venue</p>
@@ -620,7 +620,7 @@ const BookingModal = ({ isOpen, onClose, hall, services }) => {
                   className="px-6 py-2 bg-white/10 text-white font-bold rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 border border-white/20"
                 >
                   {submitting && paymentMethod === 'offline' ? 'Processing...' : 'Book Now'}
-                  <FiWallet />
+                  <FiSave />
                 </button>
                 {/* Online Booking (With Payment) */}
                 <button
