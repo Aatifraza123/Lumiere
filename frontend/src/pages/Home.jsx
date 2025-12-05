@@ -21,8 +21,6 @@ const Home = () => {
   
   useEffect(() => {
     fetchFeaturedHalls();
-    
-    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   const fetchFeaturedHalls = async () => {
