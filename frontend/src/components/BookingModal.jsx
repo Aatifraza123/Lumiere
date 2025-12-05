@@ -600,7 +600,7 @@ const BookingModal = ({ isOpen, onClose, hall, services }) => {
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-white/10 bg-[#1A1A1A] flex justify-between items-center">
+          <div className="px-6 py-4 border-t border-white/10 bg-[#1A1A1A] flex justify-between items-center gap-4">
             <button
               onClick={currentStep === 1 ? onClose : handleBack}
               className="px-6 py-2 text-gray-400 hover:text-white transition-colors font-medium flex items-center gap-2"
@@ -608,16 +608,43 @@ const BookingModal = ({ isOpen, onClose, hall, services }) => {
               <FiChevronLeft />
               {currentStep === 1 ? 'Cancel' : 'Back'}
             </button>
-            <button
-              onClick={currentStep === 3 ? handleBooking : handleNext}
-              disabled={submitting}
-              className="px-6 py-2 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#b5952f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {submitting ? 'Processing...' : currentStep === 3 
-                ? (paymentMethod === 'online' ? 'Proceed to Payment' : 'Confirm Booking') 
-                : 'Next'}
-              {currentStep < 3 && <FiChevronRight />}
-            </button>
+            {currentStep === 3 ? (
+              <div className="flex gap-3">
+                {/* Book Now Pay Later (Offline) */}
+                <button
+                  onClick={() => {
+                    setPaymentMethod('offline');
+                    handleBooking();
+                  }}
+                  disabled={submitting}
+                  className="px-6 py-2 bg-white/10 text-white font-bold rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 border border-white/20"
+                >
+                  {submitting && paymentMethod === 'offline' ? 'Processing...' : 'Book Now Pay Later'}
+                  <FiWallet />
+                </button>
+                {/* Book Now (Online) */}
+                <button
+                  onClick={() => {
+                    setPaymentMethod('online');
+                    handleBooking();
+                  }}
+                  disabled={submitting}
+                  className="px-6 py-2 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#b5952f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {submitting && paymentMethod === 'online' ? 'Processing...' : 'Book Now'}
+                  <FiCreditCard />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleNext}
+                disabled={submitting}
+                className="px-6 py-2 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#b5952f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                Next
+                <FiChevronRight />
+              </button>
+            )}
           </div>
         </motion.div>
       </div>
