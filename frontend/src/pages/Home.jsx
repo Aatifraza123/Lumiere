@@ -776,7 +776,7 @@ const TestimonialsSection = () => {
             transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
           >
             {[...testimonials, ...testimonials, ...testimonials].map((t, i) => (
-            <div key={i} className="min-w-[400px] bg-white/5 border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-colors">
+            <div key={i} className="min-w-[400px] bg-white/5 rounded-3xl p-8 hover:bg-white/10 transition-colors">
               <div className="flex gap-1 mb-4">
                 {[...Array(t.rating || 5)].map((_, si) => (
                   <FiStar key={si} className="w-4 h-4 fill-[#D4AF37] text-[#D4AF37]" />
