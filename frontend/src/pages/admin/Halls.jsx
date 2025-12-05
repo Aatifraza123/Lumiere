@@ -505,6 +505,50 @@ const AdminHalls = () => {
                     {hall.description}
                   </p>
 
+                  {/* Service Pricing */}
+                  {hall.servicePricing && hall.servicePricing.length > 0 && (
+                    <div className="mb-4 pb-4 border-b border-white/10">
+                      <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Service Pricing</div>
+                      <div className="space-y-1.5">
+                        {hall.servicePricing.slice(0, 3).map((pricing, i) => {
+                          const serviceTypeLabels = {
+                            wedding: 'Wedding',
+                            corporate: 'Corporate',
+                            party: 'Party',
+                            anniversary: 'Anniversary',
+                            engagement: 'Engagement',
+                            other: 'Other'
+                          };
+                          return (
+                            <div key={i} className="flex justify-between items-center text-xs">
+                              <span className="text-gray-300 capitalize">
+                                {serviceTypeLabels[pricing.serviceType] || pricing.serviceType}
+                              </span>
+                              <span className="text-[#D4AF37] font-bold">
+                                ₹{pricing.basePrice?.toLocaleString() || '0'}
+                              </span>
+                            </div>
+                          );
+                        })}
+                        {hall.servicePricing.length > 3 && (
+                          <div className="text-[10px] text-gray-500 pt-1">
+                            +{hall.servicePricing.length - 3} more service{hall.servicePricing.length - 3 > 1 ? 's' : ''}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Base Price if no service pricing */}
+                  {(!hall.servicePricing || hall.servicePricing.length === 0) && hall.basePrice > 0 && (
+                    <div className="mb-4 pb-4 border-b border-white/10">
+                      <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Base Price</div>
+                      <div className="text-lg font-bold text-[#D4AF37]">
+                        ₹{hall.basePrice.toLocaleString()}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Amenities Tags */}
                   <div className="flex flex-wrap gap-1.5 mt-auto">
                     {hall.amenities?.slice(0, 3).map((item, i) => (
