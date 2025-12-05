@@ -89,16 +89,16 @@ const About = () => {
             Welcome to
           </span>
           
-          <h1 className="font-['Cinzel'] text-6xl md:text-8xl lg:text-9xl font-medium mb-6 leading-none tracking-tight text-white">
+          <h1 className="font-['Cinzel'] text-6xl md:text-8xl lg:text-9xl font-medium mb-6 leading-none tracking-tight bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent">
             Lumiere
           </h1>
 
           <div className="flex items-center justify-center gap-2 text-gray-400 mb-8">
-            <FiMapPin className="text-[#D4AF37]" />
+            <FiMapPin className="text-white" />
             <span className="text-lg md:text-xl">Boring Road Patna</span>
           </div>
 
-          <div className="h-[1px] w-24 bg-[#D4AF37]/50 mx-auto mb-8"></div>
+          <div className="h-[1px] w-24 bg-white/50 mx-auto mb-8"></div>
 
           <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto font-light leading-relaxed">
             Where comfort meets elegance, and every stay becomes a cherished memory. 
@@ -128,8 +128,8 @@ const About = () => {
             className="text-center mb-16"
           >
             <span className="text-white/40 text-sm tracking-[0.3em] uppercase font-medium mb-4 block">Our Journey</span>
-            <h2 className="font-['Cinzel'] text-4xl md:text-5xl text-white mb-6">
-              The Story of <span className="text-[#D4AF37] italic font-serif">Lumiere</span>
+            <h2 className="font-['Cinzel'] text-4xl md:text-5xl mb-6 bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent">
+              The Story of <span className="italic font-serif">Lumiere</span>
             </h2>
           </motion.div>
 
@@ -186,7 +186,7 @@ const About = () => {
             viewport={{ once: true }}
             className="text-center mb-20"
           >
-            <h2 className="font-['Cinzel'] text-3xl md:text-4xl text-white mb-4">Our Mission & Values</h2>
+            <h2 className="font-['Cinzel'] text-3xl md:text-4xl mb-4 bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent">Our Mission & Values</h2>
             <p className="text-gray-400 max-w-3xl mx-auto text-lg font-light">
               The principles that guide everything we do
             </p>
@@ -218,10 +218,10 @@ const About = () => {
                 transition={{ delay: index * 0.2 }}
                 className="group p-8 bg-[#0A0A0A] border border-white/10 rounded-xl hover:border-[#D4AF37]/30 transition-all duration-500"
               >
-                <div className="text-4xl text-[#D4AF37] mb-6 group-hover:scale-110 transition-transform duration-500">
+                <div className="text-4xl text-white mb-6 group-hover:scale-110 transition-transform duration-500">
                   {item.icon}
                 </div>
-                <h3 className="font-['Cinzel'] text-xl mb-4 text-white">{item.title}</h3>
+                <h3 className="font-['Cinzel'] text-xl mb-4 bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent">{item.title}</h3>
                 <p className="text-gray-400 font-light leading-relaxed text-sm">
                   {item.desc}
                 </p>
@@ -241,8 +241,8 @@ const About = () => {
             className="text-center mb-16"
           >
             <span className="text-white/40 text-sm tracking-[0.3em] uppercase font-medium mb-4 block">Why Choose Us</span>
-            <h2 className="font-['Cinzel'] text-4xl md:text-5xl text-white mb-6">
-              What Makes <span className="text-[#D4AF37] italic font-serif">Lumiere</span> Unique
+            <h2 className="font-['Cinzel'] text-4xl md:text-5xl mb-6 bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent">
+              What Makes <span className="italic font-serif">Lumiere</span> Unique
             </h2>
           </motion.div>
 
@@ -271,9 +271,9 @@ const About = () => {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.15 }}
-                className="p-8 bg-[#0A0A0A] border-l-4 border-[#D4AF37] rounded-lg hover:bg-[#111] transition-colors"
+                className="p-8 bg-[#0A0A0A] border-l-4 border-white/30 rounded-lg hover:bg-[#111] transition-colors"
               >
-                <h3 className="font-['Cinzel'] text-2xl text-white mb-4">{item.title}</h3>
+                <h3 className="font-['Cinzel'] text-2xl mb-4 bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent">{item.title}</h3>
                 <p className="text-gray-400 font-light leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
@@ -291,8 +291,8 @@ const About = () => {
             className="text-center mb-20"
           >
             <span className="text-white/40 text-sm tracking-[0.3em] uppercase font-medium mb-4 block">World-Class Facilities</span>
-            <h2 className="font-['Cinzel'] text-4xl md:text-5xl text-white mb-6">
-              Everything You Need for a <span className="text-[#D4AF37] italic font-serif">Perfect Stay</span>
+            <h2 className="font-['Cinzel'] text-4xl md:text-5xl mb-6 bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent">
+              Everything You Need for a <span className="italic font-serif">Perfect Stay</span>
             </h2>
             <p className="text-gray-400 max-w-3xl mx-auto text-lg font-light">
               We've carefully curated every facility to ensure your comfort, safety, and satisfaction
@@ -338,12 +338,12 @@ const About = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="group p-8 bg-[#0A0A0A] border border-white/10 rounded-xl hover:border-[#D4AF37]/50 hover:bg-[#111] transition-all duration-500"
+                className="group p-8 bg-[#0A0A0A] border border-white/10 rounded-xl hover:border-white/30 hover:bg-[#111] transition-all duration-500"
               >
-                <div className="text-5xl text-[#D4AF37] mb-6 group-hover:scale-110 transition-transform duration-500">
+                <div className="text-5xl text-white mb-6 group-hover:scale-110 transition-transform duration-500">
                   {item.icon}
                 </div>
-                <h3 className="font-['Cinzel'] text-xl mb-4 text-white">{item.title}</h3>
+                <h3 className="font-['Cinzel'] text-xl mb-4 bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent">{item.title}</h3>
                 <p className="text-gray-400 font-light leading-relaxed text-sm">
                   {item.desc}
                 </p>
@@ -379,8 +379,8 @@ const About = () => {
               transition={{ duration: 0.8, delay: 0.2 }}
             >
               <span className="text-white/40 text-sm tracking-[0.3em] uppercase font-medium mb-4 block">Your Experience</span>
-              <h2 className="font-['Cinzel'] text-4xl md:text-5xl text-white mb-8">
-                A Stay That <span className="text-[#D4AF37] italic font-serif">Exceeds Expectations</span>
+              <h2 className="font-['Cinzel'] text-4xl md:text-5xl mb-8 bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent">
+                A Stay That <span className="italic font-serif">Exceeds Expectations</span>
               </h2>
               
               <div className="space-y-6 text-gray-300 text-lg font-light leading-relaxed">
@@ -414,8 +414,8 @@ const About = () => {
           viewport={{ once: true }}
           className="relative z-10 max-w-2xl mx-auto"
         >
-          <h2 className="font-['Cinzel'] text-4xl md:text-6xl mb-6 text-white">
-            Experience <span className="text-[#D4AF37] italic font-serif">Lumiere</span>
+          <h2 className="font-['Cinzel'] text-4xl md:text-6xl mb-6 bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent">
+            Experience <span className="italic font-serif">Lumiere</span>
           </h2>
           <p className="text-gray-400 text-lg mb-10 font-light">
             Book your stay today and discover why we're the preferred choice for travelers in Boring Road Patna
@@ -423,7 +423,7 @@ const About = () => {
           
           <a 
             href="/book" 
-            className="group relative inline-flex items-center gap-4 px-8 py-4 bg-[#D4AF37] text-black rounded-lg hover:bg-[#b5952f] transition-all duration-500 font-semibold"
+            className="group relative inline-flex items-center gap-4 px-8 py-4 bg-white text-black rounded-lg hover:bg-gray-200 transition-all duration-500 font-semibold"
           >
             <span className="uppercase tracking-widest text-sm">Book Your Stay</span>
             <FiArrowRight className="group-hover:translate-x-2 transition-transform duration-300" />
