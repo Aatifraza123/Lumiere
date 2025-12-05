@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { 
-  FiPlus, FiEdit2, FiTrash2, FiImage, FiDollarSign, 
+  FiPlus, FiEdit2, FiTrash2, FiImage, 
   FiCheck, FiX, FiLayers, FiTag, FiCpu, FiMoreHorizontal 
 } from 'react-icons/fi';
 import AdminNavbar from '../../components/admin/AdminNavbar';
@@ -278,18 +278,13 @@ const AdminServices = () => {
 
                 {/* Card Content */}
                 <div className="p-6">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider mb-1 block">
-                        {service.category || service.type}
-                      </span>
-                      <h3 className="font-['Cinzel'] text-xl font-bold text-white leading-tight">
-                        {service.name || service.title}
-                      </h3>
-                    </div>
-                    <div className="text-right">
-                       <span className="text-lg font-bold text-white">₹{service.price?.toLocaleString()}</span>
-                    </div>
+                  <div className="mb-2">
+                    <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider mb-1 block">
+                      {service.category || service.type}
+                    </span>
+                    <h3 className="font-['Cinzel'] text-xl font-bold text-white leading-tight">
+                      {service.name || service.title}
+                    </h3>
                   </div>
 
                   <p className="text-sm text-gray-400 line-clamp-2 mb-4 h-10">
@@ -382,23 +377,6 @@ const AdminServices = () => {
                           <option value="birthday">Birthday</option>
                           <option value="engagement">Engagement</option>
                         </select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm text-gray-400 font-medium">Base Price (₹)</label>
-                      <div className="relative">
-                        <FiDollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-                        <input
-                          type="number"
-                          name="price"
-                          required
-                          min="0"
-                          value={formData.price}
-                          onChange={handleInputChange}
-                          className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-white focus:border-[#D4AF37] focus:outline-none"
-                          placeholder="0.00"
-                        />
                       </div>
                     </div>
 
