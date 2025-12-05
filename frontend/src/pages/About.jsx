@@ -164,7 +164,7 @@ const About = () => {
             {/* Image */}
             <motion.div 
               style={{ y: yStory }}
-              className="relative h-[500px] w-full overflow-hidden rounded-lg"
+              className="relative h-[350px] w-full overflow-hidden rounded-lg"
             >
               <img 
                 src={IMAGES.lobby} 
@@ -362,7 +362,7 @@ const About = () => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="relative h-[600px] w-full overflow-hidden rounded-lg"
+              className="relative h-[400px] w-full overflow-hidden rounded-lg"
             >
               <img 
                 src={IMAGES.rooms} 
