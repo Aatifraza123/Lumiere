@@ -90,19 +90,19 @@ const About = () => {
           </span>
           
           <h1 className="font-['Cinzel'] text-6xl md:text-8xl lg:text-9xl font-medium mb-6 leading-none tracking-tight text-white">
-            [HOTEL NAME]
+            Lumiere
           </h1>
 
           <div className="flex items-center justify-center gap-2 text-gray-400 mb-8">
             <FiMapPin className="text-[#D4AF37]" />
-            <span className="text-lg md:text-xl">[CITY/LOCATION]</span>
+            <span className="text-lg md:text-xl">Boring Road Patna</span>
           </div>
 
           <div className="h-[1px] w-24 bg-[#D4AF37]/50 mx-auto mb-8"></div>
 
           <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto font-light leading-relaxed">
             Where comfort meets elegance, and every stay becomes a cherished memory. 
-            Experience unparalleled hospitality in the heart of [CITY/LOCATION].
+            Experience unparalleled hospitality in the heart of Boring Road Patna.
           </p>
         </motion.div>
 
@@ -129,7 +129,7 @@ const About = () => {
           >
             <span className="text-white/40 text-sm tracking-[0.3em] uppercase font-medium mb-4 block">Our Journey</span>
             <h2 className="font-['Cinzel'] text-4xl md:text-5xl text-white mb-6">
-              The Story of <span className="text-[#D4AF37] italic font-serif">[HOTEL NAME]</span>
+              The Story of <span className="text-[#D4AF37] italic font-serif">Lumiere</span>
             </h2>
           </motion.div>
 
@@ -143,7 +143,7 @@ const About = () => {
             >
               <div className="space-y-6 text-gray-300 text-lg font-light leading-relaxed">
                 <p>
-                  Nestled in the vibrant heart of [CITY/LOCATION], [HOTEL NAME] stands as a testament to 
+                  Nestled in the vibrant heart of Boring Road Patna, Lumiere stands as a testament to 
                   timeless hospitality and modern luxury. What began as a vision to create a home away from 
                   home has evolved into a sanctuary where every guest is treated like family.
                 </p>
@@ -242,7 +242,7 @@ const About = () => {
           >
             <span className="text-white/40 text-sm tracking-[0.3em] uppercase font-medium mb-4 block">Why Choose Us</span>
             <h2 className="font-['Cinzel'] text-4xl md:text-5xl text-white mb-6">
-              What Makes <span className="text-[#D4AF37] italic font-serif">[HOTEL NAME]</span> Unique
+              What Makes <span className="text-[#D4AF37] italic font-serif">Lumiere</span> Unique
             </h2>
           </motion.div>
 
@@ -250,7 +250,7 @@ const About = () => {
             {[
               {
                 title: "Prime Location",
-                desc: "Strategically located in [CITY/LOCATION], we offer easy access to business districts, shopping centers, and cultural attractions, making us the perfect base for both work and leisure."
+                desc: "Strategically located in Boring Road Patna, we offer easy access to business districts, shopping centers, and cultural attractions, making us the perfect base for both work and leisure."
               },
               {
                 title: "Personalized Service",
@@ -385,7 +385,7 @@ const About = () => {
               
               <div className="space-y-6 text-gray-300 text-lg font-light leading-relaxed">
                 <p>
-                  At [HOTEL NAME], we believe that exceptional hospitality is about creating moments that matter. 
+                  At Lumiere, we believe that exceptional hospitality is about creating moments that matter. 
                   Whether you're traveling for business or leisure, with family or solo, we ensure every aspect 
                   of your stay is thoughtfully considered.
                 </p>
@@ -396,7 +396,7 @@ const About = () => {
                   and satisfaction.
                 </p>
                 <p>
-                  Join thousands of satisfied guests who have made [HOTEL NAME] their preferred choice in [CITY/LOCATION]. 
+                  Join thousands of satisfied guests who have made Lumiere their preferred choice in Boring Road Patna. 
                   Experience the difference that genuine care, attention to detail, and unwavering commitment to excellence 
                   can make.
                 </p>
@@ -415,10 +415,10 @@ const About = () => {
           className="relative z-10 max-w-2xl mx-auto"
         >
           <h2 className="font-['Cinzel'] text-4xl md:text-6xl mb-6 text-white">
-            Experience <span className="text-[#D4AF37] italic font-serif">[HOTEL NAME]</span>
+            Experience <span className="text-[#D4AF37] italic font-serif">Lumiere</span>
           </h2>
           <p className="text-gray-400 text-lg mb-10 font-light">
-            Book your stay today and discover why we're the preferred choice for travelers in [CITY/LOCATION]
+            Book your stay today and discover why we're the preferred choice for travelers in Boring Road Patna
           </p>
           
           <a 
