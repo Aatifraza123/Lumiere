@@ -440,11 +440,9 @@ const FeaturedHallsSection = ({ halls, loading }) => {
                           <span className="block text-2xl font-bold">₹{hall.price || 0}</span>
                           <span className="text-xs text-gray-500 uppercase">Starting Price</span>
                         </div>
-                        <MagneticButton>
-                          <Link to={`/halls/${hall._id}`} className="px-6 py-3 border border-black/20 rounded-full hover:bg-[#D4AF37] hover:border-[#D4AF37] hover:text-white transition-all flex items-center gap-2 text-sm font-medium">
-                            View Details <FiArrowUpRight />
-                          </Link>
-                        </MagneticButton>
+                        <Link to={`/halls/${hall._id}`} className="px-6 py-3 border border-black/20 rounded-full hover:bg-[#D4AF37] hover:border-[#D4AF37] hover:text-white transition-all flex items-center gap-2 text-sm font-medium">
+                          View Details <FiArrowUpRight />
+                        </Link>
                       </div>
                     </div>
                   </motion.div>
