@@ -750,7 +750,7 @@ const TestimonialsSection = () => {
   }
 
   return (
-    <section className="py-24 bg-[#0A0A0A] overflow-hidden">
+    <section className="py-24 bg-black overflow-hidden">
       <motion.h2 
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
@@ -766,8 +766,8 @@ const TestimonialsSection = () => {
         </div>
       ) : (
         <div className="relative overflow-hidden" style={{ width: '100%', maxWidth: '100%' }}>
-          <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[#0A0A0A] to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#0A0A0A] to-transparent z-10 pointer-events-none" />
+          <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none" />
           
           <motion.div 
             className="flex gap-8"
@@ -776,7 +776,7 @@ const TestimonialsSection = () => {
             transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
           >
             {[...testimonials, ...testimonials, ...testimonials].map((t, i) => (
-            <div key={i} className="min-w-[400px] bg-white/5 rounded-3xl p-8 hover:bg-white/10 transition-colors">
+            <div key={i} className="min-w-[400px] p-8">
               <div className="flex gap-1 mb-4">
                 {[...Array(t.rating || 5)].map((_, si) => (
                   <FiStar key={si} className="w-4 h-4 fill-[#D4AF37] text-[#D4AF37]" />
