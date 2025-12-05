@@ -36,13 +36,11 @@ const AdminSubscribe = () => {
       const params = new URLSearchParams();
       if (filter === 'active') params.append('isActive', 'true');
       if (filter === 'inactive') params.append('isActive', 'false');
-      // If 'all', don't add isActive filter to get all subscriptions
 
       console.log('📥 Fetching subscriptions with filter:', filter);
       const response = await api.get(`/admin/subscribe?${params.toString()}`);
       console.log('📦 Subscriptions response:', response.data);
       
-      // Handle different response formats
       let subscriptionsData = [];
       if (response.data) {
         if (Array.isArray(response.data)) {
@@ -171,14 +169,14 @@ const AdminSubscribe = () => {
           <div className="flex gap-3">
             <button
               onClick={() => setShowNewsletterModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-black rounded-xl hover:bg-[#C5A028] transition-all font-semibold"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 font-semibold shadow-lg shadow-blue-500/25"
             >
               <FiSend />
               <span>Send Newsletter</span>
             </button>
             <button
               onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all font-semibold"
+              className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-cyan-500/50 transition-all duration-300 font-semibold"
             >
               <FiDownload />
               <span>Export CSV</span>
@@ -190,25 +188,25 @@ const AdminSubscribe = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Filter */}
-        <div className="card mb-6">
+        <div className="bg-[#121212] border border-white/10 rounded-2xl p-6 mb-6">
           <div className="flex items-center gap-4">
-            <label className="text-sm font-medium">Filter:</label>
+            <label className="text-sm font-medium text-white">Filter:</label>
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 focus:border-[#D4AF37] focus:outline-none"
+              className="bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2 text-white focus:border-blue-500 focus:outline-none transition-colors"
             >
-              <option value="all">All Subscriptions</option>
-              <option value="active">Active Only</option>
-              <option value="inactive">Inactive Only</option>
+              <option value="all" className="bg-[#0A0A0A] text-white">All Subscriptions</option>
+              <option value="active" className="bg-[#0A0A0A] text-white">Active Only</option>
+              <option value="inactive" className="bg-[#0A0A0A] text-white">Inactive Only</option>
             </select>
             <div className="ml-auto flex items-center gap-4 text-sm">
-              <div className="text-gray-400">
-                Active: <span className="text-green-400 font-semibold">
+              <div className="text-gray-300">
+                Active: <span className="text-emerald-400 font-semibold">
                   {subscriptions.filter(sub => sub.isActive).length}
                 </span>
               </div>
-              <div className="text-gray-400">
+              <div className="text-gray-300">
                 Total: <span className="text-white font-semibold">{subscriptions.length}</span>
               </div>
             </div>
@@ -216,32 +214,32 @@ const AdminSubscribe = () => {
         </div>
 
         {/* Subscriptions List */}
-        <div className="card">
+        <div className="bg-[#121212] border border-white/10 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left py-3 px-4 text-sm font-semibold">Email</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold">Name</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold">Status</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold">Subscribed At</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold">Actions</th>
+                <tr className="border-b border-white/10 bg-[#1A1A1A]">
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-white">Email</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-white">Name</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-white">Status</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-white">Subscribed At</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-white">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {subscriptions.map((subscription) => (
-                  <tr key={subscription._id} className="border-b border-white/5 hover:bg-white/5">
+                  <tr key={subscription._id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
                         <FiMail className="text-gray-400" />
-                        <span>{subscription.email}</span>
+                        <span className="text-white">{subscription.email}</span>
                       </div>
                     </td>
                     <td className="py-3 px-4">
                       {subscription.name ? (
                         <div className="flex items-center gap-2">
                           <FiUser className="text-gray-400" />
-                          <span>{subscription.name}</span>
+                          <span className="text-white">{subscription.name}</span>
                         </div>
                       ) : (
                         <span className="text-gray-500">-</span>
@@ -249,12 +247,12 @@ const AdminSubscribe = () => {
                     </td>
                     <td className="py-3 px-4">
                       {subscription.isActive ? (
-                        <span className="flex items-center gap-1 px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">
+                        <span className="flex items-center gap-1 px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs border border-emerald-500/30">
                           <FiCheckCircle />
                           Active
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 px-3 py-1 bg-gray-500/20 text-gray-400 rounded-full text-xs">
+                        <span className="flex items-center gap-1 px-3 py-1 bg-gray-500/20 text-gray-400 rounded-full text-xs border border-gray-500/30">
                           <FiXCircle />
                           Inactive
                         </span>
@@ -266,7 +264,7 @@ const AdminSubscribe = () => {
                     <td className="py-3 px-4">
                       <button
                         onClick={() => handleDelete(subscription._id)}
-                        className="p-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg transition-all"
+                        className="p-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 text-red-400 rounded-lg transition-all duration-300"
                       >
                         <FiTrash2 />
                       </button>
@@ -279,8 +277,8 @@ const AdminSubscribe = () => {
         </div>
 
         {subscriptions.length === 0 && !loading && (
-          <div className="text-center py-12 text-gray-400">
-            <p>No subscriptions found.</p>
+          <div className="text-center py-12">
+            <p className="text-gray-300">No subscriptions found.</p>
           </div>
         )}
       </main>
@@ -295,11 +293,11 @@ const AdminSubscribe = () => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-[#121212] w-full max-w-2xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-[#1A1A1A]">
+              <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-[#1A1A1A] to-[#121212]">
                 <h2 className="font-['Cinzel'] text-xl text-white">Send Newsletter</h2>
                 <button 
                   onClick={() => setShowNewsletterModal(false)}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className="text-gray-400 hover:text-white hover:bg-white/5 p-2 rounded-lg transition-all duration-300"
                 >
                   <FiX size={24} />
                 </button>
@@ -311,7 +309,7 @@ const AdminSubscribe = () => {
                     <label className="block text-sm text-gray-400 font-medium mb-2">
                       Recipients
                     </label>
-                    <div className="bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-3 text-sm text-gray-300">
+                    <div className="bg-[#0A0A0A] border border-cyan-500/30 rounded-lg px-4 py-3 text-sm text-cyan-400">
                       {subscriptions.filter(sub => sub.isActive).length} active subscribers
                     </div>
                   </div>
@@ -325,7 +323,7 @@ const AdminSubscribe = () => {
                       value={newsletterForm.subject}
                       onChange={(e) => setNewsletterForm({ ...newsletterForm, subject: e.target.value })}
                       placeholder="Newsletter Subject"
-                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-[#D4AF37] focus:outline-none"
+                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 focus:outline-none transition-colors"
                     />
                   </div>
 
@@ -338,7 +336,7 @@ const AdminSubscribe = () => {
                       onChange={(e) => setNewsletterForm({ ...newsletterForm, content: e.target.value })}
                       placeholder="Write your newsletter content here..."
                       rows={12}
-                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-[#D4AF37] focus:outline-none resize-none"
+                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 focus:outline-none resize-none transition-colors"
                     />
                     <p className="text-xs text-gray-500 mt-2">
                       You can use line breaks. HTML formatting will be preserved.
@@ -347,14 +345,14 @@ const AdminSubscribe = () => {
                 </div>
               </div>
 
-              <div className="px-6 py-4 border-t border-white/10 bg-[#1A1A1A] flex justify-end gap-3">
+              <div className="px-6 py-4 border-t border-white/10 bg-gradient-to-r from-[#1A1A1A] to-[#121212] flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     setShowNewsletterModal(false);
                     setNewsletterForm({ subject: '', content: '' });
                   }}
-                  className="px-5 py-2 text-gray-400 hover:text-white transition-colors font-medium"
+                  className="px-5 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-300 font-medium"
                 >
                   Cancel
                 </button>
@@ -362,7 +360,7 @@ const AdminSubscribe = () => {
                   type="button"
                   onClick={handleSendNewsletter}
                   disabled={sendingNewsletter || !newsletterForm.subject.trim() || !newsletterForm.content.trim()}
-                  className="px-6 py-2 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#b5952f] transition-colors shadow-lg shadow-[#D4AF37]/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-blue-500 disabled:hover:to-blue-600"
                 >
                   {sendingNewsletter ? 'Sending...' : 'Send Newsletter'}
                 </button>
@@ -376,4 +374,5 @@ const AdminSubscribe = () => {
 };
 
 export default AdminSubscribe;
+
 

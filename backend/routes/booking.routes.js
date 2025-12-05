@@ -141,12 +141,85 @@ router.post('/', [
     //   });
     // }
 
-    // Calculate prices
-    const addonsTotal = addons?.reduce((sum, addon) => sum + (addon.price * (addon.quantity || 1)), 0) || 0;
-    const basePrice = totalAmount || 0;
-    const subtotal = basePrice + addonsTotal;
-    const tax = subtotal * 0.18; // 18% GST
-    const finalTotalAmount = subtotal + tax;
+    // Use prices from request if provided (from frontend calculation)
+    // Otherwise calculate from venue's servicePricing
+    let basePrice = req.body.basePrice;
+    let slotPrice = req.body.slotPrice || 0;
+    let addonsTotal = req.body.addonsTotal || 0;
+    let tax = req.body.tax;
+    let finalTotalAmount = totalAmount;
+
+    console.log('💰 Price calculation - Request data:', {
+      basePrice: req.body.basePrice,
+      slotPrice: req.body.slotPrice,
+      addonsTotal: req.body.addonsTotal,
+      tax: req.body.tax,
+      totalAmount: req.body.totalAmount
+    });
+
+    // If basePrice not provided, calculate from venue's servicePricing
+    if (!basePrice || basePrice === 0) {
+      console.log('💰 Base price not provided, calculating from venue servicePricing');
+      console.log('💰 Event type:', eventType);
+      console.log('💰 Hall servicePricing:', hall.servicePricing);
+      
+      if (hall.servicePricing && hall.servicePricing.length > 0) {
+        // Try to find matching service pricing
+        let servicePricing = hall.servicePricing.find(
+          sp => sp.serviceType === eventType
+        );
+        
+        if (!servicePricing) {
+          console.warn('⚠️ Service pricing not found for eventType:', eventType);
+          console.warn('⚠️ Available service types:', hall.servicePricing.map(sp => sp.serviceType));
+        }
+        
+        basePrice = servicePricing?.basePrice || hall.basePrice || 0;
+        console.log('💰 Found service pricing:', servicePricing, 'Base price:', basePrice);
+      } else {
+        // Fallback: extract base price from totalAmount (remove tax)
+        if (totalAmount && totalAmount > 0) {
+          basePrice = Math.round(totalAmount / 1.18);
+        } else {
+          basePrice = hall.basePrice || 0;
+        }
+        console.log('💰 Using fallback base price:', basePrice);
+      }
+    } else {
+      console.log('✅ Using basePrice from request:', basePrice);
+    }
+
+    // If slotPrice not provided, calculate from venue's priceSlots
+    if (!slotPrice && startTime && endTime && hall.priceSlots && hall.priceSlots.length > 0) {
+      const matchingSlot = hall.priceSlots.find(
+        slot => startTime >= slot.startTime && endTime <= slot.endTime
+      );
+      slotPrice = matchingSlot?.price || 0;
+    }
+
+    // Calculate addons total if not provided
+    if (!addonsTotal && addons && addons.length > 0) {
+      addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * (addon.quantity || 1)), 0);
+    }
+
+    // Calculate tax and total if not provided
+    if (!tax || tax === 0) {
+      const subtotal = basePrice + slotPrice + addonsTotal;
+      tax = Math.round(subtotal * 0.18); // 18% GST
+    }
+
+    if (!finalTotalAmount || finalTotalAmount === 0) {
+      const subtotal = basePrice + slotPrice + addonsTotal;
+      finalTotalAmount = subtotal + tax;
+    }
+
+    console.log('💰 Final price calculation:', {
+      basePrice,
+      slotPrice,
+      addonsTotal,
+      tax,
+      finalTotalAmount
+    });
 
     // Generate invoice number
     const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
@@ -162,7 +235,7 @@ router.post('/', [
       guestCount,
       addons: addons || [],
       basePrice,
-      slotPrice: 0,
+      slotPrice,
       addonsTotal,
       tax,
       totalAmount: finalTotalAmount,
@@ -230,7 +303,19 @@ router.post('/', [
       console.error('❌ Error sending booking confirmation email:', emailError);
       console.error('❌ Email error details:', {
         message: emailError.message,
-        stack: emailError.stack
+        code: emailError.code,
+        command: emailError.command,
+        response: emailError.response,
+        responseCode: emailError.responseCode,
+        stack: process.env.NODE_ENV === 'development' ? emailError.stack : undefined
+      });
+      console.error('❌ SMTP Configuration Status:', {
+        SMTP_HOST: process.env.SMTP_HOST || 'NOT SET',
+        SMTP_PORT: process.env.SMTP_PORT || 'NOT SET',
+        SMTP_USER: process.env.SMTP_USER ? `${process.env.SMTP_USER.substring(0, 3)}***` : 'NOT SET',
+        SMTP_PASS: process.env.SMTP_PASS ? 'SET' : 'NOT SET',
+        ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'NOT SET',
+        NODE_ENV: process.env.NODE_ENV || 'NOT SET'
       });
     }
 

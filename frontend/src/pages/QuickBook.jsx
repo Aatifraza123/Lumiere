@@ -235,7 +235,8 @@ const QuickBook = () => {
             : hall.images ? [{ url: hall.images }] : [],
           facilities: Array.isArray(hall.amenities) ? hall.amenities : hall.facilities || [],
           description: hall.description || '',
-          priceSlots: hall.priceSlots || []
+          priceSlots: hall.priceSlots || [],
+          servicePricing: hall.servicePricing || [] // Include servicePricing from admin
         }));
         setHalls(transformedHalls);
         console.log('Halls loaded:', transformedHalls.length);
@@ -304,18 +305,84 @@ const QuickBook = () => {
       return;
     }
 
-    // Venue price is based on service price (no separate venue base price)
-    const venuePrice = selectedService.price || 0;
-    const servicePrice = selectedService.price || 0;
+    // Get price from venue's servicePricing (admin-set price)
+    let basePrice = 0;
+    // Use category as primary, then type, then 'other' as fallback
+    const serviceType = selectedService.category || selectedService.type || 'other';
     
-    // Total = Service Price only
-    const subtotal = servicePrice;
-    const tax = subtotal * 0.18;
+    console.log('💰 Calculating price:', {
+      venueId: selectedVenue._id,
+      venueName: selectedVenue.name,
+      serviceId: selectedService._id,
+      serviceName: selectedService.name || selectedService.title,
+      serviceCategory: selectedService.category,
+      serviceType: selectedService.type,
+      matchedServiceType: serviceType,
+      servicePricing: selectedVenue.servicePricing,
+      venueBasePrice: selectedVenue.basePrice,
+      servicePrice: selectedService.price
+    });
+
+    if (selectedVenue.servicePricing && selectedVenue.servicePricing.length > 0) {
+      // Find matching service pricing - try exact match first
+      let servicePricing = selectedVenue.servicePricing.find(
+        sp => sp.serviceType === serviceType
+      );
+      
+      // If not found, try with category
+      if (!servicePricing && selectedService.category) {
+        servicePricing = selectedVenue.servicePricing.find(
+          sp => sp.serviceType === selectedService.category
+        );
+      }
+      
+      // If still not found, try with type
+      if (!servicePricing && selectedService.type) {
+        servicePricing = selectedVenue.servicePricing.find(
+          sp => sp.serviceType === selectedService.type
+        );
+      }
+      
+      console.log('💰 Found service pricing:', servicePricing);
+      
+      if (servicePricing && servicePricing.basePrice && servicePricing.basePrice > 0) {
+        basePrice = servicePricing.basePrice;
+        console.log('✅ Using servicePricing basePrice:', basePrice);
+      } else {
+        // Fallback to venue basePrice
+        basePrice = selectedVenue.basePrice || 0;
+        console.warn('⚠️ Service pricing not found for type:', serviceType, 'Using venue basePrice:', basePrice);
+      }
+    } else {
+      // Fallback to venue basePrice or service price
+      basePrice = selectedVenue.basePrice || selectedService.price || 0;
+      console.warn('⚠️ No servicePricing found, using fallback:', basePrice);
+    }
+    
+    // Final validation - ensure basePrice is valid
+    if (!basePrice || basePrice <= 0) {
+      console.error('❌ Invalid basePrice calculated:', basePrice);
+      toast.error('Price calculation error. Please contact support.');
+      setPriceDetails(null);
+      return;
+    }
+    
+    // Total = Base Price (from admin-set servicePricing)
+    const subtotal = basePrice;
+    const tax = Math.round(subtotal * 0.18);
     const total = subtotal + tax;
 
+    console.log('💰 Final price calculation:', {
+      basePrice,
+      subtotal,
+      tax,
+      total
+    });
+
     setPriceDetails({
-      venuePrice,
-      servicePrice,
+      venuePrice: basePrice,
+      servicePrice: basePrice,
+      basePrice: basePrice, // Add basePrice for backend
       subtotal,
       tax,
       total
@@ -377,14 +444,18 @@ const QuickBook = () => {
         guestCount: guestCount,
         addons: [],
         advancePercent: bookingOption === 'with-payment' ? 10 : 0,
-        totalAmount: priceDetails.total,
-        venuePrice: priceDetails.servicePrice, // Venue price = Service price
-        servicePrice: priceDetails.servicePrice,
+        totalAmount: priceDetails.total, // Total with tax
+        basePrice: priceDetails.basePrice || priceDetails.servicePrice, // Base price before tax
+        slotPrice: 0, // No slot price in QuickBook
+        addonsTotal: 0,
+        tax: priceDetails.tax,
         paymentStatus: 'pending',
         customerName: formData.name.trim(),
         customerEmail: formData.email.trim(),
         customerMobile: formData.mobile.trim()
       };
+
+      console.log('📦 Booking data being sent:', bookingData);
 
       // Validate all required fields
       if (!bookingData.hallId || !bookingData.eventName || !bookingData.eventType || 
@@ -407,13 +478,29 @@ const QuickBook = () => {
         // Calculate advance amount (10% of total)
         const advanceAmount = Math.round(priceDetails.total * 0.1);
         
-        // Create payment order
-        const paymentResponse = await api.post('/payments/razorpay/create-order', {
-          bookingId: bookingId,
-          amount: advanceAmount
+        console.log('💳 Payment details:', {
+          totalAmount: priceDetails.total,
+          advanceAmount: advanceAmount,
+          advancePercent: 10
         });
         
+        // Create payment order with advance amount
+        const paymentResponse = await api.post('/payments/razorpay/create-order', {
+          bookingId: bookingId,
+          amount: advanceAmount // Send advance amount (10% of total)
+        });
+        
+        console.log('💳 Razorpay order response:', paymentResponse.data);
+        
         const { orderId, amount, currency } = paymentResponse.data;
+        
+        // Verify the amount matches
+        if (amount !== advanceAmount * 100) {
+          console.warn('⚠️ Amount mismatch:', {
+            expected: advanceAmount * 100,
+            received: amount
+          });
+        }
         
         // Load Razorpay
         const Razorpay = await loadRazorpay();
@@ -425,10 +512,10 @@ const QuickBook = () => {
         
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-          amount: amount,
+          amount: amount, // This is in paise (already converted by backend)
           currency: currency,
           name: 'Lumière Events',
-          description: `Advance payment for ${selectedVenue.name}`,
+          description: `Advance payment (10%) for ${selectedService.name || selectedService.title} at ${selectedVenue.name} - Total: ₹${priceDetails.total.toLocaleString()}`,
           order_id: orderId,
           handler: async function (response) {
             try {
@@ -518,22 +605,58 @@ const QuickBook = () => {
 
             <div className="bg-[#111] border border-white/10 rounded-lg p-4">
               <label className="block text-sm font-semibold mb-2">Select Service</label>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                {services.map((service) => (
-                  <button
-                    key={service._id}
-                    onClick={() => setSelectedService(service)}
-                    className={`p-2 rounded-lg border-2 text-left transition-all ${
-                      selectedService?._id === service._id
-                        ? 'border-[#D4AF37] bg-[#D4AF37]/10'
-                        : 'border-white/10 bg-white/5 hover:border-[#D4AF37]/50'
-                    }`}
-                  >
-                    <div className="text-xs font-medium mb-1">{service.name || service.title}</div>
-                    <div className="text-[#D4AF37] font-bold text-sm">₹{(service.price || 0).toLocaleString()}</div>
-                  </button>
-                ))}
-              </div>
+              {!selectedVenue ? (
+                <div className="text-center py-4 text-gray-400 text-sm">
+                  Please select a venue first to see service prices
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {services.map((service) => {
+                    // Calculate price from selected venue's servicePricing
+                    let displayPrice = service.price || 0;
+                    let priceSource = 'service'; // 'service', 'venue-servicePricing', 'venue-basePrice'
+                    
+                    if (selectedVenue && selectedVenue.servicePricing && selectedVenue.servicePricing.length > 0) {
+                      const serviceType = service.category || service.type || 'other';
+                      const servicePricing = selectedVenue.servicePricing.find(
+                        sp => sp.serviceType === serviceType
+                      );
+                      if (servicePricing && servicePricing.basePrice && servicePricing.basePrice > 0) {
+                        displayPrice = servicePricing.basePrice;
+                        priceSource = 'venue-servicePricing';
+                      } else if (selectedVenue.basePrice && selectedVenue.basePrice > 0) {
+                        displayPrice = selectedVenue.basePrice;
+                        priceSource = 'venue-basePrice';
+                      }
+                    } else if (selectedVenue.basePrice && selectedVenue.basePrice > 0) {
+                      displayPrice = selectedVenue.basePrice;
+                      priceSource = 'venue-basePrice';
+                    }
+                    
+                    return (
+                      <button
+                        key={service._id}
+                        onClick={() => {
+                          setSelectedService(service);
+                          // Price will be recalculated in useEffect
+                        }}
+                        className={`p-2 rounded-lg border-2 text-left transition-all ${
+                          selectedService?._id === service._id
+                            ? 'border-[#D4AF37] bg-[#D4AF37]/10'
+                            : 'border-white/10 bg-white/5 hover:border-[#D4AF37]/50'
+                        }`}
+                        title={priceSource === 'service' ? 'Using service default price' : 'Using venue pricing'}
+                      >
+                        <div className="text-xs font-medium mb-1 line-clamp-1">{service.name || service.title}</div>
+                        <div className="text-[#D4AF37] font-bold text-sm">₹{displayPrice.toLocaleString()}</div>
+                        {priceSource === 'service' && (
+                          <div className="text-[8px] text-gray-500 mt-0.5">Default</div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Date Selection */}

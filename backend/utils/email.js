@@ -3,27 +3,69 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT || 587,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
+// Create transporter dynamically to ensure env vars are loaded
+const createTransporter = () => {
+  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const smtpPort = parseInt(process.env.SMTP_PORT) || 587;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+
+  if (!smtpUser || !smtpPass) {
+    console.warn('⚠️  SMTP credentials not configured');
+    return null;
   }
-});
+
+  return nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpPort === 465, // true for 465, false for other ports
+    auth: {
+      user: smtpUser.trim(),
+      pass: smtpPass.trim()
+    },
+    tls: {
+      rejectUnauthorized: false // Allow self-signed certificates
+    }
+  });
+};
+
+// Verify transporter connection
+const verifyTransporter = async (transporter) => {
+  try {
+    await transporter.verify();
+    console.log('✅ SMTP server connection verified');
+    return true;
+  } catch (error) {
+    console.error('❌ SMTP server connection failed:', error.message);
+    console.error('❌ SMTP verification error details:', {
+      code: error.code,
+      command: error.command,
+      response: error.response
+    });
+    return false;
+  }
+};
 
 export const sendEmail = async (options) => {
   try {
     // Check if SMTP is configured
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.warn('⚠️  SMTP credentials not configured. Email sending skipped.');
+      const errorMsg = 'SMTP credentials not configured. Email sending skipped.';
+      console.warn(`⚠️  ${errorMsg}`);
+      console.warn('⚠️  Environment variables checked:', {
+        SMTP_USER: process.env.SMTP_USER ? 'SET' : 'NOT SET',
+        SMTP_PASS: process.env.SMTP_PASS ? 'SET' : 'NOT SET',
+        SMTP_HOST: process.env.SMTP_HOST || 'default (smtp.gmail.com)',
+        SMTP_PORT: process.env.SMTP_PORT || 'default (587)',
+        NODE_ENV: process.env.NODE_ENV || 'not set'
+      });
+      
       if (process.env.NODE_ENV === 'development') {
         console.log('📧 Email would be sent to:', options.email);
         console.log('📧 Subject:', options.subject);
         return { messageId: 'dev-mode' }; // Allow to continue in development
       }
-      throw new Error('Email configuration missing');
+      throw new Error(errorMsg);
     }
 
     // Validate SMTP_USER is a valid email (not admin@lumiere.com which doesn't exist)
@@ -37,6 +79,18 @@ export const sendEmail = async (options) => {
       console.error('❌ WARNING: SMTP_USER is set to admin@lumiere.com which is not a valid email address.');
       console.error('❌ Please set SMTP_USER to a valid Gmail address (e.g., razaaatif658@gmail.com)');
       throw new Error('SMTP_USER is set to an invalid email address. Please use a valid Gmail address.');
+    }
+
+    // Create transporter dynamically
+    const transporter = createTransporter();
+    if (!transporter) {
+      throw new Error('Failed to create email transporter. Check SMTP configuration.');
+    }
+
+    // Verify connection (only log, don't fail if verification fails)
+    const isVerified = await verifyTransporter(transporter);
+    if (!isVerified) {
+      console.warn('⚠️  SMTP connection verification failed, but attempting to send email anyway...');
     }
 
     const mailOptions = {
@@ -54,16 +108,37 @@ export const sendEmail = async (options) => {
     }
 
     console.log(`📧 Sending email to: ${options.email}`);
+    console.log(`📧 From: ${mailOptions.from}`);
+    console.log(`📧 Subject: ${options.subject}`);
+    
     const info = await transporter.sendMail(mailOptions);
     console.log('✅ Email sent successfully:', info.messageId);
+    console.log('✅ Email response:', {
+      messageId: info.messageId,
+      response: info.response
+    });
     return info;
   } catch (error) {
     console.error('❌ Email error:', error);
     console.error('❌ Email error details:', {
       message: error.message,
       code: error.code,
-      response: error.response
+      command: error.command,
+      response: error.response,
+      responseCode: error.responseCode,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
+    
+    // Log environment variables (without sensitive data)
+    console.error('❌ SMTP Configuration Status:', {
+      SMTP_HOST: process.env.SMTP_HOST || 'NOT SET',
+      SMTP_PORT: process.env.SMTP_PORT || 'NOT SET',
+      SMTP_USER: process.env.SMTP_USER ? `${process.env.SMTP_USER.substring(0, 3)}***` : 'NOT SET',
+      SMTP_PASS: process.env.SMTP_PASS ? 'SET' : 'NOT SET',
+      ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'NOT SET',
+      NODE_ENV: process.env.NODE_ENV || 'NOT SET'
+    });
+    
     throw error;
   }
 };

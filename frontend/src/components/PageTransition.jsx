@@ -4,40 +4,6 @@ import { useLocation } from 'react-router-dom';
 const pageVariants = {
   initial: {
     opacity: 0,
-    y: 40,
-    scale: 0.95,
-    filter: 'blur(12px)',
-    clipPath: 'inset(0% 0% 100% 0%)'
-  },
-  animate: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    filter: 'blur(0px)',
-    clipPath: 'inset(0% 0% 0% 0%)',
-    transition: {
-      duration: 0.7,
-      ease: [0.16, 1, 0.3, 1],
-      staggerChildren: 0.08,
-      delayChildren: 0.1
-    }
-  },
-  exit: {
-    opacity: 0,
-    y: -30,
-    scale: 0.97,
-    filter: 'blur(8px)',
-    clipPath: 'inset(100% 0% 0% 0%)',
-    transition: {
-      duration: 0.5,
-      ease: [0.16, 1, 0.3, 1]
-    }
-  }
-};
-
-const childVariants = {
-  initial: {
-    opacity: 0,
     y: 20,
     scale: 0.98
   },
@@ -46,8 +12,34 @@ const childVariants = {
     y: 0,
     scale: 1,
     transition: {
-      duration: 0.5,
-      ease: [0.16, 1, 0.3, 1]
+      duration: 0.4,
+      ease: [0.25, 0.46, 0.45, 0.94],
+      staggerChildren: 0.05,
+      delayChildren: 0.05
+    }
+  },
+  exit: {
+    opacity: 0,
+    y: -10,
+    scale: 0.99,
+    transition: {
+      duration: 0.3,
+      ease: [0.25, 0.46, 0.45, 0.94]
+    }
+  }
+};
+
+const childVariants = {
+  initial: {
+    opacity: 0,
+    y: 10
+  },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.3,
+      ease: [0.25, 0.46, 0.45, 0.94]
     }
   }
 };
@@ -69,7 +61,8 @@ const PageTransition = ({ children }) => {
           maxWidth: '100vw', 
           overflowX: 'hidden',
           margin: 0,
-          padding: 0
+          padding: 0,
+          willChange: 'transform, opacity'
         }}
       >
         <motion.div 

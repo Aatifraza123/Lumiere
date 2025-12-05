@@ -15,6 +15,8 @@ import User from '../models/User.model.js';
 import { protect, authorize } from '../middleware/auth.middleware.js';
 import { generateToken } from '../utils/generateToken.js';
 import { upload } from '../utils/upload.js';
+import { sendEmail } from '../utils/email.js';
+import nodemailer from 'nodemailer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -135,6 +137,142 @@ router.get('/dashboard', async (req, res, next) => {
     });
   } catch (error) {
     console.error('❌ Dashboard error:', error);
+    next(error);
+  }
+});
+
+// ========== EMAIL TEST ENDPOINT ==========
+router.post('/test-email', async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const testEmail = email || process.env.ADMIN_EMAIL || 'razaaatif658@gmail.com';
+
+    console.log('📧 Testing email configuration...');
+    console.log('📧 Test email will be sent to:', testEmail);
+
+    // Check SMTP configuration
+    const smtpConfig = {
+      SMTP_HOST: process.env.SMTP_HOST || 'NOT SET',
+      SMTP_PORT: process.env.SMTP_PORT || 'NOT SET',
+      SMTP_USER: process.env.SMTP_USER ? `${process.env.SMTP_USER.substring(0, 3)}***` : 'NOT SET',
+      SMTP_PASS: process.env.SMTP_PASS ? 'SET' : 'NOT SET',
+      ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'NOT SET',
+      NODE_ENV: process.env.NODE_ENV || 'NOT SET'
+    };
+
+    console.log('📧 SMTP Configuration:', smtpConfig);
+
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      return res.status(400).json({
+        success: false,
+        message: 'SMTP credentials not configured',
+        config: smtpConfig,
+        instructions: 'Please set SMTP_USER and SMTP_PASS environment variables in your hosting platform (e.g., Render dashboard)'
+      });
+    }
+
+    // Create test transporter
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT) || 587,
+      secure: parseInt(process.env.SMTP_PORT) === 465,
+      auth: {
+        user: process.env.SMTP_USER.trim(),
+        pass: process.env.SMTP_PASS.trim()
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    // Verify connection
+    let verificationResult = { success: false, error: null };
+    try {
+      await transporter.verify();
+      verificationResult.success = true;
+      console.log('✅ SMTP connection verified');
+    } catch (verifyError) {
+      verificationResult.error = {
+        message: verifyError.message,
+        code: verifyError.code,
+        command: verifyError.command,
+        response: verifyError.response
+      };
+      console.error('❌ SMTP verification failed:', verifyError.message);
+    }
+
+    // Send test email
+    let emailResult = { success: false, messageId: null, error: null };
+    try {
+      const info = await sendEmail({
+        email: testEmail,
+        subject: 'Test Email - Lumière Events Email Configuration',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%); color: #000; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { padding: 30px; background: #f9f9f9; }
+              .success { background: #d4edda; padding: 15px; border-radius: 5px; margin: 15px 0; color: #155724; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1 style="margin: 0;">Lumière Events</h1>
+                <p style="margin: 10px 0 0 0; font-size: 18px;">Email Test</p>
+              </div>
+              <div class="content">
+                <div class="success">
+                  <strong>✅ Success!</strong> Your email configuration is working correctly.
+                </div>
+                <p>This is a test email sent from your Lumière Events server.</p>
+                <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
+                <p><strong>Environment:</strong> ${process.env.NODE_ENV || 'not set'}</p>
+                <p>If you received this email, your SMTP configuration is correct and emails should be working for both admin and customer notifications.</p>
+                <p>Best regards,<br><strong>Lumière Events System</strong></p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `,
+        text: `Test email from Lumière Events. If you received this, your email configuration is working correctly. Timestamp: ${new Date().toLocaleString()}`
+      });
+      emailResult.success = true;
+      emailResult.messageId = info.messageId;
+      console.log('✅ Test email sent successfully:', info.messageId);
+    } catch (emailError) {
+      emailResult.error = {
+        message: emailError.message,
+        code: emailError.code,
+        command: emailError.command,
+        response: emailError.response
+      };
+      console.error('❌ Test email failed:', emailError.message);
+    }
+
+    res.json({
+      success: emailResult.success,
+      message: emailResult.success 
+        ? 'Test email sent successfully! Check your inbox.' 
+        : 'Test email failed. Check error details.',
+      config: smtpConfig,
+      verification: verificationResult,
+      email: emailResult,
+      instructions: !emailResult.success ? [
+        '1. Verify SMTP_USER is set to a valid Gmail address (e.g., razaaatif658@gmail.com)',
+        '2. Verify SMTP_PASS is set to a Gmail App Password (not regular password)',
+        '3. Make sure 2FA is enabled on your Gmail account',
+        '4. Generate App Password: https://myaccount.google.com/apppasswords',
+        '5. Set environment variables in your hosting platform dashboard (e.g., Render)',
+        '6. Restart your server after setting environment variables'
+      ] : []
+    });
+  } catch (error) {
+    console.error('❌ Email test error:', error);
     next(error);
   }
 });
@@ -1080,6 +1218,27 @@ router.put('/bookings/:id', async (req, res, next) => {
 
     res.json({ success: true, data: booking });
   } catch (error) {
+    next(error);
+  }
+});
+
+router.delete('/bookings/:id', async (req, res, next) => {
+  try {
+    console.log('🗑️ DELETE /admin/bookings/:id - Request received');
+    console.log('📦 Booking ID:', req.params.id);
+
+    const booking = await Booking.findById(req.params.id);
+    
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+
+    await Booking.findByIdAndDelete(req.params.id);
+    
+    console.log('✅ Booking deleted successfully:', req.params.id);
+    res.json({ success: true, message: 'Booking deleted successfully' });
+  } catch (error) {
+    console.error('❌ Error deleting booking:', error);
     next(error);
   }
 });

@@ -260,17 +260,39 @@ const HallDetail = () => {
       return;
     }
     
-    const basePrice = hall.basePrice || 0;
-    const servicePrice = selectedService.price || 0;
-    const slotPrice = selectedTimeSlot.price || 0;
+    // Get price from venue's servicePricing (admin-set price)
+    let basePrice = 0;
+    if (hall.servicePricing && hall.servicePricing.length > 0) {
+      const serviceType = selectedService.type || selectedService.category;
+      const servicePricing = hall.servicePricing.find(
+        sp => sp.serviceType === serviceType
+      );
+      basePrice = servicePricing?.basePrice || hall.basePrice || 0;
+    } else {
+      // Fallback to hall basePrice if servicePricing not set
+      basePrice = hall.basePrice || 0;
+    }
     
-    const subtotal = basePrice + servicePrice + slotPrice;
+    // Get slot price from venue's priceSlots (admin-set price)
+    let slotPrice = 0;
+    if (hall.priceSlots && hall.priceSlots.length > 0 && selectedTimeSlot) {
+      const matchingSlot = hall.priceSlots.find(
+        slot => selectedTimeSlot.startTime >= slot.startTime && 
+                selectedTimeSlot.endTime <= slot.endTime
+      );
+      slotPrice = matchingSlot?.price || selectedTimeSlot.price || 0;
+    } else {
+      // Fallback to selectedTimeSlot price if priceSlots not set
+      slotPrice = selectedTimeSlot.price || 0;
+    }
+    
+    const subtotal = basePrice + slotPrice;
     const tax = subtotal * 0.18;
     const total = subtotal + tax;
     
     setPriceDetails({ 
       basePrice, 
-      servicePrice, 
+      servicePrice: basePrice, // For compatibility
       slotPrice, 
       subtotal, 
       tax, 

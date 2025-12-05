@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { 
   FiSearch, FiFilter, FiCalendar, FiUser, FiMapPin, 
-  FiClock, FiEye, FiMoreVertical, FiX, FiCheck, FiDownload, FiDollarSign 
+  FiClock, FiEye, FiMoreVertical, FiX, FiCheck, FiDownload, FiDollarSign, FiTrash2 
 } from 'react-icons/fi';
 import AdminNavbar from '../../components/admin/AdminNavbar';
 import api from '../../utils/api';
@@ -89,6 +89,24 @@ const AdminBookings = () => {
       }
     } catch (error) {
       toast.error('Failed to update payment status');
+    }
+  };
+
+  const handleDelete = async (bookingId) => {
+    if (!window.confirm('Are you sure you want to delete this booking? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/admin/bookings/${bookingId}`);
+      toast.success('Booking deleted successfully');
+      fetchBookings();
+      if (selectedBooking?._id === bookingId) {
+        setShowDetails(false);
+        setSelectedBooking(null);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete booking');
     }
   };
 
@@ -273,19 +291,33 @@ const AdminBookings = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="font-medium text-white">₹{booking.totalAmount?.toLocaleString()}</div>
+                        {booking.basePrice && booking.basePrice !== booking.totalAmount && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Base: ₹{booking.basePrice?.toLocaleString()}
+                          </div>
+                        )}
                         <div className="mt-1"><StatusBadge status={booking.paymentStatus} /></div>
                       </td>
                       <td className="px-6 py-4">
                          <StatusBadge status={booking.status} />
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button 
-                          onClick={() => openModal(booking)}
-                          className="text-gray-400 hover:text-[#D4AF37] p-2 hover:bg-white/5 rounded-lg transition-all"
-                          title="View Details"
-                        >
-                          <FiEye size={18} />
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button 
+                            onClick={() => openModal(booking)}
+                            className="text-gray-400 hover:text-[#D4AF37] p-2 hover:bg-white/5 rounded-lg transition-all"
+                            title="View Details"
+                          >
+                            <FiEye size={18} />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(booking._id)}
+                            className="text-gray-400 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-lg transition-all"
+                            title="Delete Booking"
+                          >
+                            <FiTrash2 size={18} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -335,7 +367,12 @@ const AdminBookings = () => {
                           </p>
                           {selectedBooking.eventType && (
                             <p className="text-xs text-gray-500 mt-1 capitalize">
-                              Service: {selectedBooking.eventType}
+                              Service Type: {selectedBooking.eventType}
+                            </p>
+                          )}
+                          {selectedBooking.invoiceNumber && (
+                            <p className="text-xs text-[#D4AF37] mt-1 font-mono">
+                              Invoice: {selectedBooking.invoiceNumber}
                             </p>
                           )}
                         </div>
@@ -379,15 +416,25 @@ const AdminBookings = () => {
                     <div className="bg-[#1A1A1A] p-4 rounded-lg border border-white/5 space-y-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Base Price</span>
-                        <span>₹{selectedBooking.basePrice?.toLocaleString()}</span>
+                        <span className="text-white">₹{selectedBooking.basePrice?.toLocaleString() || 0}</span>
                       </div>
+                      {selectedBooking.slotPrice > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-400">Time Slot</span>
+                          <span className="text-white">₹{selectedBooking.slotPrice?.toLocaleString() || 0}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Add-ons</span>
-                        <span>₹{selectedBooking.addonsTotal?.toLocaleString() || 0}</span>
+                        <span className="text-white">₹{selectedBooking.addonsTotal?.toLocaleString() || 0}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Tax</span>
-                        <span>₹{selectedBooking.tax?.toLocaleString() || 0}</span>
+                        <span className="text-gray-400">Subtotal</span>
+                        <span className="text-white">₹{((selectedBooking.basePrice || 0) + (selectedBooking.slotPrice || 0) + (selectedBooking.addonsTotal || 0)).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Tax (18% GST)</span>
+                        <span className="text-white">₹{selectedBooking.tax?.toLocaleString() || 0}</span>
                       </div>
                       <div className="h-px bg-white/10 my-2" />
                       <div className="flex justify-between text-base font-bold">
@@ -432,12 +479,20 @@ const AdminBookings = () => {
                         </select>
                      </div>
                      
-                     <button 
-                        onClick={handleDownloadInvoice}
-                        className="w-full mt-3 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 py-2 rounded-lg text-sm transition-colors border border-white/5 cursor-pointer"
-                      >
-                        <FiDownload /> Download Invoice
-                     </button>
+                     <div className="flex gap-3 mt-3">
+                       <button 
+                          onClick={handleDownloadInvoice}
+                          className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 py-2 rounded-lg text-sm transition-colors border border-white/5 cursor-pointer"
+                        >
+                          <FiDownload /> Download Invoice
+                       </button>
+                       <button 
+                          onClick={() => handleDelete(selectedBooking._id)}
+                          className="flex-1 flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2 rounded-lg text-sm transition-colors border border-red-500/20 cursor-pointer"
+                        >
+                          <FiTrash2 /> Delete Booking
+                       </button>
+                     </div>
                    </div>
                 </div>
               </div>

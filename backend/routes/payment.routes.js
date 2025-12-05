@@ -88,8 +88,25 @@ router.post('/razorpay/create-order', optionalAuth, async (req, res, next) => {
       console.log('✅ Guest booking authorized');
     }
 
-    const paymentAmount = amount || booking.totalAmount;
+    // Use amount from request if provided (advance amount), otherwise use booking totalAmount
+    let paymentAmount = amount;
+    if (!paymentAmount || paymentAmount === 0) {
+      // If no amount provided, use booking's totalAmount
+      paymentAmount = booking.totalAmount;
+      console.log('💰 No amount provided, using booking totalAmount:', paymentAmount);
+    } else {
+      console.log('💰 Using provided amount (advance):', paymentAmount);
+    }
+    
     const amountInPaise = Math.round(paymentAmount * 100); // Razorpay uses paise
+    
+    console.log('💰 Razorpay order amount:', {
+      paymentAmount,
+      amountInPaise,
+      bookingTotalAmount: booking.totalAmount,
+      bookingBasePrice: booking.basePrice,
+      bookingTax: booking.tax
+    });
 
     // Generate receipt ID (max 40 characters as per Razorpay requirement)
     // Format: RCPT + bookingId (first 12 chars) + timestamp (last 8 chars) = 20 chars total
@@ -207,7 +224,19 @@ router.post('/razorpay/verify', optionalAuth, async (req, res, next) => {
       console.error('❌ Error sending payment confirmation email:', emailError);
       console.error('❌ Email error details:', {
         message: emailError.message,
-        stack: emailError.stack
+        code: emailError.code,
+        command: emailError.command,
+        response: emailError.response,
+        responseCode: emailError.responseCode,
+        stack: process.env.NODE_ENV === 'development' ? emailError.stack : undefined
+      });
+      console.error('❌ SMTP Configuration Status:', {
+        SMTP_HOST: process.env.SMTP_HOST || 'NOT SET',
+        SMTP_PORT: process.env.SMTP_PORT || 'NOT SET',
+        SMTP_USER: process.env.SMTP_USER ? `${process.env.SMTP_USER.substring(0, 3)}***` : 'NOT SET',
+        SMTP_PASS: process.env.SMTP_PASS ? 'SET' : 'NOT SET',
+        ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'NOT SET',
+        NODE_ENV: process.env.NODE_ENV || 'NOT SET'
       });
     }
 

@@ -71,6 +71,109 @@ ADMIN_PASSWORD=Admin@123
    - Generate: `openssl rand -base64 32`
    - Or use any strong random string
 
+## Production Deployment (Render, Vercel, etc.)
+
+### ⚠️ IMPORTANT: Environment Variables on Production
+
+**For production servers (like Render), you MUST set environment variables in the hosting platform's dashboard, NOT just in a `.env` file.**
+
+The `.env` file is only for local development. Production servers need environment variables set in their dashboard.
+
+### Steps for Render:
+
+1. **Go to your Render Dashboard**
+2. **Select your backend service**
+3. **Go to "Environment" tab**
+4. **Add all environment variables** from the list above:
+   - `PORT` (usually auto-set by Render)
+   - `NODE_ENV=production`
+   - `MONGODB_URI` (your MongoDB Atlas connection string)
+   - `JWT_SECRET` (generate a new one for production)
+   - `RAZORPAY_KEY_ID` (use live keys for production)
+   - `RAZORPAY_KEY_SECRET` (use live keys for production)
+   - `SMTP_HOST=smtp.gmail.com`
+   - `SMTP_PORT=587`
+   - `SMTP_USER=razaaatif658@gmail.com` (your Gmail address)
+   - `SMTP_PASS=your-16-char-app-password` (Gmail App Password)
+   - `SMTP_FROM=Lumière Events`
+   - `ADMIN_EMAIL=razaaatif658@gmail.com`
+   - `ADMIN_PASSWORD=your-secure-password`
+   - `CLOUDINARY_CLOUD_NAME=your-cloud-name`
+   - `CLOUDINARY_API_KEY=your-api-key`
+   - `CLOUDINARY_API_SECRET=your-api-secret`
+
+5. **After adding variables, restart your service**
+
+### Testing Email Configuration:
+
+After setting up environment variables, you can test email configuration:
+
+1. **Login to admin panel**
+2. **Make a POST request to:** `/api/admin/test-email`
+   - Or use the admin dashboard if a UI is available
+3. **Check the response** for configuration status
+4. **Check your email inbox** for the test email
+
+### Common Email Issues on Production:
+
+1. **Emails not sending:**
+   - ✅ Check if `SMTP_USER` and `SMTP_PASS` are set in production environment
+   - ✅ Verify Gmail App Password is correct (16 characters, no spaces)
+   - ✅ Ensure 2FA is enabled on Gmail account
+   - ✅ Check server logs for detailed error messages
+
+2. **"SMTP credentials not configured" error:**
+   - Environment variables are not set in production dashboard
+   - Restart server after setting variables
+
+3. **"Invalid login" or "Authentication failed" error:**
+   - Gmail App Password is incorrect
+   - Generate a new App Password: https://myaccount.google.com/apppasswords
+
+4. **"Connection timeout" error:**
+   - Check if `SMTP_PORT=587` is set correctly
+   - Some hosting providers block port 587, try port 465 with `secure: true`
+
+### Email Test Endpoint:
+
+**POST** `/api/admin/test-email`
+
+**Headers:**
+```
+Authorization: Bearer <admin-jwt-token>
+Content-Type: application/json
+```
+
+**Body (optional):**
+```json
+{
+  "email": "test@example.com"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Test email sent successfully! Check your inbox.",
+  "config": {
+    "SMTP_HOST": "smtp.gmail.com",
+    "SMTP_PORT": "587",
+    "SMTP_USER": "raz***",
+    "SMTP_PASS": "SET",
+    "ADMIN_EMAIL": "razaaatif658@gmail.com",
+    "NODE_ENV": "production"
+  },
+  "verification": {
+    "success": true
+  },
+  "email": {
+    "success": true,
+    "messageId": "..."
+  }
+}
+```
+
 
 
 
