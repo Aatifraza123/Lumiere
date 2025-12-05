@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { 
   FiPlus, FiEdit2, FiTrash2, FiImage, FiEye, FiEyeOff, 
   FiTag, FiLayers, FiX, FiType, FiAlignLeft, FiCheck, FiUser,
-  FiHeading, FiList, FiMinus 
+  FiList, FiMinus 
 } from 'react-icons/fi';
 import AdminNavbar from '../../components/admin/AdminNavbar';
 import api from '../../utils/api';
@@ -492,7 +492,7 @@ const AdminBlog = () => {
                               className="flex items-center gap-1 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-gray-400 hover:text-white transition-colors"
                               title="Add Heading"
                             >
-                              <FiHeading /> Heading
+                              <FiType /> Heading
                             </button>
                             <button
                               type="button"
