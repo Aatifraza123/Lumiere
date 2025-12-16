@@ -1,12 +1,29 @@
-# Fix 401 Error on Live Server
+# Live Server Troubleshooting Guide
 
-## Issue
-Admin dashboard showing 401 (Unauthorized) errors on live server after authentication changes.
+## Issues Addressed
+1. ✅ 401 (Unauthorized) errors - FIXED
+2. ⚠️ Timeout errors (30-60 seconds) - NEEDS DEPLOYMENT
+
+## Latest Update: Timeout Fix (Commit d5ab838)
+Added 60-second timeout and automatic retry logic for cold starts on free hosting tiers.
 
 ## Quick Fix Steps
 
-### 1. Deploy Latest Changes
-The fix has been pushed to GitHub. Deploy the latest code to your live server (Render/Heroku).
+### 1. Deploy Latest Changes to Live Server
+
+**IMPORTANT:** You must deploy the latest code to fix timeout issues!
+
+#### For Render:
+1. Go to https://dashboard.render.com
+2. Find your backend service
+3. Click "Manual Deploy" → "Deploy latest commit"
+4. Wait for deployment to complete (check logs)
+
+#### For Vercel (Frontend):
+1. Go to https://vercel.com/dashboard
+2. Find your project (lumiere-sandy-pi)
+3. Click "Redeploy" or push will auto-deploy
+4. Wait for deployment to complete
 
 ### 2. Verify Environment Variables
 Make sure these are set on your live server:
@@ -96,10 +113,39 @@ If you want to use the new Admin model instead:
 - [ ] `MONGODB_URI` is set
 - [ ] Server restarted after setting variables
 
+## Timeout Issues (30-60 seconds)
+
+### Why This Happens
+Render free tier puts servers to sleep after 15 minutes of inactivity. First request after sleep takes 30-60 seconds to wake up.
+
+### What We Fixed (Commit d5ab838)
+1. **Increased timeout** from 30s to 60s
+2. **Added retry logic** - automatically retries failed requests up to 2 times
+3. **Better error messages** - tells users when server is waking up
+4. **Retry on specific errors** - ECONNABORTED, ERR_NETWORK, no response
+
+### After Deploying
+First request after server sleep will:
+1. Show loading state for 30-60 seconds
+2. Automatically retry if it times out
+3. Display helpful message: "Server may be sleeping. Please wait..."
+
+### Long-term Solutions
+1. **Upgrade Render plan** - Paid plans don't sleep ($7/month)
+2. **Keep-alive ping** - Ping server every 10 minutes to keep it awake
+3. **Use different host** - Railway, Fly.io, or AWS have better free tiers
+
+### Temporary Workaround
+If you get timeout on first request:
+1. Wait 60 seconds
+2. Try again - server should be awake now
+3. Subsequent requests will be fast
+
 ## Contact Support
 
-If issue persists:
-1. Check server logs for specific error messages
-2. Verify MongoDB connection is working
-3. Test with `/api/health` endpoint
-4. Check if JWT_SECRET is properly set
+If issue persists after deployment:
+1. Check Render logs for errors: Dashboard → Service → Logs
+2. Verify backend is running: Visit `https://your-backend.onrender.com/api/health`
+3. Check MongoDB connection in logs
+4. Verify all environment variables are set
+5. Try manual restart: Dashboard → Service → Manual Deploy → "Clear build cache & deploy"
