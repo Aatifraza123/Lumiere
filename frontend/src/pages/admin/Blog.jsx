@@ -231,9 +231,11 @@ const AdminBlog = () => {
   };
 
   const updateContentSection = (id, updates) => {
-    setContentSections(contentSections.map(s => 
-      s.id === id ? { ...s, ...updates } : s
-    ));
+    setContentSections(prevSections => 
+      prevSections.map(s => 
+        s.id === id ? { ...s, ...updates } : s
+      )
+    );
   };
 
   const updateListItem = (sectionId, itemIndex, value) => {
@@ -572,7 +574,10 @@ const AdminBlog = () => {
                                   <input
                                     type="text"
                                     value={section.text || ''}
-                                    onChange={(e) => updateContentSection(section.id, { text: e.target.value })}
+                                    onChange={(e) => {
+                                      console.log('Heading input changed:', e.target.value);
+                                      updateContentSection(section.id, { text: e.target.value });
+                                    }}
                                     className={`w-full bg-[#0A0A0A] border-2 border-white/20 rounded-lg px-5 py-3 text-white focus:border-[#D4AF37] focus:outline-none font-bold placeholder-gray-600 ${
                                       section.level === 1 ? 'text-2xl' :
                                       section.level === 2 ? 'text-xl' :
@@ -580,6 +585,7 @@ const AdminBlog = () => {
                                       'text-base'
                                     }`}
                                     placeholder={`Enter H${section.level} heading...`}
+                                    autoComplete="off"
                                   />
                                 </div>
                               )}
