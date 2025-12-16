@@ -573,8 +573,12 @@ const AdminBlog = () => {
                                     type="text"
                                     value={section.text || ''}
                                     onChange={(e) => updateContentSection(section.id, { text: e.target.value })}
-                                    className="w-full bg-[#0A0A0A] border-2 border-white/20 rounded-lg px-5 py-3 text-white focus:border-[#D4AF37] focus:outline-none font-bold"
-                                    style={{ fontSize: `${28 - (section.level - 1) * 4}px` }}
+                                    className={`w-full bg-[#0A0A0A] border-2 border-white/20 rounded-lg px-5 py-3 text-white focus:border-[#D4AF37] focus:outline-none font-bold placeholder-gray-600 ${
+                                      section.level === 1 ? 'text-2xl' :
+                                      section.level === 2 ? 'text-xl' :
+                                      section.level === 3 ? 'text-lg' :
+                                      'text-base'
+                                    }`}
                                     placeholder={`Enter H${section.level} heading...`}
                                   />
                                 </div>
