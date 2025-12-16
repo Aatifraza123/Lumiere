@@ -26,7 +26,7 @@ const router = express.Router();
 // ========== ADMIN LOGIN (Public Route - Before Protection) ==========
 router.post('/login', async (req, res, next) => {
   try {
-    const { password } = req.body;
+    const { password, email } = req.body;
 
     // Get admin password from environment variables
     const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123';
@@ -39,42 +39,44 @@ router.post('/login', async (req, res, next) => {
       });
     }
 
-    // Find or create admin user
-    let adminUser = await User.findOne({ email: adminEmail, role: 'admin' });
-    
-    if (!adminUser) {
-      // Create admin user if doesn't exist
-      adminUser = await User.create({
-        name: 'Administrator',
-        email: adminEmail,
-        phone: '0000000000',
-        password: adminPassword, // Will be hashed by pre-save hook
-        role: 'admin'
-      });
-    }
-
-    // Verify password
-    const isPasswordValid = await adminUser.matchPassword(password);
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid password'
-      });
-    }
-
-    // Generate JWT token
-    const token = generateToken(adminUser._id);
-
-    return res.json({
-      success: true,
-      message: 'Login successful',
-      token,
-      data: {
-        _id: adminUser._id,
-        name: adminUser.name,
-        email: adminUser.email,
-        role: adminUser.role
+    // Simple password check for backward compatibility
+    if (password === adminPassword) {
+      // Find or create admin user in User model for backward compatibility
+      let adminUser = await User.findOne({ email: adminEmail, role: 'admin' });
+      
+      if (!adminUser) {
+        // Create admin user if doesn't exist
+        adminUser = await User.create({
+          name: 'Administrator',
+          email: adminEmail,
+          phone: '0000000000',
+          password: adminPassword, // Will be hashed by pre-save hook
+          role: 'admin'
+        });
       }
+
+      // Generate JWT token
+      const token = generateToken(adminUser._id);
+
+      console.log('✅ Admin login successful (legacy mode)');
+      
+      return res.json({
+        success: true,
+        message: 'Login successful',
+        token,
+        data: {
+          _id: adminUser._id,
+          name: adminUser.name,
+          email: adminUser.email,
+          role: adminUser.role
+        }
+      });
+    }
+
+    // If password doesn't match, return error
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid password'
     });
   } catch (error) {
     console.error('Admin login error:', error);
@@ -87,7 +89,7 @@ router.post('/login', async (req, res, next) => {
 
 // Apply admin protection to all routes below this line
 router.use(protect);
-router.use(authorize('admin', 'manager'));
+router.use(authorize('admin', 'manager', 'super-admin'));
 
 // ========== DASHBOARD ==========
 router.get('/dashboard', async (req, res, next) => {

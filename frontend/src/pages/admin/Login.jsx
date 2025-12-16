@@ -16,32 +16,39 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
+      // Get API URL from environment or use default
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      
       // Try to authenticate with backend
-      const response = await axios.post('http://localhost:5000/api/admin/login', {
+      const response = await axios.post(`${apiUrl}/admin/login`, {
         password
       });
 
       if (response.data.success) {
         // Store admin authentication
         localStorage.setItem('adminAuthenticated', 'true');
+        
         // Store JWT token for API calls
         if (response.data.token) {
           localStorage.setItem('adminToken', response.data.token);
           localStorage.setItem('token', response.data.token); // Also store as token for backward compatibility
+          console.log('✅ Admin token stored successfully');
+        } else {
+          console.warn('⚠️ No token received from server');
         }
+        
+        // Store admin data if available
+        if (response.data.data) {
+          localStorage.setItem('adminData', JSON.stringify(response.data.data));
+        }
+        
         navigate('/admin/dashboard');
       } else {
         setError('Invalid password');
       }
     } catch (err) {
-      // If backend is not available, check password locally
-      // This is a fallback for development
-      if (password === 'Admin@123') {
-        localStorage.setItem('adminAuthenticated', 'true');
-        navigate('/admin/dashboard');
-      } else {
-        setError(err.response?.data?.message || 'Invalid password');
-      }
+      console.error('❌ Admin login error:', err);
+      setError(err.response?.data?.message || 'Authentication failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
