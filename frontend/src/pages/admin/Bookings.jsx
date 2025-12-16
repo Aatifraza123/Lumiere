@@ -20,6 +20,7 @@ const AdminBookings = () => {
     status: '',
     paymentStatus: ''
   });
+  const [bookingEmails, setBookingEmails] = useState([]);
 
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('adminAuthenticated');
@@ -52,6 +53,14 @@ const AdminBookings = () => {
       
       console.log('✅ Bookings loaded:', bookingsData.length);
       setBookings(bookingsData);
+      
+      // Extract unique emails from bookings
+      const emails = new Set();
+      bookingsData.forEach(booking => {
+        if (booking.customerEmail) emails.add(booking.customerEmail);
+        if (booking.userId?.email) emails.add(booking.userId.email);
+      });
+      setBookingEmails(Array.from(emails).sort());
     } catch (error) {
       console.error('❌ Error fetching bookings:', error);
       console.error('❌ Error details:', {
@@ -450,6 +459,27 @@ const AdminBookings = () => {
                         <span>₹{((selectedBooking.totalAmount || 0) - (selectedBooking.paidAmount || 0)).toLocaleString()}</span>
                       </div>
                     </div>
+                   </div>
+
+                   {/* Email Dropdown */}
+                   <div>
+                     <h3 className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">Booking Emails</h3>
+                     <select
+                       className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:border-[#D4AF37] focus:outline-none"
+                       onChange={(e) => {
+                         if (e.target.value) {
+                           window.open(`mailto:${e.target.value}`, '_blank');
+                           e.target.value = '';
+                         }
+                       }}
+                     >
+                       <option value="">Select email to send...</option>
+                       {bookingEmails.map((email, index) => (
+                         <option key={index} value={email} className="bg-[#0A0A0A] text-white">
+                           {email}
+                         </option>
+                       ))}
+                     </select>
                    </div>
 
                    {/* Admin Actions */}

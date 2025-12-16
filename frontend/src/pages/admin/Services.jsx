@@ -373,7 +373,9 @@ const AdminServices = () => {
                           <option value="corporate">Corporate</option>
                           <option value="party">Social Party</option>
                           <option value="birthday">Birthday</option>
+                          <option value="anniversary">Anniversary</option>
                           <option value="engagement">Engagement</option>
+                          <option value="other">Other</option>
                         </select>
                       </div>
                     </div>

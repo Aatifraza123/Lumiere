@@ -184,7 +184,7 @@ const Halls = () => {
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="text-center mb-16"
         >
           <span className="text-[#D4AF37] text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Premium Venues</span>
@@ -198,7 +198,8 @@ const Halls = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16"
         >
           {[
@@ -209,10 +210,10 @@ const Halls = () => {
           ].map((item, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ delay: index * 0.08, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
               className="bg-[#111] border border-white/10 rounded-xl p-4 text-center"
             >
               <div className="text-2xl text-[#D4AF37] mb-2 flex justify-center">{item.icon}</div>
@@ -254,6 +255,7 @@ const Halls = () => {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                 className="overflow-hidden"
               >
                 <div className="bg-[#111] border border-white/10 rounded-2xl p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -318,8 +320,8 @@ const Halls = () => {
                   key={hall._id}
                   layout
                   variants={itemVariants}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  whileHover={{ scale: 1.02, y: -5, transition: { duration: 0.3 } }}
+                  exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                  whileHover={{ scale: 1.02, y: -5, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
                 >
                   <div 
                     className="bg-[#111] border border-white/10 rounded-2xl overflow-hidden h-full hover:border-[#D4AF37]/50 transition-all duration-500 flex flex-col cursor-pointer"

@@ -396,7 +396,15 @@ const BookingModal = ({ isOpen, onClose, hall, services }) => {
                   {/* Service Selection */}
                   <div>
                     <label className="block text-sm text-gray-400 mb-3">Select Service *</label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <select
+                      value={selectedService?._id || ''}
+                      onChange={(e) => {
+                        const service = services.find(s => s._id === e.target.value);
+                        setSelectedService(service);
+                      }}
+                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-3 text-white focus:border-[#D4AF37] focus:outline-none"
+                    >
+                      <option value="">-- Select a Service --</option>
                       {services.map((service) => {
                         const serviceType = service.category || service.type || 'other';
                         let servicePrice = 0;
@@ -408,22 +416,20 @@ const BookingModal = ({ isOpen, onClose, hall, services }) => {
                         }
                         
                         return (
-                          <button
-                            key={service._id}
-                            onClick={() => setSelectedService(service)}
-                            className={`p-4 rounded-lg border-2 text-left transition-all ${
-                              selectedService?._id === service._id
-                                ? 'border-[#D4AF37] bg-[#D4AF37]/10'
-                                : 'border-white/10 bg-white/5 hover:border-[#D4AF37]/50'
-                            }`}
-                          >
-                            <div className="font-semibold text-white mb-1">{service.name || service.title}</div>
-                            <div className="text-sm text-gray-400 mb-2">{service.description}</div>
-                            <div className="text-[#D4AF37] font-bold">₹{servicePrice.toLocaleString()}</div>
-                          </button>
+                          <option key={service._id} value={service._id}>
+                            {service.name || service.title} - ₹{servicePrice.toLocaleString()}
+                          </option>
                         );
                       })}
-                    </div>
+                    </select>
+                    
+                    {/* Show selected service details */}
+                    {selectedService && (
+                      <div className="mt-3 p-4 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-lg">
+                        <div className="font-semibold text-white mb-1">{selectedService.name || selectedService.title}</div>
+                        <div className="text-sm text-gray-400">{selectedService.description}</div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Date Selection */}

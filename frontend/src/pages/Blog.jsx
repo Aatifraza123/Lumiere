@@ -91,7 +91,7 @@ const Blog = () => {
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="text-center mb-20"
         >
           <span className="text-[#D4AF37] text-xs font-bold tracking-[0.3em] uppercase mb-4 block">The Journal</span>
@@ -122,7 +122,7 @@ const Blog = () => {
             {blogs.length > 0 && (
               <motion.div
                 variants={itemVariants}
-                whileHover={{ scale: 1.01, transition: { duration: 0.3 } }}
+                whileHover={{ scale: 1.01, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
                 className="lg:col-span-3 group relative cursor-pointer mb-12"
               >
                 <Link to={`/blog/${blogs[0].slug}`} className="block relative h-[500px] rounded-[2rem] overflow-hidden">
@@ -158,7 +158,7 @@ const Blog = () => {
               <motion.div
                 key={blog._id}
                 variants={itemVariants}
-                whileHover={{ scale: 1.02, y: -5, transition: { duration: 0.3 } }}
+                whileHover={{ scale: 1.02, y: -5, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
                 className="group flex flex-col h-full"
               >
                 <Link to={`/blog/${blog.slug}`} className="block h-full bg-[#111] border border-white/10 rounded-3xl overflow-hidden hover:border-[#D4AF37]/50 transition-colors duration-500">

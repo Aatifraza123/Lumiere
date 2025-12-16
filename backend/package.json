@@ -9,7 +9,8 @@
     "dev": "nodemon server.js",
     "dev:clean": "node --experimental-modules server.js",
     "seed": "node scripts/seed.js",
-    "seed:data": "node scripts/seedData.js"
+    "seed:data": "node scripts/seedData.js",
+    "create-super-admin": "node scripts/createSuperAdmin.js"
   },
   "keywords": [
     "events",

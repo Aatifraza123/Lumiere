@@ -17,12 +17,34 @@ const AdminContact = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all'); // all, unread, replied
+  const [allEmails, setAllEmails] = useState([]);
 
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('adminAuthenticated');
     if (!isAuthenticated) navigate('/admin/login');
     fetchContacts();
+    fetchAllEmails();
   }, [navigate]);
+
+  const fetchAllEmails = async () => {
+    try {
+      // Fetch contact emails
+      const contactResponse = await api.get('/admin/contact');
+      const contactEmails = (contactResponse.data.data || []).map(c => c.email);
+      
+      // Fetch newsletter emails
+      const subscribeResponse = await api.get('/admin/subscribe');
+      const newsletterEmails = (subscribeResponse.data.data || [])
+        .filter(sub => sub.isActive)
+        .map(sub => sub.email);
+      
+      // Combine and deduplicate
+      const emails = new Set([...contactEmails, ...newsletterEmails]);
+      setAllEmails(Array.from(emails).sort());
+    } catch (error) {
+      console.error('Error fetching emails:', error);
+    }
+  };
 
   const fetchContacts = async () => {
     try {
@@ -102,6 +124,28 @@ const AdminContact = () => {
           <div>
             <h1 className="font-['Cinzel'] text-3xl font-bold text-white">Inbox</h1>
             <p className="text-gray-400 mt-1">Customer inquiries and support messages.</p>
+          </div>
+
+          <div className="flex flex-col gap-3 w-full md:w-auto">
+            {/* Email Dropdown */}
+            <div className="w-full sm:w-64">
+              <select
+                className="w-full bg-[#1A1A1A] border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-[#D4AF37] focus:outline-none transition-colors"
+                onChange={(e) => {
+                  if (e.target.value) {
+                    window.open(`mailto:${e.target.value}`, '_blank');
+                    e.target.value = '';
+                  }
+                }}
+              >
+                <option value="">Select email (Contact + Newsletter)...</option>
+                {allEmails.map((email, index) => (
+                  <option key={index} value={email} className="bg-[#1A1A1A] text-white">
+                    {email}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">

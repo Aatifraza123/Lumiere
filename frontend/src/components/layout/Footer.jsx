@@ -148,20 +148,41 @@ const Footer = () => {
         </div>
 
         {/* --- BOTTOM BAR --- */}
-        <div className="mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-gray-500">
-          <p>&copy; {new Date().getFullYear()} Lumière Events. All rights reserved.</p>
+        <div className="mt-16 pt-8 border-t border-white/10">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-6">
+            <p className="text-sm text-gray-500">&copy; {new Date().getFullYear()} Lumière Events. All rights reserved.</p>
+            
+            <div className="flex gap-6">
+              {[FiInstagram, FiTwitter, FiFacebook].map((Icon, i) => (
+                <motion.a 
+                  key={i}
+                  href="#" 
+                  whileHover={{ y: -3 }}
+                  className="text-gray-400 hover:text-[#D4AF37] transition-colors text-xl"
+                >
+                  <Icon />
+                </motion.a>
+              ))}
+            </div>
+          </div>
           
-          <div className="flex gap-6">
-            {[FiInstagram, FiTwitter, FiFacebook].map((Icon, i) => (
-              <motion.a 
-                key={i}
-                href="#" 
-                whileHover={{ y: -3 }}
-                className="text-gray-400 hover:text-[#D4AF37] transition-colors text-xl"
-              >
-                <Icon />
-              </motion.a>
-            ))}
+          {/* Policy Links */}
+          <div className="flex flex-wrap justify-center gap-3 text-xs text-gray-500">
+            <Link to="/terms-conditions" className="hover:text-[#D4AF37] transition-colors">
+              Terms & Conditions
+            </Link>
+            <span className="text-gray-700">•</span>
+            <Link to="/privacy-policy" className="hover:text-[#D4AF37] transition-colors">
+              Privacy Policy
+            </Link>
+            <span className="text-gray-700">•</span>
+            <Link to="/refund-policy" className="hover:text-[#D4AF37] transition-colors">
+              Refund Policy
+            </Link>
+            <span className="text-gray-700">•</span>
+            <Link to="/cancellation-policy" className="hover:text-[#D4AF37] transition-colors">
+              Cancellation Policy
+            </Link>
           </div>
         </div>
       </div>

@@ -11,6 +11,7 @@ const __dirname = path.dirname(__filename);
 
 // Import routes
 import authRoutes from './routes/auth.routes.js';
+import adminAuthRoutes from './routes/adminAuth.routes.js';
 import hallRoutes from './routes/hall.routes.js';
 import serviceRoutes from './routes/service.routes.js';
 import packageRoutes from './routes/package.routes.js';
@@ -78,6 +79,7 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/admin-auth', adminAuthRoutes);
 app.use('/api/halls', hallRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/packages', packageRoutes);

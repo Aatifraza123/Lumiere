@@ -20,6 +20,10 @@ import Contact from './pages/Contact';
 import Gallery from './pages/Gallery';
 import Book from './pages/Book';
 import QuickBook from './pages/QuickBook';
+import TermsConditions from './pages/TermsConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import RefundPolicy from './pages/RefundPolicy';
+import CancellationPolicy from './pages/CancellationPolicy';
 
 // Admin Pages
 import AdminLogin from './pages/admin/Login';
@@ -134,6 +138,12 @@ function App() {
                 <Route path="/gallery" element={<Gallery />} />
                 <Route path="/book" element={<Book />} />
                 <Route path="/quick-book" element={<QuickBook />} />
+                
+                {/* Policy Pages */}
+                <Route path="/terms-conditions" element={<TermsConditions />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/refund-policy" element={<RefundPolicy />} />
+                <Route path="/cancellation-policy" element={<CancellationPolicy />} />
                 
                 {/* Admin Routes */}
                 <Route path="/admin/login" element={<AdminLogin />} />

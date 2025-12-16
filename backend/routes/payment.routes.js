@@ -193,57 +193,69 @@ router.post('/razorpay/verify', optionalAuth, async (req, res, next) => {
       .populate('userId', 'name email phone')
       .populate('hallId', 'name location');
 
-    // Send confirmation email with invoice (async, don't wait)
-    try {
-      console.log('📧 Preparing to send payment confirmation email...');
-      
-      // Get customer email from populated user (should be correct since we create guest user)
-      if (!populatedBooking.userId || !populatedBooking.userId.email) {
-        console.warn('⚠️ No user email found for booking, skipping email');
-        return;
-      }
-
-      const userForEmail = populatedBooking.userId;
-      console.log('📧 Sending email to customer:', userForEmail.email);
-
-      // Generate invoice PDF
-      const invoicePath = await generateInvoicePDF(
-        populatedBooking,
-        userForEmail,
-        populatedBooking.hallId,
-        { title: populatedBooking.eventType } // Service-like object for PDF
-      );
-
-      console.log('📄 Invoice PDF generated:', invoicePath);
-
-      // Send email with invoice attachment
-      await sendBookingConfirmation(populatedBooking, userForEmail, invoicePath);
-      console.log('✅ Payment confirmation email sent successfully');
-    } catch (emailError) {
-      // Log error but don't fail the payment
-      console.error('❌ Error sending payment confirmation email:', emailError);
-      console.error('❌ Email error details:', {
-        message: emailError.message,
-        code: emailError.code,
-        command: emailError.command,
-        response: emailError.response,
-        responseCode: emailError.responseCode,
-        stack: process.env.NODE_ENV === 'development' ? emailError.stack : undefined
-      });
-      console.error('❌ SMTP Configuration Status:', {
-        SMTP_HOST: process.env.SMTP_HOST || 'NOT SET',
-        SMTP_PORT: process.env.SMTP_PORT || 'NOT SET',
-        SMTP_USER: process.env.SMTP_USER ? `${process.env.SMTP_USER.substring(0, 3)}***` : 'NOT SET',
-        SMTP_PASS: process.env.SMTP_PASS ? 'SET' : 'NOT SET',
-        ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'NOT SET',
-        NODE_ENV: process.env.NODE_ENV || 'NOT SET'
-      });
-    }
-
+    // Send response first, then send emails asynchronously
     res.json({
       success: true,
       message: 'Payment verified successfully',
       data: payment
+    });
+
+    // Send confirmation emails (async, don't block response)
+    setImmediate(async () => {
+      try {
+        console.log('📧 Preparing to send payment confirmation emails...');
+        
+        // Get customer email from populated user
+        if (!populatedBooking.userId || !populatedBooking.userId.email) {
+          console.warn('⚠️ No user email found for booking, skipping customer email');
+        } else {
+          const userForEmail = populatedBooking.userId;
+          console.log('📧 Sending email to customer:', userForEmail.email);
+
+          try {
+            // Generate invoice PDF
+            const invoicePath = await generateInvoicePDF(
+              populatedBooking,
+              userForEmail,
+              populatedBooking.hallId,
+              { title: populatedBooking.eventType }
+            );
+
+            console.log('📄 Invoice PDF generated:', invoicePath);
+
+            // Send customer email with invoice attachment
+            await sendBookingConfirmation(populatedBooking, userForEmail, invoicePath);
+            console.log('✅ Customer confirmation email sent successfully');
+          } catch (customerEmailError) {
+            console.error('❌ Error sending customer email:', customerEmailError.message);
+          }
+        }
+
+        // Send admin notification email
+        try {
+          const customerInfo = {
+            name: populatedBooking.customerName || populatedBooking.userId?.name || 'N/A',
+            email: populatedBooking.customerEmail || populatedBooking.userId?.email || 'N/A',
+            phone: populatedBooking.customerMobile || populatedBooking.userId?.phone || 'N/A'
+          };
+          
+          console.log('📧 Sending admin notification with customer info:', customerInfo);
+          await sendAdminBookingNotification(populatedBooking, customerInfo);
+          console.log('✅ Admin notification email sent successfully');
+        } catch (adminEmailError) {
+          console.error('❌ Error sending admin notification:', adminEmailError.message);
+        }
+      } catch (emailError) {
+        console.error('❌ Error in email sending process:', emailError);
+        console.error('❌ SMTP Configuration Status:', {
+          SMTP_HOST: process.env.SMTP_HOST || 'NOT SET',
+          SMTP_PORT: process.env.SMTP_PORT || 'NOT SET',
+          SMTP_USER: process.env.SMTP_USER ? `${process.env.SMTP_USER.substring(0, 3)}***` : 'NOT SET',
+          SMTP_PASS: process.env.SMTP_PASS ? 'SET' : 'NOT SET',
+          ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'NOT SET',
+          NODE_ENV: process.env.NODE_ENV || 'NOT SET'
+        });
+      }
     });
   } catch (error) {
     next(error);
