@@ -1,243 +1,140 @@
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform, useInView } from 'framer-motion';
-import { FiArrowUpRight, FiMapPin, FiStar, FiPlay, FiCheckCircle, FiZap, FiAward, FiHeart, FiUsers, FiCalendar, FiClock, FiShield } from 'react-icons/fi';
+import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
+import { FiArrowUpRight, FiMapPin, FiStar, FiPlay, FiUsers, FiInstagram, FiVolume2, FiVolumeX } from 'react-icons/fi';
 import { useEffect, useState, useRef } from 'react';
 import api from '../utils/api';
 import HeroSection from '../components/HeroSection';
 
+// --- ASSETS ---
 const ASSETS = {
-  halls: [
-    "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200",
-    "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1200",
-    "https://goodthomas.net/wp-content/uploads/2024/11/host-a-private-party-good-thomas-entertainment-musical-bingo-3171837-1536x1026.jpg"
+  aboutImage: "https://images.unsplash.com/photo-1519225421980-715cb0202128?w=1600&q=80",
+  videoMain: "https://cdn.coverr.co/videos/coverr-wedding-celebration-with-lights-2637/1080p.mp4",
+  reel1: "https://cdn.coverr.co/videos/coverr-bride-and-groom-posing-in-the-sunset-4638/1080p.mp4",
+  reel2: "https://cdn.coverr.co/videos/coverr-people-dancing-at-a-wedding-party-5452/1080p.mp4",
+  reel3: "https://cdn.coverr.co/videos/coverr-slow-motion-of-sparklers-at-wedding-5136/1080p.mp4",
+  services: [
+    "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1600&q=80",
+    "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1600&q=80",
+    "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=1600&q=80"
   ]
 };
-
-const VIDEO_BREAK_SOURCE = "https://cdn.coverr.co/videos/coverr-wedding-celebration-with-lights-2637/1080p.mp4";
 
 const Home = () => {
   const [featuredHalls, setFeaturedHalls] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
+
+  // --- FETCH REAL DATA ---
   useEffect(() => {
-    fetchFeaturedHalls();
+    const fetchHalls = async () => {
+      try {
+        setLoading(true);
+        let response = await api.get('/halls?isFeatured=true&limit=3');
+        let data = response.data?.data || response.data?.halls || response.data || [];
+        
+        if (data.length === 0) {
+           const fallbackResponse = await api.get('/halls?isActive=true&limit=3');
+           data = fallbackResponse.data?.data || fallbackResponse.data?.halls || fallbackResponse.data || [];
+        }
+
+        const formattedHalls = data.map(hall => ({
+          _id: hall._id,
+          name: hall.name,
+          location: hall.location || 'Location on Request',
+          price: hall.basePrice || hall.price || 'On Request',
+          img: (hall.images && hall.images.length > 0) 
+               ? (typeof hall.images[0] === 'string' ? hall.images[0] : hall.images[0].url) 
+               : 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800',
+          rating: hall.rating || 5,
+          type: hall.type || 'Luxury Venue'
+        }));
+        setFeaturedHalls(formattedHalls);
+      } catch (err) {
+        console.error("❌ Failed to fetch halls:", err);
+        setFeaturedHalls([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHalls();
   }, []);
 
-  const fetchFeaturedHalls = async () => {
-    try {
-      setLoading(true);
-      console.log('📖 Fetching featured halls from API...');
-      
-      // First try to get featured halls
-      let response = await api.get('/halls?isFeatured=true&isActive=true&limit=3');
-      
-      // Handle different response structures
-      let hallsData = [];
-      if (response.data) {
-        if (Array.isArray(response.data)) {
-          hallsData = response.data;
-        } else if (response.data.data && Array.isArray(response.data.data)) {
-          hallsData = response.data.data;
-        } else if (response.data.halls && Array.isArray(response.data.halls)) {
-          hallsData = response.data.halls;
-        }
-      }
-      
-      // If no featured halls, try to get any active halls as fallback
-      if (hallsData.length === 0) {
-        try {
-          response = await api.get('/halls?isActive=true&limit=3');
-          if (response.data) {
-            if (Array.isArray(response.data)) {
-              hallsData = response.data;
-            } else if (response.data.data && Array.isArray(response.data.data)) {
-              hallsData = response.data.data;
-            } else if (response.data.halls && Array.isArray(response.data.halls)) {
-              hallsData = response.data.halls;
-            }
-          }
-        } catch (err) {
-          console.log("Fallback fetch failed", err);
-        }
-      }
-      
-      // 1. Transform existing API data
-      let displayedHalls = hallsData.slice(0, 3).map((hall, index) => ({
-        _id: hall._id,
-        name: hall.name || 'Unnamed Venue',
-        location: hall.location || 'Location TBD',
-        price: hall.basePrice || hall.price || 0,
-        capacity: hall.capacity || 0,
-        img: Array.isArray(hall.images) && hall.images.length > 0 
-          ? (typeof hall.images[0] === 'string' ? hall.images[0] : (hall.images[0]?.url || hall.images[0]))
-          : ASSETS.halls[index % ASSETS.halls.length],
-        rating: hall.rating || 5,
-        type: 'Luxury Venue'
-      }));
-
-      // 2. ADD 2 MORE MOCK VENUES IF NEEDED
-      // This block ensures you always have at least 3 items
-      if (displayedHalls.length < 3) {
-        // Get deleted mock venues from localStorage
-        const deletedMockVenues = JSON.parse(localStorage.getItem('deletedMockVenues') || '[]');
-        
-        const mockVenues = [
-          {
-            _id: 'royal-palace',
-            name: 'The Royal Palace',
-            location: 'Udaipur, Rajasthan',
-            price: 250000,
-            capacity: 800,
-            img: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200",
-            rating: 4.9,
-            type: 'Heritage Property'
-          },
-          {
-            _id: 'grand-hyatt',
-            name: 'Grand Hyatt Ballroom',
-            location: 'Mumbai, Maharashtra',
-            price: 180000,
-            capacity: 500,
-            img: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200",
-            rating: 4.8,
-            type: 'Luxury Hotel'
-          },
-          {
-            _id: 'seaside-center',
-            name: 'Seaside Convention Center',
-            location: 'Goa, India',
-            price: 120000,
-            capacity: 300,
-            img: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1200",
-            rating: 4.7,
-            type: 'Beachside Resort'
-          }
-        ];
-
-        // Filter out deleted mock venues
-        const availableMockVenues = mockVenues.filter(
-          venue => !deletedMockVenues.includes(venue._id)
-        );
-
-        // Fill the array until we have 3 items (only from available mock venues)
-        let mockIndex = 0;
-        while (displayedHalls.length < 3 && availableMockVenues.length > 0) {
-          // Add a mock item with proper ID that matches HallDetail mock data
-          const mockItem = availableMockVenues[mockIndex % availableMockVenues.length];
-          displayedHalls.push(mockItem);
-          mockIndex++;
-        }
-      }
-
-      console.log('✅ Final halls to display:', displayedHalls);
-      setFeaturedHalls(displayedHalls);
-
-    } catch (error) {
-      console.error('❌ Error fetching halls:', error);
-       // If API fails completely, show available mock items so section isn't empty
-       const deletedMockVenues = JSON.parse(localStorage.getItem('deletedMockVenues') || '[]');
-       const allMockVenues = [
-           {
-             _id: 'royal-palace',
-             name: 'The Royal Palace',
-             location: 'Udaipur, Rajasthan',
-             price: 250000,
-             capacity: 800,
-             img: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200",
-             rating: 4.9,
-             type: 'Heritage Property'
-           },
-           {
-             _id: 'grand-hyatt',
-             name: 'Grand Hyatt Ballroom',
-             location: 'Mumbai, Maharashtra',
-             price: 180000,
-             capacity: 500,
-             img: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200",
-             rating: 4.8,
-             type: 'Luxury Hotel'
-           },
-           {
-             _id: 'seaside-center',
-             name: 'Seaside Convention Center',
-             location: 'Goa, India',
-             price: 120000,
-             capacity: 300,
-             img: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1200",
-             rating: 4.7,
-             type: 'Beachside Resort'
-           }
-       ];
-       // Filter out deleted mock venues
-       const availableMockVenues = allMockVenues.filter(
-         venue => !deletedMockVenues.includes(venue._id)
-       );
-       setFeaturedHalls(availableMockVenues);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-        
-
-
   return (
-    <div className="bg-[#0A0A0A] text-white font-['Montserrat'] overflow-x-hidden relative selection:bg-[#D4AF37] selection:text-black" style={{ width: '100%', maxWidth: '100vw', margin: 0, padding: 0 }}>
+    <div className="bg-[#050505] text-[#1a1a1a] font-['Montserrat'] overflow-x-hidden relative selection:bg-[#D4AF37] selection:text-black w-full">
       
-      {/* FILM GRAIN */}
-      <div className="fixed inset-0 opacity-[0.03] pointer-events-none z-[100] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+      {/* GLOBAL SCROLL PROGRESS */}
+      <motion.div className="fixed top-0 left-0 right-0 h-1 bg-[#D4AF37] z-[100] origin-left" style={{ scaleX }} />
 
-      {/* SECTIONS */}
+      {/* GLOBAL NOISE */}
+      <div className="fixed inset-0 opacity-[0.04] pointer-events-none z-[90] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+
+      {/* --- SECTIONS --- */}
+      
       <HeroSection />
+      
+      {/* 1. ABOUT (Cinematic Split) */}
       <AboutSection />
+      
+      {/* 2. THE ATELIER (Stats - NEW) */}
+      <StatsSection />
+      
+      {/* 3. SERVICES (Dark Mode) */}
       <ServicesSection />
+      
+      {/* 4. CINEMATIC SHORTS (Video Reels - NEW) */}
+      <CinematicReelsSection />
+      
+      {/* 5. FEATURED HALLS (Real Data) */}
       <FeaturedHallsSection halls={featuredHalls} loading={loading} />
+      
+      {/* 6. PROCESS (Timeline) */}
       <ProcessSection />
+      
+      {/* 7. VIDEO BREAK (Immersive) */}
       <VideoBreakSection />
+      
+      {/* 8. TESTIMONIALS */}
       <TestimonialsSection />
-      <WhyChooseUsSection />
+      
+      {/* 9. CTA */}
       <CTASection />
+      
     </div>
   );
 };
 
-
-
-// ===== ABOUT SECTION =====
+// ==========================================
+// 1. ABOUT SECTION
+// ==========================================
 const AboutSection = () => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
-
   return (
-    <section ref={ref} className="py-32 px-6 max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-        <motion.div
-          initial={{ opacity: 0, x: -80 }}
-          animate={isInView ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 1 }}
-        >
-          <span className="text-[#D4AF37] text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Our Story</span>
-          <h2 className="font-['Playfair_Display'] text-[clamp(2rem,5vw,3.5rem)] mb-6 leading-tight font-normal">
-            Where Celebration <br />
-            <span className="italic text-[#D4AF37]">Becomes Art</span>
+    <section className="py-32 px-6 bg-[#F9F8F4] relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-1/3 h-full bg-[#f0efe9] -skew-x-12 transform translate-x-32 z-0"></div>
+      <div className="max-w-7xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+        <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 1 }} viewport={{ once: true }}>
+          <div className="flex items-center gap-4 mb-8">
+            <span className="h-[1px] w-12 bg-[#D4AF37]"></span>
+            <span className="text-[#D4AF37] text-xs font-bold tracking-[0.3em] uppercase">Since 2010</span>
+          </div>
+          <h2 className="font-['Playfair_Display'] text-6xl md:text-7xl mb-8 leading-[1.1] text-[#050505]">
+            Where Life <br />
+            <span className="italic text-[#D4AF37]">Becomes Art.</span>
           </h2>
-          <p className="text-gray-400 text-base leading-relaxed mb-6 font-light">
-            Founded in 2010, Lumière Events emerged from a simple philosophy: every celebration deserves to be extraordinary.
-          </p>
-          <p className="text-gray-400 text-base leading-relaxed font-light">
-            We've orchestrated over 1,200 events across India — from intimate rooftop engagements to palace weddings hosting 2,000 guests.
+          <p className="text-[#555] text-lg leading-relaxed mb-8 font-light max-w-md">
+            We don't just plan events; we orchestrate moments that suspend time. From intimate soirées to royal galas, Lumière is the architect of your most cherished memories.
           </p>
         </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, x: 80 }}
-          animate={isInView ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 1, delay: 0.2 }}
-          className="relative group"
-        >
-          <div className="relative h-[500px] rounded-3xl overflow-hidden">
-            <img src={ASSETS.halls[0]} alt="About" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 grayscale group-hover:grayscale-0" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2 }} viewport={{ once: true }} className="relative">
+          <div className="relative h-[600px] w-full overflow-hidden rounded-[2rem] shadow-2xl">
+             <img src={ASSETS.aboutImage} alt="About" className="w-full h-full object-cover transition-transform duration-[2s] hover:scale-110" />
+             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+             <motion.div 
+               initial={{ y: 50, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }}
+               className="absolute bottom-8 left-8 right-8 text-white"
+             >
+               <p className="font-['Playfair_Display'] italic text-2xl">"The details are not the details. They make the design."</p>
+             </motion.div>
           </div>
         </motion.div>
       </div>
@@ -245,51 +142,32 @@ const AboutSection = () => {
   );
 };
 
-// ===== SERVICES SECTION =====
-const ServicesSection = () => {
-  const services = [
-    { 
-      title: 'Royal Weddings', 
-      desc: 'Opulent celebrations with traditional grandeur and modern elegance.',
-      img: ASSETS.halls[0],
-      features: ['Venue Selection', 'Décor Design', 'Catering', 'Photography']
-    },
-    { 
-      title: 'Corporate Galas', 
-      desc: 'Professional events that reflect your brand prestige.',
-      img: ASSETS.halls[1],
-      features: ['AV Production', 'Brand Integration', 'Guest Management']
-    },
-    { 
-      title: 'Private Parties', 
-      desc: 'Intimate celebrations designed for memories.',
-      img: ASSETS.halls[2],
-      features: ['Theme Design', 'Entertainment', 'Custom Menus']
-    },
+// ==========================================
+// 2. STATS SECTION (The Atelier - NEW)
+// ==========================================
+const StatsSection = () => {
+  const stats = [
+    { label: "Celebrations", value: "1,200+" },
+    { label: "Guest Experience", value: "500k+" },
+    { label: "Global Cities", value: "15" },
+    { label: "Design Awards", value: "24" },
   ];
 
   return (
-    <section className="py-32 px-6 bg-[#0F0F0F] relative">
-      {/* Gradient overlay at top to match Our Story section */}
-      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#0A0A0A] to-transparent pointer-events-none" />
-      <div className="max-w-7xl mx-auto relative z-10">
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <h2 className="font-['Playfair_Display'] text-[clamp(2.5rem,5vw,4rem)] mb-4 font-normal">
-            Our <span className="italic text-[#D4AF37]">Expertise</span>
-          </h2>
-          <p className="text-gray-400 text-base md:text-lg max-w-2xl mx-auto font-light">
-            From concept to execution, we handle every detail with meticulous care.
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {services.map((service, i) => (
-            <TiltCard key={i} service={service} index={i} />
+    <section className="py-20 bg-[#050505] border-y border-white/5">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
+          {stats.map((stat, i) => (
+            <motion.div 
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+            >
+              <h4 className="font-['Playfair_Display'] text-4xl md:text-6xl text-white mb-2">{stat.value}</h4>
+              <p className="text-[#D4AF37] text-xs uppercase tracking-[0.2em]">{stat.label}</p>
+            </motion.div>
           ))}
         </div>
       </div>
@@ -297,666 +175,279 @@ const ServicesSection = () => {
   );
 };
 
-const TiltCard = ({ service, index }) => {
-  const [rotateX, setRotateX] = useState(0);
-  const [rotateY, setRotateY] = useState(0);
-  const ref = useRef(null);
-
-  const handleMouseMove = (e) => {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    setRotateX((y - centerY) / 10);
-    setRotateY((centerX - x) / 10);
-  };
+// ==========================================
+// 3. SERVICES SECTION
+// ==========================================
+const ServicesSection = () => {
+  const services = [
+    { title: 'Royal Weddings', img: ASSETS.services[0], id: '01' },
+    { title: 'Corporate Galas', img: ASSETS.services[1], id: '02' },
+    { title: 'Private Soirées', img: ASSETS.services[2], id: '03' },
+  ];
 
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.2 }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={() => { setRotateX(0); setRotateY(0); }}
-      style={{
-        transformStyle: 'preserve-3d',
-        transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
-      }}
-      className="relative h-[550px] rounded-3xl overflow-hidden cursor-pointer transition-transform duration-200"
-    >
-      <img src={service.img} alt={service.title} className="w-full h-full object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-      
-      <div className="absolute inset-0 p-6 flex flex-col justify-end">
-        <h3 className="font-['Playfair_Display'] text-3xl font-normal mb-3">{service.title}</h3>
-        <p className="text-gray-300 text-sm mb-4 font-light">{service.desc}</p>
-        <div className="flex flex-wrap gap-2 mb-4">
-          {service.features.map((f, i) => (
-            <span key={i} className="text-xs px-3 py-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full">
-              {f}
-            </span>
+    <section className="bg-[#050505] text-white py-32 relative">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex justify-between items-end mb-20 border-b border-white/10 pb-8">
+          <h2 className="font-['Playfair_Display'] text-5xl md:text-6xl">Our <span className="text-[#D4AF37] italic">Expertise</span></h2>
+          <span className="hidden md:block text-gray-500 text-sm tracking-widest uppercase">Curated Experiences</span>
+        </div>
+        <div className="space-y-4">
+          {services.map((service, index) => (
+            <motion.div 
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+              className="group relative border-b border-white/10 pb-12 pt-4 cursor-pointer overflow-hidden"
+            >
+              <div className="flex items-center justify-between relative z-10 group-hover:translate-x-4 transition-transform duration-500">
+                <div className="flex items-baseline gap-8">
+                  <span className="text-[#D4AF37] font-['Playfair_Display'] text-2xl opacity-50">{service.id}</span>
+                  <h3 className="text-4xl md:text-7xl font-light group-hover:text-[#D4AF37] transition-colors duration-500">{service.title}</h3>
+                </div>
+                <FiArrowUpRight className="text-4xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 text-[#D4AF37]" />
+              </div>
+              <div className="absolute inset-0 z-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none">
+                <img src={service.img} className="w-full h-full object-cover grayscale" alt={service.title}/>
+              </div>
+            </motion.div>
           ))}
         </div>
-        <Link to="/services" className="flex items-center gap-2 text-[#D4AF37] font-medium text-sm hover:gap-3 transition-all">
-          Learn More <FiArrowUpRight />
-        </Link>
       </div>
-    </motion.div>
+    </section>
   );
 };
 
-// ===== FEATURED HALLS (WHITE BG) =====
-const FeaturedHallsSection = ({ halls, loading }) => {
-  // Debug logging
-  console.log('🏛️ FeaturedHallsSection - halls:', halls);
-  console.log('🏛️ FeaturedHallsSection - loading:', loading);
-  console.log('🏛️ FeaturedHallsSection - halls length:', halls?.length);
-  console.log('🏛️ FeaturedHallsSection - halls type:', typeof halls);
-  console.log('🏛️ FeaturedHallsSection - is array?', Array.isArray(halls));
-  
-  // Ensure we have at least 3 halls, show first 3
-  const displayHalls = halls && Array.isArray(halls) ? halls.slice(0, 3) : [];
-  console.log('🏛️ Display halls (first 3):', displayHalls);
-  console.log('🏛️ Display halls count:', displayHalls.length);
-  
-  // Always render the section, even if empty (for debugging)
+// ==========================================
+// 4. CINEMATIC REELS SECTION (NEW)
+// ==========================================
+const CinematicReelsSection = () => {
+  const reels = [
+    { src: ASSETS.reel1, title: "The Union", loc: "Goa" },
+    { src: ASSETS.reel2, title: "Midnight Gala", loc: "Mumbai" },
+    { src: ASSETS.reel3, title: "Sparkle & Shine", loc: "Delhi" },
+  ];
+
   return (
-    <section className="pt-12 pb-20 px-6 bg-white text-black relative z-10 overflow-visible">
-      <div className="max-w-7xl mx-auto">
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-12 text-center md:text-left"
-        >
-          <h2 className="font-['Playfair_Display'] text-[clamp(2.5rem,5vw,4rem)] mb-4 font-normal">
-            Featured <span className="italic text-[#D4AF37]">Venues</span>
-          </h2>
-          <p className="text-gray-600 text-base md:text-lg max-w-xl font-light">
-            Handpicked luxury destinations vetted for ambiance and service.
-          </p>
-          {displayHalls.length > 0 && (
-            <p className="text-xs text-gray-400 mt-2">Showing {displayHalls.length} of {halls?.length || 0} venues</p>
-          )}
-        </motion.div>
+    <section className="py-32 bg-[#111] overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6 mb-16 flex justify-between items-end">
+         <h2 className="font-['Playfair_Display'] text-4xl text-white">Captured <span className="text-[#D4AF37] italic">Moments</span></h2>
+         <div className="flex gap-2 text-white items-center text-sm font-bold uppercase tracking-widest">
+           <FiInstagram className="text-xl"/> @LumiereEvents
+         </div>
+      </div>
+      
+      {/* Horizontal Scroll Container */}
+      <div className="flex gap-6 overflow-x-auto pb-8 scrollbar-hide px-6">
+         {reels.map((reel, i) => (
+           <motion.div 
+             key={i} 
+             className="min-w-[300px] md:min-w-[350px] h-[600px] rounded-3xl overflow-hidden relative group cursor-pointer border border-white/10"
+             whileHover={{ scale: 0.98 }}
+           >
+             <video 
+               src={reel.src} 
+               autoPlay loop muted playsInline 
+               className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500"
+             />
+             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80"></div>
+             <div className="absolute bottom-8 left-8">
+                <p className="text-[#D4AF37] text-xs uppercase tracking-widest mb-2">{reel.loc}</p>
+                <h3 className="font-['Playfair_Display'] text-3xl text-white">{reel.title}</h3>
+             </div>
+             <div className="absolute top-8 right-8 w-10 h-10 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white">
+                <FiPlay className="ml-1 text-sm"/>
+             </div>
+           </motion.div>
+         ))}
+      </div>
+    </section>
+  );
+};
+
+// ==========================================
+// 5. FEATURED HALLS (Real Data)
+// ==========================================
+const FeaturedHallsSection = ({ halls, loading }) => {
+  return (
+    <section className="bg-[#fff] py-32 px-6">
+      <div className="max-w-[1800px] mx-auto">
+        <div className="text-center mb-24">
+           <span className="text-[#D4AF37] text-xs font-bold tracking-[0.4em] uppercase">The Collection</span>
+           <h2 className="font-['Playfair_Display'] text-5xl md:text-7xl text-black mt-4">Venues of <span className="italic text-[#D4AF37]">Distinction</span></h2>
+        </div>
 
         {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-[#D4AF37]"></div>
-          </div>
+           <div className="flex flex-col items-center justify-center h-[400px]">
+              <div className="w-16 h-16 border-t-2 border-[#D4AF37] rounded-full animate-spin"></div>
+              <p className="mt-4 text-gray-400 text-sm uppercase tracking-widest">Curating Collection...</p>
+           </div>
+        ) : halls.length > 0 ? (
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+             {halls.map((hall, i) => (
+               <motion.div 
+                 key={hall._id}
+                 initial={{ opacity: 0, y: 50 }}
+                 whileInView={{ opacity: 1, y: 0 }}
+                 viewport={{ once: true }}
+                 transition={{ delay: i * 0.2 }}
+                 className={`group relative ${i === 1 ? 'lg:-mt-16' : ''}`}
+               >
+                 <div className="relative h-[600px] w-full overflow-hidden">
+                   <img src={hall.img} alt={hall.name} className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110" />
+                   <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-500"></div>
+                   
+                   <div className="absolute inset-0 p-8 flex flex-col justify-between text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                     <div className="flex justify-between items-start">
+                       <span className="px-3 py-1 bg-[#D4AF37] text-black text-xs font-bold uppercase tracking-widest">{hall.type}</span>
+                       <span className="flex items-center gap-1 bg-black/20 backdrop-blur-sm px-2 py-1 rounded"><FiStar className="fill-white"/> {hall.rating?.toFixed(1) || 5.0}</span>
+                     </div>
+                     <div>
+                       <h3 className="font-['Playfair_Display'] text-4xl mb-2 leading-none">{hall.name}</h3>
+                       <p className="flex items-center gap-2 text-sm uppercase tracking-widest opacity-80"><FiMapPin/> {hall.location}</p>
+                       <div className="mt-6 pt-6 border-t border-white/30 flex justify-between items-end">
+                         <div>
+                            <span className="text-2xl font-serif">₹{typeof hall.price === 'number' ? hall.price.toLocaleString() : hall.price}</span>
+                            <span className="text-[10px] block opacity-70">STARTING PRICE</span>
+                         </div>
+                         <Link to={`/halls/${hall._id}`} className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:bg-[#D4AF37] transition-colors">
+                            <FiArrowUpRight/>
+                         </Link>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+                 
+                 <div className="mt-6 text-center group-hover:opacity-0 transition-opacity duration-300">
+                    <h3 className="font-['Playfair_Display'] text-3xl text-black">{hall.name}</h3>
+                    <p className="text-gray-500 text-sm uppercase tracking-widest mt-1">{hall.location}</p>
+                 </div>
+               </motion.div>
+             ))}
+           </div>
         ) : (
-          <div className="space-y-16 overflow-visible">
-            {displayHalls.length > 0 ? (
-              displayHalls.map((hall, i) => {
-                console.log(`🏛️ Rendering hall ${i + 1}/${displayHalls.length}:`, hall);
-                return (
-                  <motion.div 
-                    key={hall._id || `hall-${i}`}
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: i * 0.1 }}
-                    className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center relative w-full"
-                  >
-                    <div className={`relative h-[350px] rounded-3xl overflow-hidden group ${i % 2 === 1 ? 'lg:order-2' : ''}`}>
-                      <motion.img 
-                        src={hall.img || ASSETS.halls[i % ASSETS.halls.length]} 
-                        alt={hall.name || 'Venue'}
-                        className="w-full h-full object-cover"
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ duration: 0.6 }}
-                        onError={(e) => {
-                          console.error('Image error for hall:', hall.name, e);
-                          e.target.src = ASSETS.halls[i % ASSETS.halls.length];
-                        }}
-                      />
-                      <div className="absolute top-6 right-6">
-                        <span className="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-bold flex items-center gap-1">
-                          <FiStar className="fill-[#D4AF37] text-[#D4AF37]" /> {(hall.rating || 5).toFixed(1)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className={`relative ${i % 2 === 1 ? 'lg:order-1' : ''} overflow-hidden`}>
-                      <span className="absolute -top-16 left-0 md:-left-8 text-[100px] font-['Playfair_Display'] text-[#D4AF37] opacity-10 pointer-events-none" style={{ maxWidth: '100%' }}>
-                        0{i + 1}
-                      </span>
-                      
-                      <h3 className="font-['Playfair_Display'] text-3xl md:text-4xl mb-3 relative z-10 font-normal">{hall.name || 'Unnamed Venue'}</h3>
-                      
-                      <div className="flex items-center gap-2 text-[#D4AF37] mb-4 text-sm uppercase tracking-wide">
-                        <FiMapPin /> {hall.location || 'Location TBD'}
-                      </div>
-                      
-                      <p className="text-gray-600 text-base mb-6 leading-relaxed font-light">
-                        An architectural masterpiece designed for {hall.capacity || 0} guests with state-of-the-art facilities.
-                      </p>
-                      
-                      <div className="flex items-center gap-6 border-t border-black/10 pt-6">
-                        <div>
-                          <span className="block text-2xl font-bold">₹{hall.price || 0}</span>
-                          <span className="text-xs text-gray-500 uppercase">Starting Price</span>
-                        </div>
-                        <Link to={`/halls/${hall._id}`} className="px-6 py-3 border border-black/20 rounded-full hover:bg-[#D4AF37] hover:border-[#D4AF37] hover:text-white transition-all flex items-center gap-2 text-sm font-medium">
-                          View Details <FiArrowUpRight />
-                        </Link>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })
-            ) : (
-              <div className="text-center py-20">
-                <p className="text-gray-600">No venues available at the moment.</p>
-                <p className="text-sm text-gray-400 mt-2">Debug: Received {halls?.length || 0} halls</p>
-              </div>
-            )}
-          </div>
+           <div className="text-center py-20 bg-gray-50 rounded-2xl">
+              <p className="text-gray-500 font-light text-xl">No curated venues available.</p>
+           </div>
         )}
       </div>
     </section>
   );
 };
 
-// ===== PROCESS SECTION =====
+// ==========================================
+// 6. PROCESS SECTION
+// ==========================================
 const ProcessSection = () => {
   const steps = [
-    { icon: <FiUsers />, title: 'Consultation', desc: 'We listen to your vision' },
-    { icon: <FiCalendar />, title: 'Planning', desc: 'Detailed timeline creation' },
-    { icon: <FiZap />, title: 'Execution', desc: 'Flawless event management' },
-    { icon: <FiHeart />, title: 'Follow-up', desc: 'Post-event support' },
+    { num: '01', title: 'Vision', desc: 'We begin with a blank canvas and your dreams.' },
+    { num: '02', title: 'Design', desc: 'Sketching the blueprints of your celebration.' },
+    { num: '03', title: 'Craft', desc: 'Sourcing the finest materials and talent.' },
+    { num: '04', title: 'Reality', desc: 'The day arrives. Perfection is delivered.' },
   ];
 
   return (
-    <section className="py-32 px-6 bg-[#0A0A0A]">
+    <section className="bg-[#F9F8F4] py-32 px-6 border-t border-gray-200">
       <div className="max-w-7xl mx-auto">
-        <motion.div 
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <h2 className="font-['Playfair_Display'] text-[clamp(2rem,5vw,3.5rem)] mb-4 font-normal">
-            Our <span className="italic text-[#D4AF37]">Process</span>
-          </h2>
-          <p className="text-gray-400 text-base font-light">Four steps to perfection</p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {steps.map((step, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.15 }}
-              className="relative group"
-            >
-              <div className="bg-white/5 border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-all hover:-translate-y-2 h-full">
-                <div className="w-14 h-14 rounded-full bg-[#D4AF37]/10 flex items-center justify-center text-2xl text-[#D4AF37] mb-6">
-                  {step.icon}
-                </div>
-                <h3 className="text-xl font-bold mb-3">{step.title}</h3>
-                <p className="text-gray-400 text-sm font-light">{step.desc}</p>
-              </div>
-              {i < steps.length - 1 && (
-                <div className="hidden md:block absolute top-1/2 -right-4 w-8 h-[2px] bg-gradient-to-r from-[#D4AF37] to-transparent" />
-              )}
-            </motion.div>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
+           <div className="hidden md:block absolute top-12 left-0 w-full h-[1px] bg-gray-300 z-0"></div>
+           {steps.map((step, i) => (
+             <motion.div 
+               key={i}
+               initial={{ opacity: 0, y: 20 }}
+               whileInView={{ opacity: 1, y: 0 }}
+               viewport={{ once: true }}
+               transition={{ delay: i * 0.2 }}
+               className="relative z-10 pt-12 md:pt-0"
+             >
+               <div className="w-4 h-4 bg-[#D4AF37] rounded-full mb-6 mx-auto md:mx-0 relative z-10 outline outline-4 outline-[#F9F8F4]"></div>
+               <span className="text-6xl text-gray-200 font-bold absolute top-0 right-0 -z-10">{step.num}</span>
+               <h3 className="font-['Playfair_Display'] text-3xl mb-3 text-[#050505]">{step.title}</h3>
+               <p className="text-gray-500 text-sm leading-relaxed">{step.desc}</p>
+             </motion.div>
+           ))}
         </div>
       </div>
     </section>
   );
 };
 
-// ===== VIDEO BREAK =====
+// ==========================================
+// 7. VIDEO BREAK SECTION
+// ==========================================
 const VideoBreakSection = () => {
-  const videoRef = useRef(null);
-  const sectionRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [videoLoaded, setVideoLoaded] = useState(false);
-
-  useEffect(() => {
-    // Load video when component mounts
-    if (videoRef.current) {
-      videoRef.current.load();
-    }
-  }, []);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && videoLoaded) {
-            // Video is in view and loaded, play it
-            if (videoRef.current) {
-              const playPromise = videoRef.current.play();
-              if (playPromise !== undefined) {
-                playPromise
-                  .then(() => {
-                    setIsPlaying(true);
-                    console.log('Video playing');
-                  })
-                  .catch((error) => {
-                    console.log('Video autoplay prevented:', error);
-                    setIsPlaying(false);
-                  });
-              }
-            }
-          } else {
-            // Video is out of view, pause it
-            if (videoRef.current && !videoRef.current.paused) {
-              videoRef.current.pause();
-              setIsPlaying(false);
-            }
-          }
-        });
-      },
-      {
-        threshold: 0.2, // Play when 20% of video is visible
-        rootMargin: '100px'
-      }
-    );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
-    return () => {
-      if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
-      }
-    };
-  }, [videoLoaded]);
-
-  const handlePlayClick = () => {
-    if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play().then(() => {
-          setIsPlaying(true);
-        }).catch((error) => {
-          console.log('Play error:', error);
-        });
-      } else {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      }
-    }
-  };
-
-  const handleVideoLoaded = () => {
-    setVideoLoaded(true);
-    console.log('Video loaded');
-    
-    // Try to play if section is in view
-    if (sectionRef.current && videoRef.current) {
-      const rect = sectionRef.current.getBoundingClientRect();
-      const isInView = rect.top < window.innerHeight && rect.bottom > 0;
-      
-      if (isInView) {
-        videoRef.current.play().then(() => {
-          setIsPlaying(true);
-        }).catch((error) => {
-          console.log('Autoplay blocked:', error);
-        });
-      }
-    }
-  };
-
+  const [muted, setMuted] = useState(true);
+  
   return (
-    <section ref={sectionRef} className="py-32 px-6 bg-[#0F0F0F]">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
-        whileHover={{ scale: 1.02 }}
-        className="max-w-7xl mx-auto h-[500px] rounded-3xl overflow-hidden relative group cursor-pointer"
-        onClick={handlePlayClick}
-      >
-        {/* Fallback image - shown behind video */}
-        <img 
-          src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=1600" 
-          className="w-full h-full object-cover absolute inset-0 z-0"
-          alt="Video fallback"
-        />
-        
-        {/* Video Element */}
-        <video
-          ref={videoRef}
-          className="w-full h-full object-cover absolute inset-0 z-10"
-          loop
-          muted
-          playsInline
-          preload="auto"
-          poster="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=1600"
-          onCanPlay={handleVideoLoaded}
-          onLoadedData={handleVideoLoaded}
-          onLoadedMetadata={() => {
-            console.log('Video metadata loaded');
-            setVideoLoaded(true);
-          }}
-          onPlay={() => {
-            console.log('Video playing');
-            setIsPlaying(true);
-          }}
-          onPause={() => {
-            console.log('Video paused');
-            setIsPlaying(false);
-          }}
-          onError={(e) => {
-            const video = e.target;
-            if (video.error) {
-              console.error('Video error code:', video.error.code);
-              console.error('Video error message:', video.error.message);
-            } else {
-              console.error('Video failed to load');
-            }
-          }}
-          onLoadStart={() => {
-            console.log('Video load started');
-          }}
-        >
-          <source src={VIDEO_BREAK_SOURCE} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-
-        {/* Overlay with Play/Pause Button */}
-        <div className={`absolute inset-0 bg-black/50 group-hover:bg-black/30 transition-colors flex items-center justify-center ${isPlaying ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'}`}>
-          <motion.div 
-            whileHover={{ scale: 1.2 }}
-            className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border-2 border-white/30"
-          >
-            {isPlaying ? (
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-8 bg-white rounded"></div>
-                <div className="w-2 h-8 bg-white rounded"></div>
-              </div>
-            ) : (
-              <FiPlay className="w-8 h-8 text-white ml-1" />
-            )}
-          </motion.div>
+    <section className="h-[80vh] w-full relative overflow-hidden flex items-center justify-center group">
+      <video autoPlay loop muted={muted} playsInline className="absolute inset-0 w-full h-full object-cover">
+        <source src={ASSETS.videoMain} type="video/mp4" />
+      </video>
+      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-700"></div>
+      
+      <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} className="relative z-10 text-center">
+        <div className="w-24 h-24 rounded-full border border-white/30 bg-white/10 backdrop-blur-md flex items-center justify-center mx-auto mb-8 cursor-pointer hover:scale-110 transition-transform duration-300">
+           <FiPlay className="text-white text-3xl ml-2"/>
         </div>
-
-        {/* Text Overlay */}
-        <div className="absolute bottom-8 left-8 right-8 z-10">
-          <h3 className="font-['Playfair_Display'] text-3xl md:text-5xl font-normal text-white mb-2">See Magic Unfold</h3>
-          <p className="text-gray-200 text-sm md:text-base font-light">A visual journey through iconic celebrations</p>
-        </div>
+        <h2 className="font-['Playfair_Display'] text-6xl text-white">The Lumière <span className="italic text-[#D4AF37]">Effect</span></h2>
       </motion.div>
-    </section>
-  );
-};
-
-// ===== TESTIMONIALS =====
-const TestimonialsSection = () => {
-  const [testimonials, setTestimonials] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchTestimonials();
-  }, []);
-
-  const fetchTestimonials = async () => {
-    try {
-      console.log('📖 Fetching testimonials for website...');
-      const response = await api.get('/testimonials?isApproved=true&isActive=true');
-      console.log('📖 Testimonials API response:', response.data);
       
-      const testimonialsData = response.data?.data || [];
-      console.log(`📖 Found ${testimonialsData.length} approved and active testimonials`);
-      
-      if (testimonialsData.length > 0) {
-        console.log('✅ Testimonials loaded from database');
-        setTestimonials(testimonialsData);
-      } else {
-        console.warn('⚠️ No approved and active testimonials found in database');
-        setTestimonials([]);
-      }
-    } catch (error) {
-      console.error('❌ Error fetching testimonials:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      });
-      setTestimonials([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Don't render if no testimonials
-  if (!loading && testimonials.length === 0) {
-    return null; // Hide section if no testimonials
-  }
-
-  return (
-    <section className="py-24 bg-black overflow-hidden">
-      <motion.h2 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        className="font-['Playfair_Display'] text-center text-[clamp(2rem,5vw,3.5rem)] mb-16 font-normal"
+      <button 
+        onClick={() => setMuted(!muted)}
+        className="absolute bottom-8 right-8 w-12 h-12 rounded-full bg-black/50 backdrop-blur text-white flex items-center justify-center hover:bg-[#D4AF37] transition-colors z-20"
       >
-        Loved by <span className="text-[#D4AF37]">Thousands</span>
-      </motion.h2>
-
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-[#D4AF37]"></div>
-        </div>
-      ) : (
-        <div className="relative overflow-hidden" style={{ width: '100%', maxWidth: '100%' }}>
-          <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none" />
-          
-          <motion.div 
-            className="flex gap-8"
-            style={{ willChange: 'transform' }}
-            animate={{ x: [0, -1000] }}
-            transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
-          >
-            {[...testimonials, ...testimonials, ...testimonials].map((t, i) => (
-            <div key={i} className="min-w-[400px] p-8">
-              <div className="flex gap-1 mb-4">
-                {[...Array(t.rating || 5)].map((_, si) => (
-                  <FiStar key={si} className="w-4 h-4 fill-[#D4AF37] text-[#D4AF37]" />
-                ))}
-              </div>
-              <p className="text-gray-300 text-base mb-6 italic font-light leading-relaxed">"{t.message || t.text}"</p>
-              <div className="flex items-center gap-3">
-                {t.image ? (
-                  <img src={t.image} alt={t.name} className="w-12 h-12 rounded-full object-cover" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-[#D4AF37] flex items-center justify-center font-bold text-black">
-                    {t.name.charAt(0)}
-                  </div>
-                )}
-                <div>
-                  <h4 className="font-bold text-white">{t.name}</h4>
-                  <span className="text-xs text-gray-500">{t.eventType || t.event}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-          </motion.div>
-        </div>
-      )}
+         {muted ? <FiVolumeX/> : <FiVolume2/>}
+      </button>
     </section>
   );
 };
 
-// ===== WHY CHOOSE US =====
-const WhyChooseUsSection = () => {
-  const features = [
-    { 
-      icon: <FiAward />, 
-      title: 'Excellence in Every Detail', 
-      desc: 'With years of expertise in luxury event planning and hospitality, Lumière has established itself as a trusted name in Boring Road, Patna. Our commitment to perfection has earned us recognition for delivering exceptional experiences that exceed expectations.' 
-    },
-    { 
-      icon: <FiHeart />, 
-      title: 'Personalized Service', 
-      desc: 'We understand that every event is unique. Our dedicated team works closely with you to bring your vision to life, ensuring every detail reflects your personal style and preferences. From intimate gatherings to grand celebrations, we tailor our services to meet your specific needs.' 
-    },
-    { 
-      icon: <FiUsers />, 
-      title: 'Experienced Professionals', 
-      desc: 'Our team of skilled event coordinators, designers, and hospitality experts brings years of industry experience to every project. We combine creativity with meticulous planning to ensure flawless execution, making your special moments truly memorable.' 
-    },
-    { 
-      icon: <FiShield />, 
-      title: 'Trusted & Reliable', 
-      desc: 'At Lumière, we prioritize your peace of mind. With comprehensive planning, transparent communication, and a proven track record of successful events, you can trust us to handle every aspect of your celebration with professionalism and care.' 
-    },
-  ];
-
+// ==========================================
+// 8. TESTIMONIALS SECTION
+// ==========================================
+const TestimonialsSection = () => {
   return (
-    <section className="py-32 px-6 bg-[#0F0F0F]">
-      <div className="max-w-7xl mx-auto">
-        <motion.h2 
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="font-['Playfair_Display'] text-[clamp(2.5rem,5vw,4rem)] text-center mb-16 font-normal"
-        >
-          Why <span className="italic text-[#D4AF37]">Lumière?</span>
-        </motion.h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((feature, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              whileHover={{ y: -10 }}
-              className="bg-white/5 border border-white/10 rounded-3xl p-8"
-            >
-              <div className="text-5xl mb-6 text-[#D4AF37]">{feature.icon}</div>
-              <h3 className="text-xl font-bold mb-4 text-white">{feature.title}</h3>
-              <p className="text-gray-400 text-sm font-light leading-relaxed">{feature.desc}</p>
-            </motion.div>
-          ))}
-        </div>
+    <section className="bg-[#050505] text-white py-32 flex items-center justify-center text-center px-6">
+      <div className="max-w-4xl">
+         <FiUsers className="text-[#D4AF37] text-4xl mx-auto mb-8"/>
+         <h2 className="font-['Playfair_Display'] text-3xl md:text-5xl leading-tight mb-12">
+           "Lumière didn't just plan our wedding; they directed a masterpiece. The attention to detail was nothing short of poetic."
+         </h2>
+         <div className="flex flex-col items-center">
+            <span className="font-bold uppercase tracking-[0.2em] text-sm text-[#D4AF37]">The Royal Family of Jaipur</span>
+            <span className="text-gray-500 text-xs mt-2 uppercase">Udaipur Palace Wedding</span>
+         </div>
       </div>
     </section>
   );
 };
 
-// ===== CTA =====
+// ==========================================
+// 9. CTA SECTION
+// ==========================================
 const CTASection = () => {
   return (
-    <section className="py-40 px-6 bg-[#0A0A0A] relative overflow-hidden">
-      <motion.div 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 1 }}
-        className="max-w-4xl mx-auto text-center relative z-10"
-      >
-        {/* Heading with Stagger Animation */}
-        <motion.h2 
-          className="font-['Playfair_Display'] text-[clamp(2.5rem,6vw,5rem)] mb-6 font-normal leading-tight"
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1, ease: "easeOut" }}
-        >
-          <motion.span
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="inline-block"
-          >
-            Ready to create{' '}
-          </motion.span>
-          <motion.span
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="inline-block italic text-[#D4AF37]"
-          >
-            history?
-          </motion.span>
-        </motion.h2>
-        
-        {/* Description with Fade In */}
-        <motion.p 
-          className="text-base md:text-lg text-gray-400 mb-12 max-w-2xl mx-auto font-light"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1, delay: 0.8, ease: "easeOut" }}
-        >
-          Let's make your celebration extraordinary.
-        </motion.p>
-
-        {/* START Button with Enhanced Animation */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 1, type: "spring", stiffness: 200 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <motion.button 
-            className="inline-block text-5xl md:text-7xl font-['Playfair_Display'] font-normal text-white hover:text-[#D4AF37] transition-colors duration-500 relative"
-            animate={{
-              textShadow: [
-                "0 0 0px rgba(212, 175, 55, 0)",
-                "0 0 20px rgba(212, 175, 55, 0.5)",
-                "0 0 0px rgba(212, 175, 55, 0)"
-              ]
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          >
-            START
-            {/* Glowing Underline Effect */}
-            <motion.div
-              className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent"
-              initial={{ scaleX: 0, opacity: 0 }}
-              whileInView={{ scaleX: 1, opacity: 1 }}
-              viewport={{ once: true }}
-              animate={{
-                opacity: [0.5, 1, 0.5],
-                scaleX: [0.8, 1, 0.8]
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 1.5
-              }}
-            />
-          </motion.button>
-        </motion.div>
+    <section className="h-[80vh] bg-[#F9F8F4] flex flex-col items-center justify-center relative overflow-hidden">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-[#D4AF37]/20 rounded-full animate-[spin_10s_linear_infinite]"></div>
+      <motion.div initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} className="relative z-10 text-center px-6">
+         <h2 className="font-['Playfair_Display'] text-6xl md:text-9xl text-[#050505] mb-8">
+            Begin the <br/> <span className="italic text-[#D4AF37]">Extraordinary</span>
+         </h2>
+         <Link to="/contact" className="inline-block px-12 py-5 bg-[#050505] text-white font-bold uppercase tracking-[0.2em] text-sm hover:bg-[#D4AF37] hover:text-black transition-all shadow-2xl">
+            Inquire Now
+         </Link>
       </motion.div>
     </section>
   );
 };
 
-// ===== HELPER COMPONENTS =====
-
-const GlassButton = ({ children }) => (
-  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex items-center px-6 py-4 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm text-white hover:bg-white/10 transition-all text-sm font-medium">
-    {children}
-  </motion.button>
-);
-
 export default Home;
+
+
+
+
 
 
 

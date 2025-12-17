@@ -9,49 +9,6 @@ import {
 import AdminNavbar from '../../components/admin/AdminNavbar';
 import api from '../../utils/api';
 
-// Featured mock venues (matching Home.jsx and HallDetail.jsx)
-const FEATURED_MOCK_HALLS = [
-  {
-    _id: 'royal-palace',
-    name: 'The Royal Palace',
-    location: 'Udaipur, Rajasthan',
-    capacity: 800,
-    basePrice: 250000,
-    rating: 4.9,
-    images: ['https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200'],
-    amenities: ['Heritage Architecture', 'Lake View', 'Royal Gardens', 'Traditional Decor', 'Premium Catering', 'Bridal Suite', 'Photography Setup', 'Valet Parking'],
-    description: 'A majestic heritage palace overlooking the pristine lakes of Udaipur. Experience royal grandeur with modern amenities in this architectural marvel that has hosted countless royal celebrations.',
-    isFeatured: true,
-    isActive: true
-  },
-  {
-    _id: 'grand-hyatt',
-    name: 'Grand Hyatt Ballroom',
-    location: 'Mumbai, Maharashtra',
-    capacity: 500,
-    basePrice: 180000,
-    rating: 4.8,
-    images: ['https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200'],
-    amenities: ['5-Star Hotel', 'Central AC', 'Grand Ballroom', 'Premium Sound System', 'International Cuisine', 'Bridal Suite', 'Concierge Service', 'Valet Parking'],
-    description: 'Elegant sophistication meets modern luxury at the Grand Hyatt Ballroom. Located in the heart of Mumbai, this world-class venue offers impeccable service, state-of-the-art facilities, and culinary excellence.',
-    isFeatured: true,
-    isActive: true
-  },
-  {
-    _id: 'seaside-center',
-    name: 'Seaside Convention Center',
-    location: 'Goa, India',
-    capacity: 300,
-    basePrice: 120000,
-    rating: 4.7,
-    images: ['https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1200'],
-    amenities: ['Beach Access', 'Outdoor & Indoor Spaces', 'Sea View', 'Tropical Decor', 'Seafood Catering', 'Sound System', 'Parking', 'Photography Setup'],
-    description: 'A stunning beachside venue where the golden sands meet elegant architecture. Perfect for intimate celebrations with breathtaking ocean views. Experience the perfect blend of tropical paradise and sophisticated event hosting.',
-    isFeatured: true,
-    isActive: true
-  }
-];
-
 const AdminHalls = () => {
   const navigate = useNavigate();
   const [halls, setHalls] = useState([]);
@@ -94,26 +51,9 @@ const AdminHalls = () => {
     try {
       const response = await api.get('/admin/halls');
       const dbHalls = response.data.data || [];
-      
-      // Get deleted mock venues from localStorage
-      const deletedMockVenues = JSON.parse(localStorage.getItem('deletedMockVenues') || '[]');
-      
-      // Filter out deleted mock venues
-      const availableMockVenues = FEATURED_MOCK_HALLS.filter(
-        venue => !deletedMockVenues.includes(venue._id)
-      );
-      
-      // Add available mock venues to the list
-      const allHalls = [...dbHalls, ...availableMockVenues];
-      setHalls(allHalls);
+      setHalls(dbHalls);
     } catch (error) {
       console.error('Error fetching halls:', error);
-      // On error, still show available mock venues
-      const deletedMockVenues = JSON.parse(localStorage.getItem('deletedMockVenues') || '[]');
-      const availableMockVenues = FEATURED_MOCK_HALLS.filter(
-        venue => !deletedMockVenues.includes(venue._id)
-      );
-      setHalls(availableMockVenues);
       toast.error('Failed to fetch venues');
     } finally {
       setLoading(false);
@@ -225,11 +165,6 @@ const AdminHalls = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      console.log('📝 Form submission started');
-      console.log('📝 Form data:', formData);
-      console.log('📝 Image files:', imageFiles.length);
-      console.log('📝 Image previews:', imagePreviews.length);
-      
       // Frontend validation
       if (!formData.name || !formData.name.trim()) {
         toast.error('Venue name is required');
@@ -256,16 +191,17 @@ const AdminHalls = () => {
       formDataToSend.append('description', formData.description.trim());
       formDataToSend.append('location', formData.location.trim());
       formDataToSend.append('capacity', capacityNum.toString());
-      // Handle basePrice - convert empty string to 0
+      
       const basePriceValue = formData.basePrice && formData.basePrice.toString().trim() !== '' 
         ? parseFloat(formData.basePrice) 
         : 0;
       formDataToSend.append('basePrice', basePriceValue.toString());
-      // Handle rating - convert to number, default to 5
+      
       const ratingValue = formData.rating && formData.rating.toString().trim() !== '' 
         ? parseFloat(formData.rating) 
         : 5;
-      formDataToSend.append('rating', Math.min(Math.max(ratingValue, 0), 5).toString()); // Clamp between 0 and 5
+      formDataToSend.append('rating', Math.min(Math.max(ratingValue, 0), 5).toString());
+      
       formDataToSend.append('amenities', JSON.stringify(formData.amenities || []));
       formDataToSend.append('priceSlots', JSON.stringify(formData.priceSlots || []));
       formDataToSend.append('servicePricing', JSON.stringify(formData.servicePricing || []));
@@ -282,20 +218,7 @@ const AdminHalls = () => {
         formDataToSend.append('imageUrls', JSON.stringify(formData.images));
       }
       
-      // Log FormData contents (for debugging)
-      console.log('📦 FormData contents:');
-      for (let [key, value] of formDataToSend.entries()) {
-        if (value instanceof File) {
-          console.log(`  ${key}: [File] ${value.name} (${value.size} bytes)`);
-        } else {
-          console.log(`  ${key}: ${value}`);
-        }
-      }
-
-      // Check if editing a mock venue (mock venues have specific IDs)
-      const isMockVenue = editingHall && ['royal-palace', 'grand-hyatt', 'seaside-center'].includes(editingHall._id);
-      
-      if (editingHall && !isMockVenue) {
+      if (editingHall) {
         // Update existing real venue
         await api.put(`/admin/halls/${editingHall._id}`, formDataToSend, {
           headers: {
@@ -304,58 +227,26 @@ const AdminHalls = () => {
         });
         toast.success('Venue updated successfully!');
       } else {
-        // Create new venue (either new or from mock venue)
+        // Create new venue
         await api.post('/admin/halls', formDataToSend, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         });
-        if (isMockVenue) {
-          toast.success('Venue created successfully! (Based on demo venue)');
-        } else {
-          toast.success('Venue created successfully!');
-        }
+        toast.success('Venue created successfully!');
       }
 
       closeModal();
       fetchHalls();
     } catch (error) {
       console.error('❌ Error saving venue:', error);
-      console.error('❌ Error response:', error.response?.data);
-      console.error('❌ Error status:', error.response?.status);
-      console.error('❌ Error config:', error.config);
-      
-      // Log full error object
-      if (error.response?.data) {
-        console.error('❌ Full error response:', JSON.stringify(error.response.data, null, 2));
-        console.error('❌ Error message:', error.response.data.message);
-        console.error('❌ Error errors:', error.response.data.errors);
-      }
-      
-      // Get detailed error message
       let errorMessage = 'Failed to save venue';
-      if (error.response?.data) {
-        // Try multiple ways to extract error message
-        if (error.response.data.message) {
+      if (error.response?.data?.message) {
           errorMessage = error.response.data.message;
-        } else if (error.response.data.error) {
+      } else if (error.response?.data?.error) {
           errorMessage = error.response.data.error;
-        } else if (typeof error.response.data === 'string') {
-          errorMessage = error.response.data;
-        } else if (error.response.data.errors) {
-          // Handle validation errors
-          const errorMessages = Object.values(error.response.data.errors).map(e => e.message || e);
-          errorMessage = errorMessages.join(', ') || 'Validation failed';
-        } else {
-          // Try to stringify the whole response
-          errorMessage = JSON.stringify(error.response.data);
-        }
-      } else if (error.message) {
-        errorMessage = error.message;
       }
-      
-      console.error('❌ Final error message:', errorMessage);
-      toast.error(errorMessage, { duration: 5000 });
+      toast.error(errorMessage);
     }
   };
 
@@ -409,27 +300,6 @@ const AdminHalls = () => {
   };
 
   const handleDelete = async (id) => {
-    // Check if it's a mock venue
-    const isMockVenue = ['royal-palace', 'grand-hyatt', 'seaside-center'].includes(id);
-    
-    if (isMockVenue) {
-      // For mock venues, save to localStorage and remove from list
-      if (!window.confirm('Are you sure you want to remove this demo venue from the list?')) return;
-      
-      // Get current deleted mock venues
-      const deletedMockVenues = JSON.parse(localStorage.getItem('deletedMockVenues') || '[]');
-      
-      // Add this venue ID to deleted list if not already there
-      if (!deletedMockVenues.includes(id)) {
-        deletedMockVenues.push(id);
-        localStorage.setItem('deletedMockVenues', JSON.stringify(deletedMockVenues));
-      }
-      
-      // Remove from current state
-      setHalls(prev => prev.filter(hall => hall._id !== id));
-      toast.success('Demo venue removed from list');
-    } else {
-      // For real venues, delete from database
       if (!window.confirm('Are you sure you want to delete this venue?')) return;
       try {
         await api.delete(`/admin/halls/${id}`);
@@ -438,7 +308,6 @@ const AdminHalls = () => {
       } catch (error) {
         toast.error('Failed to delete venue');
       }
-    }
   };
 
   return (
@@ -469,9 +338,6 @@ const AdminHalls = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {halls.map((hall, index) => {
-              // Check if this is a mock venue (has _id starting with 'royal-palace', 'grand-hyatt', or 'seaside-center')
-              const isMockVenue = ['royal-palace', 'grand-hyatt', 'seaside-center'].includes(hall._id);
-              
               return (
               <motion.div
                 key={hall._id}
@@ -485,11 +351,6 @@ const AdminHalls = () => {
                   {hall.isFeatured && (
                     <span className="px-2 py-1 bg-[#D4AF37] text-black text-[10px] uppercase font-bold rounded shadow-lg flex items-center gap-1">
                       <FiStar size={10} /> Featured
-                    </span>
-                  )}
-                  {isMockVenue && (
-                    <span className="px-2 py-1 bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] uppercase font-bold rounded">
-                      Demo
                     </span>
                   )}
                 </div>
@@ -516,14 +377,14 @@ const AdminHalls = () => {
                     <button 
                       onClick={() => openModal(hall)}
                       className="p-3 bg-white text-black rounded-full hover:bg-[#D4AF37] transition-colors"
-                      title={isMockVenue ? "Edit (will create new venue)" : "Edit"}
+                      title="Edit"
                     >
                       <FiEdit2 />
                     </button>
                     <button 
                       onClick={() => handleDelete(hall._id)}
                       className="p-3 bg-red-500/20 text-red-500 border border-red-500/50 rounded-full hover:bg-red-500 hover:text-white transition-colors"
-                      title={isMockVenue ? "Remove from list" : "Delete"}
+                      title="Delete"
                     >
                       <FiTrash2 />
                     </button>
@@ -946,6 +807,7 @@ const AdminHalls = () => {
                     </div>
                   </div>
 
+                  {/* Amenities Section */}
                   <div className="space-y-3">
                     <label className="text-sm text-gray-400 font-medium flex justify-between">
                       <span>Amenities & Facilities</span>
@@ -1026,5 +888,6 @@ const AdminHalls = () => {
 };
 
 export default AdminHalls;
+
 
 

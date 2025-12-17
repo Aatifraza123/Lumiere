@@ -2,433 +2,241 @@ import { useCallback } from "react";
 import Particles from "react-particles";
 import { loadSlim } from "tsparticles-slim"; 
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { FiAward, FiHeart, FiUsers, FiArrowRight, FiShield, FiHome, FiCoffee, FiLock, FiStar, FiMapPin } from 'react-icons/fi';
+import { FiAward, FiHeart, FiUsers, FiArrowRight, FiShield, FiCoffee, FiStar, FiMapPin } from 'react-icons/fi';
 
 // --- ASSETS ---
 const IMAGES = {
-  hero: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80",
-  rooms: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80",
-  restaurant: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
-  lobby: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1200&q=80"
+  hero: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1600&q=80",
+  story: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=80",
+  facilities: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200&q=80",
+  experience: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&q=80"
 };
 
 const About = () => {
   const { scrollYProgress } = useScroll();
   
-  // Parallax & Opacity Transforms
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
-  const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
-  const yStory = useTransform(scrollYProgress, [0.1, 0.4], [50, -50]);
+  // Parallax Transforms
+  const heroScale = useTransform(scrollYProgress, [0, 0.2], [1.1, 1]);
+  const yParallax = useTransform(scrollYProgress, [0, 1], [0, -100]);
 
   const particlesInit = useCallback(async (engine) => {
     await loadSlim(engine);
   }, []);
 
   return (
-    <div className="bg-[#050505] text-white min-h-screen font-['Lato'] overflow-x-hidden relative selection:bg-white selection:text-black">
-      
-      {/* === 0. SUBTLE PARTICLES (Clean & Minimal) === */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
+    <div className="bg-[#050505] min-h-screen font-sans overflow-x-hidden selection:bg-[#D4AF37] selection:text-black">
+
+      {/* === 0. PARTICLES === */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-20">
         <Particles
           id="tsparticles"
           init={particlesInit}
           options={{
             fullScreen: { enable: false },
-            background: { color: { value: "transparent" } },
-            fpsLimit: 120,
             particles: {
-              color: { value: "#ffffff" },
-              links: {
-                color: "#ffffff",
-                distance: 150,
-                enable: true,
-                opacity: 0.1,
-                width: 1,
-              },
-              move: {
-                enable: true,
-                speed: 0.4,
-                direction: "none",
-                random: true,
-                straight: false,
-                outModes: { default: "out" },
-              },
-              number: { density: { enable: true, area: 800 }, value: 40 },
-              opacity: { value: 0.2, animation: { enable: true, speed: 0.5, minimumValue: 0.1 } },
-              shape: { type: "circle" },
-              size: { value: { min: 1, max: 2 } },
-            },
-            detectRetina: true,
+              color: { value: "#D4AF37" },
+              move: { enable: true, speed: 0.2 },
+              number: { value: 20 },
+              opacity: { value: 0.3 },
+              size: { value: 1 },
+            }
           }}
           className="absolute inset-0 h-full w-full"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#050505]" />
       </div>
 
-      {/* === 1. HERO SECTION === */}
-      <motion.section 
-        style={{ opacity: heroOpacity, scale: heroScale }}
-        className="relative h-screen flex flex-col items-center justify-center px-6 z-10"
-      >
-        <div className="absolute inset-0 z-0">
-          <img 
-            src={IMAGES.hero} 
-            alt="Hotel Lobby" 
-            className="w-full h-full object-cover opacity-30"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
-        </div>
-        
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-          className="text-center relative z-10"
-        >
-          <span className="font-['Cinzel'] text-white/60 text-xs md:text-sm font-medium tracking-[0.6em] uppercase mb-6 block">
-            Welcome to
-          </span>
+      {/* === 1. CINEMATIC HERO (Colorful) === */}
+      <section className="relative h-screen flex items-end justify-start px-6 pb-20 overflow-hidden">
+        <motion.div style={{ scale: heroScale }} className="absolute inset-0 z-0">
+          <img src={IMAGES.hero} alt="Luxury Hotel" className="w-full h-full object-cover opacity-80 transition-transform duration-[3s]" />
           
-          <h1 className="font-['Cinzel'] text-6xl md:text-8xl lg:text-9xl font-medium mb-6 leading-none tracking-tight text-white">
-            Lumiere
-          </h1>
-
-          <div className="flex items-center justify-center gap-2 text-gray-400 mb-8">
-            <FiMapPin className="text-[#D4AF37]" />
-            <span className="text-lg md:text-xl">Boring Road Patna</span>
-          </div>
-
-          <div className="h-[1px] w-24 bg-[#D4AF37]/50 mx-auto mb-8"></div>
-
-          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto font-light leading-relaxed">
-            Where comfort meets elegance, and every stay becomes a cherished memory. 
-            Experience unparalleled hospitality in the heart of Boring Road Patna.
-          </p>
+          {/* Gradient overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/60 via-transparent to-transparent" />
         </motion.div>
-
-        {/* Clean Scroll Indicator */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5, duration: 1 }}
-          className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10"
-        >
-           <div className="w-[1px] h-24 bg-gradient-to-b from-white/50 to-transparent mx-auto"></div>
-        </motion.div>
-      </motion.section>
-
-      {/* === 2. OUR STORY === */}
-      <section className="py-32 px-6 relative z-10">
-        <div className="max-w-7xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-16"
+        
+        <div className="relative z-10 max-w-7xl mx-auto w-full border-l border-[#D4AF37]/50 pl-8 md:pl-16">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1.2 }}
           >
-            <span className="text-white/40 text-sm tracking-[0.3em] uppercase font-medium mb-4 block">Our Journey</span>
-            <h2 className="font-['Cinzel'] text-4xl md:text-5xl text-white mb-6">
-              The Story of <span className="text-[#D4AF37] italic font-serif">Lumiere</span>
-            </h2>
+            <span className="text-[#D4AF37] text-xs md:text-sm font-bold tracking-[0.4em] uppercase mb-6 block shadow-black drop-shadow-md">
+              Welcome to
+            </span>
+            <h1 className="font-serif text-6xl md:text-8xl lg:text-9xl text-white mb-6 leading-[0.9] drop-shadow-2xl">
+              Lumiere <br/>
+              <span className="italic font-light text-[#D4AF37]">Royale</span>
+            </h1>
+            <p className="text-white/90 text-lg md:text-2xl font-light max-w-xl leading-relaxed drop-shadow-lg">
+              Patna's premier destination for luxury living. A sanctuary where modern architecture meets timeless Indian hospitality.
+            </p>
           </motion.div>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center mb-20">
-            {/* Text Content */}
+      {/* === 2. THE HOTEL STORY (Split Layout - Black) === */}
+      <section className="py-32 px-6 relative z-10 bg-[#050505]">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row gap-20 items-center">
+            
+            {/* Text Side */}
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
+              className="lg:w-1/2"
             >
-              <div className="space-y-6 text-white text-lg font-light leading-relaxed">
-                <p>
-                  Nestled in the vibrant heart of Boring Road Patna, Lumiere stands as a testament to 
-                  timeless hospitality and modern luxury. What began as a vision to create a home away from 
-                  home has evolved into a sanctuary where every guest is treated like family.
-                </p>
-                <p>
-                  Our story is woven from countless moments of warmth, dedication, and an unwavering 
-                  commitment to excellence. From the moment you step through our doors, you'll discover 
-                  that we're not just a hotel—we're a destination where memories are made, business is 
-                  conducted with ease, and families find their perfect retreat.
-                </p>
-                <p>
-                  Over the years, we've hosted thousands of guests, each with unique needs and expectations. 
-                  This diversity has shaped us into a hotel that seamlessly blends the comfort families 
-                  seek with the efficiency business travelers demand.
-                </p>
-              </div>
+               <span className="text-[#D4AF37] text-xs font-bold tracking-[0.3em] uppercase mb-8 block flex items-center gap-4">
+                  <span className="w-12 h-[1px] bg-[#D4AF37]"></span> About The Hotel
+               </span>
+               <h2 className="font-serif text-5xl md:text-6xl text-white mb-10 leading-tight">
+                  An Icon in <br/><span className="text-gray-500 italic">Boring Road</span>
+               </h2>
+               <div className="space-y-8 text-gray-400 text-lg md:text-xl font-light leading-relaxed">
+                  <p>
+                     Lumiere Royale is more than just a hotel; it is a landmark in Patna's most vibrant district. Designed by award-winning architects, our property stands as a beacon of sophistication amidst the city's energy.
+                  </p>
+                  <p>
+                     We offer 50+ meticulously designed suites, a world-class rooftop lounge, and state-of-the-art wellness facilities. Whether you are here for business or leisure, Lumiere is your exclusive retreat from the ordinary.
+                  </p>
+               </div>
+               
+               {/* Stats Strip */}
+               <div className="mt-16 grid grid-cols-3 gap-8 border-t border-white/10 pt-10">
+                  <div>
+                     <h4 className="text-4xl font-serif text-[#D4AF37]">50+</h4>
+                     <p className="text-[10px] uppercase tracking-widest text-gray-500 mt-2">Suites</p>
+                  </div>
+                  <div>
+                     <h4 className="text-4xl font-serif text-[#D4AF37]">24/7</h4>
+                     <p className="text-[10px] uppercase tracking-widest text-gray-500 mt-2">Service</p>
+                  </div>
+                  <div>
+                     <h4 className="text-4xl font-serif text-[#D4AF37]">4.9</h4>
+                     <p className="text-[10px] uppercase tracking-widest text-gray-500 mt-2">Rating</p>
+                  </div>
+               </div>
             </motion.div>
 
-            {/* Image */}
+            {/* Image Side (Updated Image) */}
             <motion.div 
-              style={{ y: yStory }}
-              className="relative h-[220px] w-full overflow-hidden rounded-lg"
+               style={{ y: yParallax }}
+               className="lg:w-1/2 relative"
             >
-              <img 
-                src={IMAGES.lobby} 
-                alt="Hotel Lobby" 
-                className="absolute inset-0 w-full h-full object-cover grayscale contrast-110 hover:scale-105 transition-transform duration-[2s]" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+               <div className="relative h-[600px] w-full overflow-hidden">
+                  <img src={IMAGES.story} alt="Story" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-[2s]" />
+               </div>
             </motion.div>
+
           </div>
         </div>
       </section>
 
-      {/* === 3. MISSION & VALUES === */}
-      <section className="py-32 px-6 relative z-10 bg-[#080808] border-y border-white/5">
+      {/* === 3. THE ROOMS & SUITES (Split Layout - White) === */}
+      <section className="py-32 px-6 relative z-10 bg-white text-black mt-20 lg:mt-0">
         <div className="max-w-7xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-20"
-          >
-            <h2 className="font-['Cinzel'] text-3xl md:text-4xl text-white mb-4">Our Mission & Values</h2>
-            <p className="text-gray-400 max-w-3xl mx-auto text-lg font-light">
-              The principles that guide everything we do
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            {[
-              { 
-                title: 'Our Mission', 
-                icon: <FiStar />, 
-                desc: 'To provide exceptional hospitality experiences that exceed expectations, creating lasting memories for every guest while maintaining the highest standards of service, comfort, and care.' 
-              },
-              { 
-                title: 'Excellence', 
-                icon: <FiAward />, 
-                desc: 'We strive for perfection in every detail, from the cleanliness of our rooms to the quality of our cuisine, ensuring every aspect of your stay is flawless.' 
-              },
-              { 
-                title: 'Genuine Care', 
-                icon: <FiHeart />, 
-                desc: 'Your comfort and satisfaction are our top priorities. We treat every guest with warmth, respect, and personalized attention that makes you feel truly valued.' 
-              }
-            ].map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.2 }}
-                className="group p-8 bg-[#0A0A0A] border border-white/10 rounded-xl hover:border-[#D4AF37]/30 transition-all duration-500"
-              >
-                <div className="text-4xl text-[#D4AF37] mb-6 group-hover:scale-110 transition-transform duration-500">
-                  {item.icon}
-                </div>
-                <h3 className="font-['Cinzel'] text-xl mb-4 text-white">{item.title}</h3>
-                <p className="text-gray-400 font-light leading-relaxed text-sm">
-                  {item.desc}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* === 4. WHAT MAKES US UNIQUE === */}
-      <section className="py-32 px-6 relative z-10">
-        <div className="max-w-7xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <span className="text-white/40 text-sm tracking-[0.3em] uppercase font-medium mb-4 block">Why Choose Us</span>
-            <h2 className="font-['Cinzel'] text-4xl md:text-5xl text-white mb-6">
-              What Makes <span className="text-[#D4AF37] italic font-serif">Lumiere</span> Unique
-            </h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            {[
-              {
-                title: "Prime Location",
-                desc: "Strategically located in Boring Road Patna, we offer easy access to business districts, shopping centers, and cultural attractions, making us the perfect base for both work and leisure."
-              },
-              {
-                title: "Personalized Service",
-                desc: "Our dedicated team goes above and beyond to understand your needs. Whether you're here for business or pleasure, we tailor our services to ensure your stay is exactly what you envision."
-              },
-              {
-                title: "Modern Amenities",
-                desc: "We've thoughtfully equipped our hotel with the latest technology and modern conveniences, ensuring you stay connected, comfortable, and productive throughout your visit."
-              },
-              {
-                title: "Family-Friendly & Business-Ready",
-                desc: "Our versatile spaces and services cater perfectly to families seeking comfort and fun, while also providing business travelers with everything they need for a successful trip."
-              }
-            ].map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.15 }}
-                className="p-8 bg-[#0A0A0A] border-l-4 border-[#D4AF37] rounded-lg hover:bg-[#111] transition-colors"
-              >
-                <h3 className="font-['Cinzel'] text-2xl text-white mb-4">{item.title}</h3>
-                <p className="text-gray-400 font-light leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* === 5. FACILITIES === */}
-      <section className="py-32 px-6 relative z-10 bg-[#080808]">
-        <div className="max-w-7xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-20"
-          >
-            <span className="text-white/40 text-sm tracking-[0.3em] uppercase font-medium mb-4 block">World-Class Facilities</span>
-            <h2 className="font-['Cinzel'] text-4xl md:text-5xl text-white mb-6">
-              Everything You Need for a <span className="text-[#D4AF37] italic font-serif">Perfect Stay</span>
-            </h2>
-            <p className="text-gray-400 max-w-3xl mx-auto text-lg font-light">
-              We've carefully curated every facility to ensure your comfort, safety, and satisfaction
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                icon: <FiHome />,
-                title: "Luxurious Rooms",
-                desc: "Spacious, elegantly designed rooms and suites featuring premium bedding, modern furnishings, and thoughtful amenities. Each room is a haven of comfort, equipped with high-speed Wi-Fi, climate control, and stunning views."
-              },
-              {
-                icon: <FiCoffee />,
-                title: "Exquisite Restaurant",
-                desc: "Savor culinary excellence at our in-house restaurant, where our talented chefs craft delicious meals using the finest ingredients. From hearty breakfasts to gourmet dinners, every meal is a celebration of flavor."
-              },
-              {
-                icon: <FiShield />,
-                title: "Secure Parking",
-                desc: "Travel with peace of mind knowing your vehicle is safe in our well-lit, 24/7 monitored parking facility. Ample space for cars, with easy access to the hotel entrance."
-              },
-              {
-                icon: <FiLock />,
-                title: "24/7 Security",
-                desc: "Your safety is paramount. Our round-the-clock security team, advanced surveillance systems, and secure access controls ensure you and your belongings are always protected."
-              },
-              {
-                icon: <FiStar />,
-                title: "Impeccable Hygiene",
-                desc: "We maintain the highest standards of cleanliness and sanitation. Our rigorous cleaning protocols, regular deep-cleaning sessions, and use of hospital-grade disinfectants guarantee a spotless environment."
-              },
-              {
-                icon: <FiUsers />,
-                title: "Exceptional Staff",
-                desc: "Our professional, courteous, and well-trained team is always ready to assist you. From the front desk to housekeeping, every staff member is committed to making your stay memorable."
-              }
-            ].map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="group p-8 bg-[#0A0A0A] border border-white/10 rounded-xl hover:border-[#D4AF37]/50 hover:bg-[#111] transition-all duration-500"
-              >
-                <div className="text-5xl text-[#D4AF37] mb-6 group-hover:scale-110 transition-transform duration-500">
-                  {item.icon}
-                </div>
-                <h3 className="font-['Cinzel'] text-xl mb-4 text-white">{item.title}</h3>
-                <p className="text-gray-400 font-light leading-relaxed text-sm">
-                  {item.desc}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* === 6. GUEST EXPERIENCE === */}
-      <section className="py-32 px-6 relative z-10">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+          <div className="flex flex-col lg:flex-row-reverse gap-20 items-center">
+            
+            {/* Text Side */}
             <motion.div 
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="relative h-[400px] w-full overflow-hidden rounded-lg"
+              className="lg:w-1/2"
             >
-              <img 
-                src={IMAGES.rooms} 
-                alt="Luxurious Room" 
-                className="absolute inset-0 w-full h-full object-cover grayscale contrast-110 hover:scale-105 transition-transform duration-[2s]" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+               <span className="text-[#D4AF37] text-xs font-bold tracking-[0.3em] uppercase mb-8 block flex items-center gap-4">
+                  <span className="w-12 h-[1px] bg-[#D4AF37]"></span> Accommodation
+               </span>
+               <h2 className="font-serif text-5xl md:text-6xl text-black mb-10 leading-tight">
+                  Designed for <br/><span className="text-[#D4AF37] italic">Rest & Renewal</span>
+               </h2>
+               <div className="space-y-8 text-gray-600 text-lg md:text-xl font-light leading-relaxed">
+                  <p>
+                     Our accommodations range from Deluxe Rooms to the expansive Royal Suite. Each space features floor-to-ceiling windows, Italian marble bathrooms, and bespoke furnishings tailored for comfort.
+                  </p>
+                  <p>
+                     Experience sleep like never before on our custom memory foam mattresses, and wake up to stunning views of the Patna skyline. Technology meets tranquility with our smart-room controls and high-speed connectivity.
+                  </p>
+               </div>
+               
+               <div className="mt-12">
+                  <button className="group flex items-center gap-4 text-black uppercase tracking-[0.2em] text-xs font-bold hover:text-[#D4AF37] transition-colors">
+                     View All Rooms 
+                     <span className="w-12 h-[1px] bg-black group-hover:bg-[#D4AF37] transition-colors"></span>
+                     <FiArrowRight className="group-hover:translate-x-2 transition-transform"/>
+                  </button>
+               </div>
             </motion.div>
 
-            <motion.div 
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              <span className="text-white/40 text-sm tracking-[0.3em] uppercase font-medium mb-4 block">Your Experience</span>
-              <h2 className="font-['Cinzel'] text-4xl md:text-5xl text-white mb-8">
-                A Stay That <span className="text-[#D4AF37] italic font-serif">Exceeds Expectations</span>
-              </h2>
-              
-              <div className="space-y-6 text-gray-300 text-lg font-light leading-relaxed">
-                <p>
-                  At Lumiere, we believe that exceptional hospitality is about creating moments that matter. 
-                  Whether you're traveling for business or leisure, with family or solo, we ensure every aspect 
-                  of your stay is thoughtfully considered.
-                </p>
-                <p>
-                  Our commitment to guest experience means we're constantly evolving. We listen to your feedback, 
-                  anticipate your needs, and go the extra mile to make your time with us truly special. From the 
-                  moment you make your reservation to the time you check out, we're here to ensure your comfort 
-                  and satisfaction.
-                </p>
-                <p>
-                  Join thousands of satisfied guests who have made Lumiere their preferred choice in Boring Road Patna. 
-                  Experience the difference that genuine care, attention to detail, and unwavering commitment to excellence 
-                  can make.
-                </p>
-              </div>
+            {/* Image Side */}
+            <motion.div className="lg:w-1/2 relative group">
+               <div className="h-[700px] w-full overflow-hidden relative">
+                  <img src={IMAGES.experience} alt="Experience" className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105" />
+                  <div className="absolute inset-0 border-[20px] border-white/0 group-hover:border-white/20 transition-all duration-700 pointer-events-none"></div>
+               </div>
             </motion.div>
+
           </div>
         </div>
       </section>
 
-      {/* === 7. CTA SECTION === */}
-      <section className="py-32 px-6 text-center relative z-10 bg-[#080808] border-t border-white/5">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="relative z-10 max-w-2xl mx-auto"
-        >
-          <h2 className="font-['Cinzel'] text-4xl md:text-6xl mb-6 text-white">
-            Experience <span className="text-[#D4AF37] italic font-serif">Lumiere</span>
-          </h2>
-          <p className="text-gray-400 text-lg mb-10 font-light">
-            Book your stay today and discover why we're the preferred choice for travelers in Boring Road Patna
-          </p>
-          
-          <a 
-            href="/book" 
-            className="group relative inline-flex items-center gap-4 px-8 py-4 bg-[#D4AF37] text-black rounded-lg hover:bg-[#b5952f] transition-all duration-500 font-semibold"
-          >
-            <span className="uppercase tracking-widest text-sm">Book Your Stay</span>
-            <FiArrowRight className="group-hover:translate-x-2 transition-transform duration-300" />
-          </a>
-        </motion.div>
+      {/* === 4. AMENITIES GRID (Black) === */}
+      <section className="py-32 px-6 relative z-10 bg-[#0A0A0A]">
+         <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-24">
+               <span className="text-[#D4AF37] text-xs font-bold tracking-[0.4em] uppercase block mb-4">Our Features</span>
+               <h2 className="font-serif text-4xl md:text-6xl text-white">Unmatched <span className="italic text-gray-600">Amenities</span></h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16 border-t border-white/10 pt-16">
+               {[
+                  { icon: <FiStar />, title: "Concierge", desc: "Our 24/7 concierge team handles everything from travel arrangements to restaurant reservations." },
+                  { icon: <FiCoffee />, title: "Fine Dining", desc: "Enjoy global cuisine at 'The Gilded Spoon', our signature restaurant featuring world-class chefs." },
+                  { icon: <FiShield />, title: "Secure Parking", desc: "Ample, monitored underground parking is provided complimentary for all hotel guests." },
+                  { icon: <FiHeart />, title: "Sky Spa", desc: "Relax at our rooftop spa offering Ayurvedic treatments and modern therapies." },
+                  { icon: <FiUsers />, title: "Grand Ballroom", desc: "A pillar-less ballroom perfect for weddings and corporate events up to 500 guests." },
+                  { icon: <FiAward />, title: "Business Center", desc: "High-tech meeting rooms and co-working spaces for the modern traveler." }
+               ].map((item, i) => (
+                  <motion.div 
+                     key={i}
+                     initial={{ opacity: 0, y: 20 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     viewport={{ once: true }}
+                     transition={{ delay: i * 0.1 }}
+                     className="group hover:-translate-y-2 transition-transform duration-500"
+                  >
+                     <div className="text-[#D4AF37] text-3xl mb-6 group-hover:scale-110 transition-transform">{item.icon}</div>
+                     <h3 className="font-serif text-2xl text-white mb-3">{item.title}</h3>
+                     <p className="text-gray-500 font-light text-lg">{item.desc}</p>
+                  </motion.div>
+               ))}
+            </div>
+         </div>
+      </section>
+
+      {/* === 5. FINAL CTA (Editorial) === */}
+      <section className="h-[80vh] relative flex items-center justify-center text-center overflow-hidden">
+         <div className="absolute inset-0 z-0">
+            <img src={IMAGES.facilities} alt="Lobby" className="w-full h-full object-cover opacity-40 grayscale" />
+            <div className="absolute inset-0 bg-black/60" />
+         </div>
+
+         <div className="relative z-10 max-w-4xl px-6">
+            <h2 className="font-serif text-6xl md:text-8xl text-white mb-8 leading-none">
+               Experience <br/><span className="italic text-[#D4AF37]">The Royal Life</span>
+            </h2>
+            <div className="flex flex-col md:flex-row gap-8 justify-center items-center mt-12">
+               <a href="/book" className="px-12 py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-[0.2em] text-sm hover:bg-white transition-colors">
+                  Check Availability
+               </a>
+               <a href="/contact" className="px-12 py-5 border border-white text-white font-bold uppercase tracking-[0.2em] text-sm hover:bg-white hover:text-black transition-colors">
+                  Contact Us
+               </a>
+            </div>
+         </div>
       </section>
 
     </div>
@@ -436,3 +244,9 @@ const About = () => {
 };
 
 export default About;
+
+
+
+
+
+

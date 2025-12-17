@@ -1,221 +1,251 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import { FiMapPin, FiMail, FiPhone, FiSend, FiClock } from 'react-icons/fi';
+import { 
+  FiArrowRight, FiPlus, FiMinus, FiInstagram, FiTwitter, FiFacebook
+} from 'react-icons/fi';
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
   const [loading, setLoading] = useState(false);
-  const [focusedField, setFocusedField] = useState(null);
+  const [openFaq, setOpenFaq] = useState(null);
+
+  // --- FAQ DATA ---
+  const faqs = [
+    {
+      question: "Check-in & Check-out",
+      answer: "Check-in begins at 2:00 PM. Check-out is by 11:00 AM. For early arrival or late departure requests, please contact the front desk."
+    },
+    {
+      question: "Private Events & Weddings",
+      answer: "We offer bespoke event planning. Our Grand Ballroom holds up to 500 guests. Contact our events team using the form above."
+    },
+    {
+      question: "Parking & Valet",
+      answer: "Complimentary valet parking is available for all guests. Secure underground parking is accessible 24/7."
+    }
+  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      console.log('📝 Submitting contact form...');
-      console.log('📝 Form data:', formData);
-      
-      // Prepare data - add subject if not provided (use message first 50 chars)
-      const contactData = {
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim() || '',
-        subject: `Contact from ${formData.name.trim()}`,
-        message: formData.message.trim()
-      };
-
-      console.log('📝 Sending to API:', contactData);
-
-      const response = await api.post('/contact', contactData);
-      
-      console.log('✅ Contact form submitted successfully:', response.data);
-      
-      toast.success('Message sent successfully! We will get back to you soon.');
+      await api.post('/contact', {
+        ...formData,
+        subject: `Contact from ${formData.name.trim()}`
+      });
+      toast.success('Message sent successfully.');
       setFormData({ name: '', email: '', phone: '', message: '' });
     } catch (error) {
-      console.error('❌ Error submitting contact form:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      });
-      
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.errors?.[0]?.msg || 
-                          'Failed to send message. Please try again.';
-      toast.error(errorMessage);
+      toast.error('Failed to send message.');
     } finally {
       setLoading(false);
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1 }
-  };
-
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans relative selection:bg-[#D4AF37] selection:text-black pb-20">
+    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-[#D4AF37] selection:text-black flex flex-col lg:flex-row overflow-x-hidden">
       
-      {/* FILM GRAIN */}
-      <div className="fixed inset-0 opacity-[0.03] pointer-events-none z-[10] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+      {/* === LEFT COLUMN: VISUAL & INFO (Fixed on Desktop) === */}
+      <div className="lg:w-5/12 relative min-h-[50vh] lg:min-h-screen lg:fixed lg:top-0 lg:left-0 border-r border-white/5">
+         {/* Background Image */}
+         <div className="absolute inset-0 z-0">
+            <img 
+              src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1200" 
+              alt="Luxury Hotel" 
+              className="w-full h-full object-cover opacity-50 grayscale hover:grayscale-0 transition-all duration-[3s] ease-in-out scale-105 hover:scale-100"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/20 to-transparent" />
+         </div>
 
-      <div className="max-w-7xl mx-auto px-6 pt-32 relative z-20">
-        
-        {/* HEADER */}
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-20"
-        >
-          <span className="text-[#D4AF37] text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Get in Touch</span>
-          <h1 className="text-5xl md:text-7xl font-light mb-6">Let's Create <span className="font-serif italic text-[#D4AF37]">Magic</span></h1>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto font-light">
-            Ready to start planning your event? We're here to answer your questions and bring your vision to life.
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-          
-          {/* LEFT: CONTACT FORM */}
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="bg-[#111] border border-white/10 p-8 md:p-12 rounded-[2rem] relative overflow-hidden"
-          >
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#D4AF37] via-[#FFD700] to-[#D4AF37]" />
-            
-            <h2 className="text-3xl font-light mb-8">Send a Message</h2>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {['name', 'email', 'phone'].map((field) => (
-                <motion.div key={field} variants={itemVariants} className="relative">
-                  <label 
-                    className={`absolute left-0 transition-all duration-300 pointer-events-none
-                      ${focusedField === field || formData[field] 
-                        ? '-top-5 text-xs text-[#D4AF37]' 
-                        : 'top-3 text-gray-500'}`}
-                  >
-                    {field.charAt(0).toUpperCase() + field.slice(1)}
-                  </label>
-                  <input
-                    type={field === 'email' ? 'email' : field === 'phone' ? 'tel' : 'text'}
-                    required
-                    value={formData[field]}
-                    onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
-                    onFocus={() => setFocusedField(field)}
-                    onBlur={() => setFocusedField(null)}
-                    className="w-full bg-transparent border-b border-white/20 py-3 text-white focus:border-[#D4AF37] focus:outline-none transition-colors placeholder-transparent"
-                  />
-                </motion.div>
-              ))}
-
-              <motion.div variants={itemVariants} className="relative mt-8">
-                <label 
-                  className={`absolute left-0 transition-all duration-300 pointer-events-none
-                    ${focusedField === 'message' || formData.message 
-                      ? '-top-5 text-xs text-[#D4AF37]' 
-                      : 'top-3 text-gray-500'}`}
-                >
-                  Your Message
-                </label>
-                <textarea
-                  required
-                  rows="4"
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  onFocus={() => setFocusedField('message')}
-                  onBlur={() => setFocusedField(null)}
-                  className="w-full bg-transparent border-b border-white/20 py-3 text-white focus:border-[#D4AF37] focus:outline-none transition-colors resize-none placeholder-transparent"
-                />
-              </motion.div>
-
-              <motion.button 
-                variants={itemVariants}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                disabled={loading}
-                className="w-full py-4 mt-4 bg-[#D4AF37] text-black font-bold rounded-xl hover:bg-white transition-colors flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>Send Message <FiSend /></>
-                )}
-              </motion.button>
-            </form>
-          </motion.div>
-
-          {/* RIGHT: INFO & MAP */}
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="space-y-8"
-          >
-            {/* Info Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <motion.div variants={itemVariants} className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-[#D4AF37]/30 transition-colors">
-                <FiMail className="text-[#D4AF37] text-2xl mb-4" />
-                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Email</h3>
-                <p className="text-lg">hello@lumiere.com</p>
-              </motion.div>
-              <motion.div variants={itemVariants} className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-[#D4AF37]/30 transition-colors">
-                <FiPhone className="text-[#D4AF37] text-2xl mb-4" />
-                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Phone</h3>
-                <p className="text-lg">+91 98765 43210</p>
-              </motion.div>
+         {/* Content Overlay */}
+         <div className="absolute bottom-0 left-0 w-full p-10 md:p-16 z-10 flex flex-col justify-between h-full">
+            {/* Top Logo Area */}
+            <div className="pt-20 lg:pt-0">
+                <span className="text-[#D4AF37] text-xs font-bold tracking-[0.5em] uppercase block mb-6">Welcome</span>
+                <h1 className="font-serif text-5xl md:text-7xl text-white leading-none">
+                  Lumiere <br/>
+                  <span className="italic font-light text-[#D4AF37]">Royale</span>
+                </h1>
             </div>
 
-            <motion.div variants={itemVariants} className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-[#D4AF37]/30 transition-colors">
-              <div className="flex items-start gap-4">
-                <FiMapPin className="text-[#D4AF37] text-2xl mt-1 shrink-0" />
-                <div>
-                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Studio</h3>
-                  <p className="text-lg leading-relaxed">
-                    The Grand Palladium, Level 4<br />
-                    Lower Parel, Mumbai 400013
-                  </p>
+            {/* Bottom Info Area */}
+            <div className="space-y-12">
+                <div className="space-y-8">
+                    <div className="group">
+                        <h3 className="text-xs text-[#D4AF37] uppercase tracking-widest mb-2">Visit Us</h3>
+                        <p className="text-xl md:text-2xl font-light leading-relaxed text-gray-200 group-hover:text-white transition-colors">
+                            Level 4, Grand Palladium<br/>
+                            Lower Parel, Mumbai 400013
+                        </p>
+                    </div>
+                    
+                    <div className="group">
+                        <h3 className="text-xs text-[#D4AF37] uppercase tracking-widest mb-2">Contact</h3>
+                        <p className="text-xl md:text-2xl font-light leading-relaxed text-gray-200 group-hover:text-white transition-colors">
+                            +91 98765 43210<br/>
+                            hello@lumiere.com
+                        </p>
+                    </div>
                 </div>
-              </div>
-            </motion.div>
 
-            {/* Dark Mode Map Placeholder */}
-            <motion.div 
-              variants={itemVariants}
-              className="h-64 w-full rounded-2xl overflow-hidden border border-white/10 relative group"
-            >
-              {/* Using a filtered Google Maps iframe for dark mode effect */}
-              <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d30164.53320436863!2d72.82228605000001!3d19.017533!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7ce8c5c975d91%3A0x2a5e57292f8c028b!2sLower%20Parel%2C%20Mumbai%2C%20Maharashtra!5e0!3m2!1sen!2sin!4v1629364512345!5m2!1sen!2sin"
-                width="100%" 
-                height="100%" 
-                style={{ border: 0, filter: 'invert(90%) hue-rotate(180deg)' }} 
-                allowFullScreen="" 
-                loading="lazy"
-                className="opacity-70 group-hover:opacity-100 transition-opacity duration-500"
-              />
-              <div className="absolute inset-0 pointer-events-none border border-white/10 rounded-2xl" />
-            </motion.div>
-
-          </motion.div>
-        </div>
-
+                {/* Social Icons */}
+                <div className="flex gap-6 pt-6 border-t border-white/10">
+                    <FiInstagram size={24} className="text-gray-500 hover:text-[#D4AF37] transition-colors cursor-pointer" />
+                    <FiTwitter size={24} className="text-gray-500 hover:text-[#D4AF37] transition-colors cursor-pointer" />
+                    <FiFacebook size={24} className="text-gray-500 hover:text-[#D4AF37] transition-colors cursor-pointer" />
+                </div>
+            </div>
+         </div>
       </div>
+
+      {/* === RIGHT COLUMN: FORM & CONTENT (Scrollable) === */}
+      <div className="lg:w-7/12 lg:ml-auto bg-[#050505] min-h-screen relative z-10">
+         <div className="p-8 md:p-20 lg:p-32 max-w-4xl mx-auto">
+            
+            <motion.div 
+               initial={{ opacity: 0, y: 30 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ duration: 0.8, delay: 0.2 }}
+            >
+               <h2 className="font-serif text-4xl md:text-5xl text-white mb-6">Get in Touch</h2>
+               <p className="text-gray-400 font-light text-lg mb-16 leading-relaxed max-w-xl">
+                  Whether you are planning a stay or an event, our team is at your disposal to create a personalized experience.
+               </p>
+
+               {/* REFINED FORM */}
+               <form onSubmit={handleSubmit} className="space-y-16">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
+                     {/* Name */}
+                     <div className="relative group">
+                        <input 
+                           type="text" 
+                           required 
+                           value={formData.name}
+                           onChange={e => setFormData({...formData, name: e.target.value})}
+                           className="w-full bg-transparent border-b border-white/20 py-4 text-white focus:border-[#D4AF37] focus:outline-none transition-colors text-xl font-light peer"
+                           placeholder=" "
+                        />
+                        <label className="absolute left-0 top-4 text-gray-500 text-base transition-all peer-focus:-top-6 peer-focus:text-xs peer-focus:text-[#D4AF37] peer-focus:tracking-widest peer-focus:uppercase peer-not-placeholder-shown:-top-6 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:text-[#D4AF37] peer-not-placeholder-shown:tracking-widest peer-not-placeholder-shown:uppercase">
+                           Your Name
+                        </label>
+                     </div>
+                     {/* Email */}
+                     <div className="relative group">
+                        <input 
+                           type="email" 
+                           required 
+                           value={formData.email}
+                           onChange={e => setFormData({...formData, email: e.target.value})}
+                           className="w-full bg-transparent border-b border-white/20 py-4 text-white focus:border-[#D4AF37] focus:outline-none transition-colors text-xl font-light peer"
+                           placeholder=" "
+                        />
+                        <label className="absolute left-0 top-4 text-gray-500 text-base transition-all peer-focus:-top-6 peer-focus:text-xs peer-focus:text-[#D4AF37] peer-focus:tracking-widest peer-focus:uppercase peer-not-placeholder-shown:-top-6 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:text-[#D4AF37] peer-not-placeholder-shown:tracking-widest peer-not-placeholder-shown:uppercase">
+                           Email Address
+                        </label>
+                     </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div className="relative group">
+                     <input 
+                        type="tel" 
+                        value={formData.phone}
+                        onChange={e => setFormData({...formData, phone: e.target.value})}
+                        className="w-full bg-transparent border-b border-white/20 py-4 text-white focus:border-[#D4AF37] focus:outline-none transition-colors text-xl font-light peer"
+                        placeholder=" "
+                     />
+                     <label className="absolute left-0 top-4 text-gray-500 text-base transition-all peer-focus:-top-6 peer-focus:text-xs peer-focus:text-[#D4AF37] peer-focus:tracking-widest peer-focus:uppercase peer-not-placeholder-shown:-top-6 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:text-[#D4AF37] peer-not-placeholder-shown:tracking-widest peer-not-placeholder-shown:uppercase">
+                        Phone Number (Optional)
+                     </label>
+                  </div>
+
+                  {/* Message */}
+                  <div className="relative group">
+                     <textarea 
+                        rows="2"
+                        required 
+                        value={formData.message}
+                        onChange={e => setFormData({...formData, message: e.target.value})}
+                        className="w-full bg-transparent border-b border-white/20 py-4 text-white focus:border-[#D4AF37] focus:outline-none transition-colors text-xl font-light peer resize-none"
+                        placeholder=" "
+                     />
+                     <label className="absolute left-0 top-4 text-gray-500 text-base transition-all peer-focus:-top-6 peer-focus:text-xs peer-focus:text-[#D4AF37] peer-focus:tracking-widest peer-focus:uppercase peer-not-placeholder-shown:-top-6 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:text-[#D4AF37] peer-not-placeholder-shown:tracking-widest peer-not-placeholder-shown:uppercase">
+                        How can we help?
+                     </label>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="pt-8">
+                    <button 
+                        disabled={loading}
+                        className="group flex items-center gap-6 text-white hover:text-[#D4AF37] transition-all uppercase tracking-[0.2em] text-sm font-bold"
+                    >
+                        {loading ? 'Sending...' : 'Send Message'}
+                        <span className="w-16 h-[1px] bg-white/30 group-hover:bg-[#D4AF37] group-hover:w-32 transition-all duration-300"></span>
+                        <FiArrowRight className="group-hover:translate-x-2 transition-transform duration-300" />
+                    </button>
+                  </div>
+               </form>
+
+               {/* FAQ SECTION */}
+               <div className="mt-32">
+                  <h3 className="text-xs font-bold text-[#D4AF37] uppercase tracking-[0.2em] mb-12 border-b border-white/10 pb-6">Frequently Asked Questions</h3>
+                  <div className="space-y-8">
+                     {faqs.map((faq, i) => (
+                        <div key={i} className="border-b border-white/5 pb-8">
+                           <button 
+                              onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                              className="w-full flex justify-between items-center text-left hover:text-[#D4AF37] transition-colors group"
+                           >
+                              <span className="text-2xl font-serif text-white group-hover:text-[#D4AF37] transition-colors">{faq.question}</span>
+                              <span className="text-[#D4AF37] text-xl transition-transform duration-300 transform group-hover:scale-110">
+                                {openFaq === i ? <FiMinus/> : <FiPlus/>}
+                              </span>
+                           </button>
+                           <AnimatePresence>
+                              {openFaq === i && (
+                                 <motion.div 
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                 >
+                                    <p className="text-gray-400 font-light text-lg mt-6 leading-relaxed max-w-2xl">{faq.answer}</p>
+                                 </motion.div>
+                              )}
+                           </AnimatePresence>
+                        </div>
+                     ))}
+                  </div>
+               </div>
+
+            </motion.div>
+         </div>
+         
+         {/* Bottom Map Strip */}
+         <div className="h-64 w-full bg-[#111] grayscale opacity-60 hover:opacity-100 hover:grayscale-0 transition-all duration-[1s]">
+            <iframe 
+               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d30164.53320436863!2d72.82228605000001!3d19.017533!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7ce8c5c975d91%3A0x2a5e57292f8c028b!2sLower%20Parel%2C%20Mumbai%2C%20Maharashtra!5e0!3m2!1sen!2sin!4v1629364512345!5m2!1sen!2sin"
+               width="100%" 
+               height="100%" 
+               style={{ border: 0, filter: 'invert(100%) hue-rotate(180deg) contrast(1.1)' }} 
+               allowFullScreen="" 
+               loading="lazy"
+            />
+         </div>
+      </div>
+
     </div>
   );
 };
 
 export default Contact;
+
+
+
 
 
 

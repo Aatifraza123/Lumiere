@@ -1,18 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import api from '../utils/api';
-import { FiArrowRight, FiStar, FiSearch, FiCheckCircle } from 'react-icons/fi';
+import { FiArrowRight, FiStar, FiSearch, FiFilter, FiChevronRight } from 'react-icons/fi';
 
 const Services = () => {
   const navigate = useNavigate();
   const [services, setServices] = useState([]);
   const [filteredServices, setFilteredServices] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [categories, setCategories] = useState(['All']);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { fetchServices(); }, []);
-  useEffect(() => { filterServices(); }, [services, searchQuery]);
+  
+  // Filter logic runs whenever search, category, or services change
+  useEffect(() => { filterServices(); }, [services, searchQuery, selectedCategory]);
 
   const fetchServices = async () => {
     try {
@@ -26,14 +30,19 @@ const Services = () => {
           title: service.title || service.name,
           slug: service.slug || (service.title || service.name).toLowerCase().replace(/\s+/g, '-'),
           description: service.description || '',
-          category: service.category || service.type || 'other',
+          category: service.category || service.type || 'General',
           image: {
             url: service.image?.url || service.image || 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800'
           },
           features: service.features || [],
           isPopular: service.isFeatured || false
         }));
+        
         setServices(transformedServices);
+        
+        // Extract unique categories
+        const uniqueCats = ['All', ...new Set(transformedServices.map(s => s.category))];
+        setCategories(uniqueCats);
       } else {
         setServices([]);
       }
@@ -48,6 +57,7 @@ const Services = () => {
   const filterServices = () => {
     let filtered = [...services];
     
+    // 1. Filter by Search
     if (searchQuery) {
       const q = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(s => 
@@ -55,190 +65,183 @@ const Services = () => {
         (s.description && s.description.toLowerCase().includes(q))
       );
     }
+
+    // 2. Filter by Category
+    if (selectedCategory !== 'All') {
+      filtered = filtered.filter(s => s.category === selectedCategory);
+    }
     
     setFilteredServices(filtered);
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white font-sans relative selection:bg-[#D4AF37] selection:text-black">
+    <div className="min-h-screen bg-[#050505] text-white font-['Lato'] relative selection:bg-[#D4AF37] selection:text-black overflow-x-hidden">
       
-      {/* FILM GRAIN */}
-      <div className="fixed inset-0 opacity-[0.03] pointer-events-none z-[10] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+      {/* BACKGROUND EFFECTS */}
+      <div className="fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.04] pointer-events-none z-[0]" />
+      <div className="fixed top-0 left-0 w-full h-[500px] bg-gradient-to-b from-[#1a1a1a] to-transparent opacity-60 z-[0]" />
 
-      <div className="max-w-7xl mx-auto px-6 pt-32 relative z-20">
+      <div className="max-w-7xl mx-auto px-6 pt-32 pb-20 relative z-10">
         
-        {/* Header */}
+        {/* === 1. HEADER SECTION === */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           className="text-center mb-16"
         >
-          <span className="text-[#D4AF37] text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Premium Services</span>
-          <h1 className="text-5xl md:text-7xl font-light mb-6">Our <span className="font-serif italic text-[#D4AF37]">Services</span></h1>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto font-light leading-relaxed">
-            At Lumiere, we provide exceptional hospitality and comprehensive event management services. 
-            From luxurious room amenities to grand event planning, we ensure every detail is executed with precision.
+          <span className="font-['Cinzel'] text-[#D4AF37] text-xs md:text-sm font-bold tracking-[0.4em] uppercase mb-4 block">
+            Exceptional Hospitality
+          </span>
+          <h1 className="font-['Cinzel'] text-5xl md:text-7xl font-medium mb-6 leading-tight">
+            Our <span className="text-[#D4AF37] italic font-serif">Services</span>
+          </h1>
+          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto font-light leading-relaxed">
+            From luxurious room amenities to grand event planning, every detail is executed with precision to ensure your stay is unforgettable.
           </p>
         </motion.div>
 
-        {/* Search Bar */}
+        {/* === 2. CONTROL BAR (Search & Filter) === */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-16"
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="sticky top-24 z-30 mb-16"
         >
-          <div className="relative max-w-md mx-auto">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search services..."
-              className="w-full bg-white/5 border border-white/10 rounded-full pl-11 pr-4 py-3 text-sm focus:border-[#D4AF37] focus:outline-none focus:bg-white/10 transition-all"
-            />
+          <div className="bg-[#121212]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl flex flex-col md:flex-row items-center gap-4 max-w-4xl mx-auto">
+            
+            {/* Search Input */}
+            <div className="relative w-full md:w-1/2">
+              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[#D4AF37] text-lg" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search specific services..."
+                className="w-full bg-white/5 border border-white/5 rounded-xl pl-12 pr-4 py-3 text-sm text-white placeholder-gray-500 focus:border-[#D4AF37] focus:outline-none focus:bg-white/10 transition-all"
+              />
+            </div>
+
+            {/* Category Pills */}
+            <div className="flex gap-2 overflow-x-auto w-full md:w-1/2 pb-1 md:pb-0 scrollbar-hide">
+               {categories.map((cat) => (
+                 <button
+                   key={cat}
+                   onClick={() => setSelectedCategory(cat)}
+                   className={`px-4 py-2 rounded-lg text-xs uppercase tracking-wider font-bold whitespace-nowrap transition-all duration-300 ${
+                     selectedCategory === cat 
+                       ? 'bg-[#D4AF37] text-black shadow-[0_0_15px_rgba(212,175,55,0.4)]' 
+                       : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                   }`}
+                 >
+                   {cat}
+                 </button>
+               ))}
+            </div>
           </div>
         </motion.div>
 
-        {/* Key Services - Compact */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16"
-        >
-          {[
-            { icon: <FiCheckCircle />, title: 'Hotel Services', text: 'Room services, hospitality, catering' },
-            { icon: <FiCheckCircle />, title: 'Event Management', text: 'Weddings, corporate events, celebrations' },
-            { icon: <FiCheckCircle />, title: 'Premium Amenities', text: 'Security, WiFi, valet parking' }
-          ].map((item, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ delay: index * 0.1, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="bg-[#111] border border-white/10 rounded-xl p-6 text-center"
-            >
-              <div className="text-3xl text-[#D4AF37] mb-3 flex justify-center">{item.icon}</div>
-              <h3 className="text-lg font-bold mb-2 text-white">{item.title}</h3>
-              <p className="text-sm text-gray-400">{item.text}</p>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Services Grid */}
+        {/* === 3. SERVICES GRID === */}
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-[#D4AF37]"></div>
+          <div className="flex justify-center items-center py-32">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#D4AF37]"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-            {filteredServices.map((service, index) => (
-              <motion.div
-                key={service._id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ delay: index * 0.05, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                whileHover={{ scale: 1.02, y: -5, transition: { duration: 0.2 } }}
-                className="bg-[#111] border border-white/10 rounded-2xl overflow-hidden hover:border-[#D4AF37]/50 transition-all duration-300 cursor-pointer"
-                onClick={() => navigate(`/services/${service._id}`)}
-              >
-                <div className="relative h-48 overflow-hidden">
-                  <img 
-                    src={service.image?.url || service.image} 
-                    alt={service.title} 
-                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-transparent to-transparent" />
-                  {service.isPopular && (
-                    <div className="absolute top-3 right-3 bg-[#D4AF37] text-black px-2 py-1 rounded-full text-[10px] font-bold flex items-center gap-1">
-                      <FiStar className="fill-black text-xs" /> Popular
+          <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
+            <AnimatePresence>
+              {filteredServices.map((service, index) => (
+                <motion.div
+                  layout
+                  key={service._id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.3 }}
+                  className="group relative bg-[#0F0F0F] border border-white/10 rounded-xl overflow-hidden hover:border-[#D4AF37]/50 transition-all duration-500 hover:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] cursor-pointer h-full flex flex-col"
+                  onClick={() => navigate(`/services/${service._id}`)}
+                >
+                  {/* Image Section */}
+                  <div className="relative h-64 overflow-hidden">
+                    <img 
+                      src={service.image?.url || service.image} 
+                      alt={service.title} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0F0F0F] via-transparent to-transparent opacity-90" />
+                    
+                    {/* Badge */}
+                    {service.isPopular && (
+                      <div className="absolute top-4 right-4 bg-[#D4AF37]/90 backdrop-blur-md text-black px-3 py-1 rounded-sm text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 shadow-lg">
+                        <FiStar className="fill-black text-xs" /> Popular
+                      </div>
+                    )}
+                    
+                    {/* Category Tag */}
+                    <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-md border border-white/10 text-white/80 px-3 py-1 rounded-full text-[10px] uppercase tracking-wider">
+                      {service.category}
                     </div>
-                  )}
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold mb-2 text-white">{service.title}</h3>
-                  <p className="text-gray-400 text-sm mb-4 line-clamp-2 font-light">
-                    {service.description}
-                  </p>
-                  <Link 
-                    to={`/services/${service._id}`}
-                    className="inline-flex items-center gap-2 text-sm text-[#D4AF37] hover:text-[#FFD700] transition-colors"
-                  >
-                    View Details <FiArrowRight />
-                  </Link>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
+                  </div>
 
-        {/* Why Choose Us - Compact */}
-        <section className="mb-16 bg-[#111] border border-white/10 rounded-3xl p-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-8"
-          >
-            <h2 className="font-['Playfair_Display'] text-3xl md:text-4xl mb-4">
-              Why Choose <span className="text-[#D4AF37] italic">Lumiere</span>
-            </h2>
+                  {/* Content Section */}
+                  <div className="p-6 flex flex-col flex-grow relative">
+                    {/* Decoration Line */}
+                    <div className="absolute top-0 left-6 right-6 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:via-[#D4AF37]/50 transition-all duration-500"></div>
+
+                    <h3 className="font-['Cinzel'] text-2xl font-medium mb-3 text-white group-hover:text-[#D4AF37] transition-colors">
+                      {service.title}
+                    </h3>
+                    
+                    <p className="text-gray-400 text-sm leading-relaxed mb-6 line-clamp-3 font-normal flex-grow">
+                      {service.description}
+                    </p>
+
+                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+                      <span className="text-xs text-gray-500 uppercase tracking-widest group-hover:text-white transition-colors">
+                        Know More
+                      </span>
+                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-[#D4AF37] group-hover:text-black transition-all duration-300">
+                         <FiArrowRight />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </motion.div>
+        )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { title: 'Expert Team', desc: 'Experienced professionals with years of industry expertise' },
-              { title: 'Personalized Care', desc: 'Services tailored to meet your unique needs' },
-              { title: 'Quality Assurance', desc: 'Highest standards of quality in every service' },
-              { title: '24/7 Support', desc: 'Round-the-clock assistance for all your needs' }
-            ].map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="p-4 bg-[#0A0A0A] rounded-xl border-l-4 border-[#D4AF37]"
-              >
-                <h3 className="text-base font-bold mb-2 text-white">{item.title}</h3>
-                <p className="text-gray-400 text-xs font-light leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        {/* Simple CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <h2 className="font-['Playfair_Display'] text-3xl md:text-4xl mb-4">
-            Ready to Get Started?
-          </h2>
-          <p className="text-gray-400 mb-8">Contact us to discuss your requirements</p>
-          <Link
-            to="/contact"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#b5952f] transition-colors"
-          >
-            Contact Us
-            <FiArrowRight />
-          </Link>
-        </motion.div>
-
-        {/* Empty State */}
-        {!loading && filteredServices.length === 0 && services.length === 0 && (
-          <div className="text-center py-20">
-            <h3 className="text-2xl font-bold text-white mb-2">No services found</h3>
-            <p className="text-gray-400">Please check back later</p>
+        {/* === 4. EMPTY STATE === */}
+        {!loading && filteredServices.length === 0 && (
+          <div className="text-center py-20 border border-dashed border-white/10 rounded-2xl bg-white/5">
+            <div className="bg-white/5 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl text-gray-500">
+                <FiFilter />
+            </div>
+            <h3 className="text-2xl font-['Cinzel'] text-white mb-2">No services found</h3>
+            <p className="text-gray-400 font-light">Try adjusting your search or category filter.</p>
+            <button 
+                onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }}
+                className="mt-6 text-[#D4AF37] text-sm underline underline-offset-4 hover:text-white transition-colors"
+            >
+                Clear all filters
+            </button>
           </div>
         )}
+
+        {/* === 5. BOTTOM CTA === */}
+        <div className="relative mt-20 border-t border-white/10 pt-20">
+           <div className="flex flex-col md:flex-row justify-between items-center gap-8 bg-[#111] p-10 rounded-2xl border border-white/5">
+              <div className="text-center md:text-left">
+                  <h2 className="font-['Cinzel'] text-3xl text-white mb-2">Need a Custom Package?</h2>
+                  <p className="text-gray-400 text-sm font-light">We specialize in tailoring experiences to your exact needs.</p>
+              </div>
+              <Link
+                to="/contact"
+                className="px-8 py-4 bg-white text-black font-bold text-sm tracking-widest uppercase rounded hover:bg-[#D4AF37] transition-colors duration-300 flex items-center gap-2"
+              >
+                Contact Us <FiChevronRight />
+              </Link>
+           </div>
+        </div>
 
       </div>
     </div>
@@ -246,3 +249,4 @@ const Services = () => {
 };
 
 export default Services;
+
