@@ -233,35 +233,8 @@ const ServiceDetail = () => {
           </div>
         )}
 
-        {/* Features Grid */}
-        {service.features && service.features.length > 0 && (
-          <div className="mb-20">
-            <h2 className="text-3xl font-bold mb-10 text-center">Service Features</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {service.features.map((feature, i) => (
-                <motion.div 
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="bg-[#111] border border-white/5 p-8 rounded-3xl hover:bg-white/5 transition-colors group"
-                >
-                  <div className="w-14 h-14 rounded-full bg-[#D4AF37]/10 flex items-center justify-center text-3xl text-[#D4AF37] mb-6 group-hover:scale-110 transition-transform duration-300 border border-[#D4AF37]/20">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-xl font-bold mb-2 text-white group-hover:text-[#D4AF37] transition-colors">
-                    {feature.name}
-                  </h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Why Choose This Service */}
-        <div className="mb-20 bg-[#111] border border-white/10 rounded-3xl p-12">
+        <div className="mb-20 bg-[#0A0A0A] rounded-3xl p-12">
           <h2 className="text-3xl font-bold mb-8 text-center">Why Choose This Service</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {[
