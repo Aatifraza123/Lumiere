@@ -3,18 +3,69 @@ import { useParams, Link } from 'react-router-dom';
 import { motion, useScroll, useSpring } from 'framer-motion';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import { FiClock, FiCalendar, FiUser, FiShare2, FiTwitter, FiFacebook, FiLinkedin, FiArrowLeft } from 'react-icons/fi';
+import { FiClock, FiCalendar, FiShare2, FiTwitter, FiFacebook, FiLinkedin, FiArrowLeft, FiCopy, FiCheck } from 'react-icons/fi';
 
 const BlogDetail = () => {
   const { slug } = useParams();
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
+
+  // Get current page URL
+  const currentUrl = window.location.href;
+  const encodedUrl = encodeURIComponent(currentUrl);
 
   useEffect(() => {
     fetchBlog();
   }, [slug]);
+
+  // Social sharing functions
+  const shareOnTwitter = () => {
+    const text = encodeURIComponent(blog?.title || 'Check out this article');
+    const url = `https://twitter.com/intent/tweet?text=${text}&url=${encodedUrl}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+
+  const shareOnFacebook = () => {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+
+  const shareOnLinkedIn = () => {
+    const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(currentUrl);
+      setCopied(true);
+      toast.success('Link copied to clipboard!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast.error('Failed to copy link');
+    }
+  };
+
+  const shareNative = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: blog?.title || 'Blog Post',
+          text: blog?.excerpt || 'Check out this article',
+          url: currentUrl,
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Error sharing:', err);
+        }
+      }
+    } else {
+      copyToClipboard();
+    }
+  };
 
   const fetchBlog = async () => {
     try {
@@ -145,10 +196,34 @@ const BlogDetail = () => {
         <div className="lg:col-span-2 hidden lg:block">
           <div className="sticky top-32 flex flex-col gap-4 items-center">
             <span className="text-xs font-bold text-gray-500 uppercase tracking-widest rotate-180 mb-4" style={{ writingMode: 'vertical-rl' }}>Share Article</span>
-            <button className="p-3 rounded-full bg-white/5 hover:bg-[#1DA1F2] hover:text-white transition-colors text-gray-400"><FiTwitter /></button>
-            <button className="p-3 rounded-full bg-white/5 hover:bg-[#4267B2] hover:text-white transition-colors text-gray-400"><FiFacebook /></button>
-            <button className="p-3 rounded-full bg-white/5 hover:bg-[#0077b5] hover:text-white transition-colors text-gray-400"><FiLinkedin /></button>
-            <button className="p-3 rounded-full bg-white/5 hover:bg-[#D4AF37] hover:text-black transition-colors text-gray-400"><FiShare2 /></button>
+            <button 
+              onClick={shareOnTwitter}
+              className="p-3 rounded-full bg-white/5 hover:bg-[#1DA1F2] hover:text-white transition-all hover:scale-110 text-gray-400"
+              title="Share on Twitter"
+            >
+              <FiTwitter />
+            </button>
+            <button 
+              onClick={shareOnFacebook}
+              className="p-3 rounded-full bg-white/5 hover:bg-[#4267B2] hover:text-white transition-all hover:scale-110 text-gray-400"
+              title="Share on Facebook"
+            >
+              <FiFacebook />
+            </button>
+            <button 
+              onClick={shareOnLinkedIn}
+              className="p-3 rounded-full bg-white/5 hover:bg-[#0077b5] hover:text-white transition-all hover:scale-110 text-gray-400"
+              title="Share on LinkedIn"
+            >
+              <FiLinkedin />
+            </button>
+            <button 
+              onClick={copied ? null : copyToClipboard}
+              className="p-3 rounded-full bg-white/5 hover:bg-[#D4AF37] hover:text-black transition-all hover:scale-110 text-gray-400"
+              title={copied ? 'Copied!' : 'Copy link'}
+            >
+              {copied ? <FiCheck className="text-green-400" /> : <FiCopy />}
+            </button>
           </div>
         </div>
 
@@ -171,9 +246,34 @@ const BlogDetail = () => {
               ))}
             </div>
             <div className="flex gap-4 lg:hidden">
-              <button className="p-2 rounded-full bg-white/5 hover:bg-[#D4AF37] hover:text-black"><FiTwitter /></button>
-              <button className="p-2 rounded-full bg-white/5 hover:bg-[#D4AF37] hover:text-black"><FiFacebook /></button>
-              <button className="p-2 rounded-full bg-white/5 hover:bg-[#D4AF37] hover:text-black"><FiShare2 /></button>
+              <button 
+                onClick={shareOnTwitter}
+                className="p-2 rounded-full bg-white/5 hover:bg-[#1DA1F2] hover:text-white transition-all"
+                title="Share on Twitter"
+              >
+                <FiTwitter />
+              </button>
+              <button 
+                onClick={shareOnFacebook}
+                className="p-2 rounded-full bg-white/5 hover:bg-[#4267B2] hover:text-white transition-all"
+                title="Share on Facebook"
+              >
+                <FiFacebook />
+              </button>
+              <button 
+                onClick={shareOnLinkedIn}
+                className="p-2 rounded-full bg-white/5 hover:bg-[#0077b5] hover:text-white transition-all"
+                title="Share on LinkedIn"
+              >
+                <FiLinkedin />
+              </button>
+              <button 
+                onClick={shareNative}
+                className="p-2 rounded-full bg-white/5 hover:bg-[#D4AF37] hover:text-black transition-all"
+                title="Share"
+              >
+                {copied ? <FiCheck className="text-green-400" /> : <FiShare2 />}
+              </button>
             </div>
           </div>
 
