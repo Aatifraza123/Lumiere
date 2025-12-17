@@ -61,26 +61,26 @@ const HeroSection = () => {
           Corporate Events & more with timeless elegance.
         </motion.p>
 
-        {/* Badges - Small Size */}
+        {/* CTA Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.8 }}
-          className="flex flex-wrap items-center justify-center gap-2"
+          className="flex flex-wrap items-center justify-center gap-3"
         >
           <Link 
             to="/halls"
-            className="group px-3 py-1.5 text-xs font-medium text-white transition-all duration-300 rounded-full backdrop-blur-md bg-white/10 border border-white/20 hover:bg-[#D4AF37] hover:border-[#D4AF37] hover:text-black flex items-center gap-1.5"
+            className="group px-6 py-2.5 text-sm font-semibold text-white transition-all duration-300 rounded-full backdrop-blur-md bg-white/10 border border-white/20 hover:bg-[#D4AF37] hover:border-[#D4AF37] hover:text-black flex items-center gap-2 hover:scale-105"
           >
-            <FiCalendar className="text-xs" />
+            <FiCalendar className="text-sm" />
             <span>Book Now</span>
           </Link>
 
           <Link 
             to="/services"
-            className="group px-3 py-1.5 text-xs font-medium text-white transition-all duration-300 rounded-full backdrop-blur-md bg-white/10 border border-white/20 hover:bg-white/20 hover:border-white/40 flex items-center gap-1.5"
+            className="group px-6 py-2.5 text-sm font-semibold text-white transition-all duration-300 rounded-full backdrop-blur-md bg-white/10 border border-white/20 hover:bg-white/20 hover:border-white/40 flex items-center gap-2 hover:scale-105"
           >
-            <FiCompass className="text-xs" />
+            <FiCompass className="text-sm" />
             <span>Explore Services</span>
           </Link>
         </motion.div>
