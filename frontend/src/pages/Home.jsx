@@ -9,7 +9,7 @@ const ASSETS = {
   halls: [
     "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200",
     "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1200",
-    "https://images.unsplash.com/photo-1519225448526-064d816ddd21?w=1200"
+    "https://goodthomas.net/wp-content/uploads/2024/11/host-a-private-party-good-thomas-entertainment-musical-bingo-3171837-1536x1026.jpg"
   ]
 };
 
