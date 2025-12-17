@@ -212,22 +212,27 @@ const AdminBlog = () => {
       ...(type.includes('list') ? { items: [''] } : {})
     };
     
-    if (afterId === null) {
-      setContentSections([...contentSections, newSection]);
-    } else {
-      const index = contentSections.findIndex(s => s.id === afterId);
-      setContentSections([
-        ...contentSections.slice(0, index + 1),
-        newSection,
-        ...contentSections.slice(index + 1)
-      ]);
-    }
+    setContentSections(prevSections => {
+      if (afterId === null) {
+        return [...prevSections, newSection];
+      } else {
+        const index = prevSections.findIndex(s => s.id === afterId);
+        return [
+          ...prevSections.slice(0, index + 1),
+          newSection,
+          ...prevSections.slice(index + 1)
+        ];
+      }
+    });
   };
 
   const removeContentSection = (id) => {
-    if (contentSections.length > 1) {
-      setContentSections(contentSections.filter(s => s.id !== id));
-    }
+    setContentSections(prevSections => {
+      if (prevSections.length > 1) {
+        return prevSections.filter(s => s.id !== id);
+      }
+      return prevSections;
+    });
   };
 
   const updateContentSection = (id, updates) => {
@@ -239,7 +244,7 @@ const AdminBlog = () => {
   };
 
   const updateListItem = (sectionId, itemIndex, value) => {
-    setContentSections(contentSections.map(s => {
+    setContentSections(prevSections => prevSections.map(s => {
       if (s.id === sectionId) {
         const newItems = [...(s.items || [])];
         newItems[itemIndex] = value;
@@ -250,7 +255,7 @@ const AdminBlog = () => {
   };
 
   const addListItem = (sectionId) => {
-    setContentSections(contentSections.map(s => {
+    setContentSections(prevSections => prevSections.map(s => {
       if (s.id === sectionId) {
         return { ...s, items: [...(s.items || []), ''] };
       }
@@ -259,7 +264,7 @@ const AdminBlog = () => {
   };
 
   const removeListItem = (sectionId, itemIndex) => {
-    setContentSections(contentSections.map(s => {
+    setContentSections(prevSections => prevSections.map(s => {
       if (s.id === sectionId) {
         const newItems = s.items.filter((_, i) => i !== itemIndex);
         return { ...s, items: newItems.length > 0 ? newItems : [''] };
@@ -575,18 +580,24 @@ const AdminBlog = () => {
                                     type="text"
                                     value={section.text || ''}
                                     onChange={(e) => {
-                                      console.log('Heading input changed:', e.target.value);
-                                      updateContentSection(section.id, { text: e.target.value });
+                                      const newValue = e.target.value;
+                                      console.log('Heading input changed:', newValue);
+                                      console.log('Section ID:', section.id);
+                                      updateContentSection(section.id, { text: newValue });
                                     }}
-                                    className={`w-full bg-[#0A0A0A] border-2 border-white/20 rounded-lg px-5 py-3 text-white focus:border-[#D4AF37] focus:outline-none font-bold placeholder-gray-600 ${
+                                    className={`w-full bg-[#1a1a1a] border-2 border-[#D4AF37]/50 rounded-lg px-5 py-3 text-white focus:border-[#D4AF37] focus:outline-none font-bold placeholder-gray-500 ${
                                       section.level === 1 ? 'text-2xl' :
                                       section.level === 2 ? 'text-xl' :
                                       section.level === 3 ? 'text-lg' :
                                       'text-base'
                                     }`}
-                                    placeholder={`Enter H${section.level} heading...`}
+                                    placeholder={`Type your H${section.level} heading here...`}
                                     autoComplete="off"
                                   />
+                                  {/* Debug info */}
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    Current value: "{section.text || 'empty'}" | ID: {section.id}
+                                  </div>
                                 </div>
                               )}
 
